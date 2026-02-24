@@ -4,6 +4,7 @@ import lombok.NonNull;
 
 import java.util.List;
 
+
 public record ClanMembersResponse(@NonNull List<Member> items) {
     public record Member(
             @NonNull String tag,

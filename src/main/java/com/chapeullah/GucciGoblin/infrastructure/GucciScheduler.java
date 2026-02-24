@@ -11,7 +11,7 @@ public class GucciScheduler {
 
     private final GucciService gucciService;
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 0/1 * * * *")
     public void sync() {
         gucciService.updateMembers();
     }
