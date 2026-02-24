@@ -28,5 +28,4 @@ public final class GucciLogger {
         logger.error(message);
     }
 
-
 }

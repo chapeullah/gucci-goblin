@@ -95,7 +95,7 @@ public class MemberDeltaService {
     }
 
     private static String headerFor(@NonNull MemberDelta memberDelta, String name) {
-        return String.format("%-7s%-13s%-18s", " ", memberDelta.getTag(), name);
+        return String.format("%-7s%-13s%-18s", " ", memberDelta.getTag(), consoleName(name));
     }
 
     private static <T> void printIfChange(
@@ -106,6 +106,11 @@ public class MemberDeltaService {
         if (delta.changed()) {
             System.out.println(header + String.format("%-24s ", field) + delta);
         }
+    }
+
+    private static String consoleName(@NonNull String s) {
+        String t = s.replaceAll("[^a-zA-Z0-9А-Яа-яЁё _\\-\\.]", "?");
+        return t.replaceAll("\\s+", " ").trim();
     }
 
 }

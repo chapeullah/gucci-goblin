@@ -81,7 +81,7 @@ public class MemberEntity {
 
     @Column(name="joined",
             nullable = true)
-    private Instant joined;
+    private Instant joined = Instant.now();
 
     private MemberEntity(
             @NonNull String tag,

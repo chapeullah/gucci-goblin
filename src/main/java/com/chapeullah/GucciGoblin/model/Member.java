@@ -102,7 +102,7 @@ public class Member {
     }
 
     public static Member initFrom(@NonNull Member member) {
-        Member created = new Member(
+        Member createdMember = new Member(
                 member.tag,
                 member.name,
                 member.role,
@@ -115,10 +115,10 @@ public class Member {
                 member.donationsReceived
         );
 
-        created.lastActivity = Instant.now();
-        created.joined = Instant.now();
+        createdMember.lastActivity = Instant.now();
+        createdMember.joined = Instant.now();
 
-        return created;
+        return createdMember;
     }
 
     /**
@@ -140,27 +140,27 @@ public class Member {
     /**
      * Creates a member from MemberEntity.
      */
-    public static Member from(@NonNull MemberEntity entity) {
+    public static Member from(@NonNull MemberEntity memberEntity) {
         Member member = new Member(
-                entity.getTag(),
-                entity.getName(),
-                entity.getRole(),
-                entity.getTownHallLevel(),
-                entity.getExpLevel(),
-                entity.getBuilderBaseTrophies(),
-                entity.getDonations(),
-                entity.getDonationsReceived(),
-                entity.getTotalDonations(),
-                entity.getTotalDonationsReceived()
+                memberEntity.getTag(),
+                memberEntity.getName(),
+                memberEntity.getRole(),
+                memberEntity.getTownHallLevel(),
+                memberEntity.getExpLevel(),
+                memberEntity.getBuilderBaseTrophies(),
+                memberEntity.getDonations(),
+                memberEntity.getDonationsReceived(),
+                memberEntity.getTotalDonations(),
+                memberEntity.getTotalDonationsReceived()
         );
 
-        member.lastActivity = entity.getLastActivity();
-        member.lastDonation = entity.getLastDonation();
-        member.lastDonationsReceived = entity.getLastDonationsReceived();
-        member.lastBuilderBaseTrophiesChanged = entity.getLastBuilderBaseTrophiesChanged();
-        member.lastTownHallUpgrade = entity.getLastTownHallUpgrade();
+        member.lastActivity = memberEntity.getLastActivity();
+        member.lastDonation = memberEntity.getLastDonation();
+        member.lastDonationsReceived = memberEntity.getLastDonationsReceived();
+        member.lastBuilderBaseTrophiesChanged = memberEntity.getLastBuilderBaseTrophiesChanged();
+        member.lastTownHallUpgrade = memberEntity.getLastTownHallUpgrade();
 
-        member.joined = entity.getJoined();
+        member.joined = memberEntity.getJoined();
 
         return member;
     }
