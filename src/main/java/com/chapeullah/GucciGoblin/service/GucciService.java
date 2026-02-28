@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,8 @@ public class GucciService {
     private final MemberRepository memberRepository;
     private final PlayerRepository playerRepository;
     private final MemberDeltaService memberDeltaService;
+
+    private final AtomicLong tickCounter = new AtomicLong(0);
 
     /**
      * Initialize data if not exists
@@ -82,6 +85,8 @@ public class GucciService {
      * Synchronize API with DB
      */
     public void synchronize() {
+        System.out.println();
+        System.out.printf("-------------------------------------------------- ITER=%d", tickCounter.incrementAndGet());
         updateMembers();
         updatePlayers();
     }
