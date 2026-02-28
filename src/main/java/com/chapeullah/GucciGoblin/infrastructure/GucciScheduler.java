@@ -13,7 +13,7 @@ public class GucciScheduler {
 
     @Scheduled(cron = "0 0/1 * * * *")
     public void sync() {
-        gucciService.sync();
+        gucciService.synchronize();
     }
 
 }

@@ -109,7 +109,7 @@ public class MemberDeltaService {
     }
 
     private static String consoleName(@NonNull String s) {
-        String t = s.replaceAll("[^a-zA-Z0-9А-Яа-яЁё _\\-\\.]", "?");
+        String t = s.replaceAll("[^\\p{L}\\p{N} _\\-\\.'’]", "▫");
         return t.replaceAll("\\s+", " ").trim();
     }
 
