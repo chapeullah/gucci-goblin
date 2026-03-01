@@ -62,11 +62,11 @@ public class MemberDeltaService {
         List<MemberDelta> memberDeltas = MemberDeltaService.memberDeltasFrom(oldMembers, newMembers);
 
         if (memberDeltas.isEmpty()) {
-            gucciLogger.info("No changes");
+            gucciLogger.info("Members sync: no changes");
             return;
         }
 
-        gucciLogger.info("Changes:");
+        gucciLogger.info("Members sync: changes detected");
 
         for (MemberDelta memberDelta : memberDeltas) {
             printMemberDelta(memberDelta);

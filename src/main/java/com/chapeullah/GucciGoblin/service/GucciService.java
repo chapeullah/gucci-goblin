@@ -29,13 +29,12 @@ public class GucciService {
     private final PlayerRepository playerRepository;
     private final MemberDeltaService memberDeltaService;
 
-    private final AtomicLong tickCounter = new AtomicLong(0);
-
     /**
      * Initialize data if not exists
      */
     @Deprecated
     public void init() {
+        System.out.println("═".repeat(47) + " INITIALIZATION " + "═".repeat(46) + "╗");
         initMembers();
         initPlayers();
     }
@@ -85,15 +84,12 @@ public class GucciService {
      * Synchronize API with DB
      */
     public void synchronize() {
-        System.out.println();
-        System.out.printf("-------------------------------------------------- ITER=%d", tickCounter.incrementAndGet());
+        System.out.println("═".repeat(115) + "╣");
         updateMembers();
         updatePlayers();
     }
 
     private void updateMembers() {
-        gucciLogger.info("Starting members synchronization.");
-
         LinkedHashMap<String, Member> currentMembers = mapFrom(gucciClient.getMembers());
         LinkedHashMap<String, Member> oldMembers = mapMembersFrom(memberRepository.findAll());
         memberDeltaService.memberDeltaOutput(oldMembers, currentMembers);
@@ -108,7 +104,7 @@ public class GucciService {
                 .toList();
         memberRepository.saveAll(entities);
 
-        gucciLogger.info("MEMBERS synchronization SUCCESS. Members: " + entities.size());
+        gucciLogger.info("Members synchronization success. Members: " + entities.size());
     }
 
     private static void upsertMember(
@@ -125,8 +121,6 @@ public class GucciService {
     }
 
     private void updatePlayers() {
-        gucciLogger.info("Starting PLAYERS synchronization.");
-
         LinkedHashMap<String, Member> currentMembers = mapMembersFrom(memberRepository.findAll());
         LinkedHashMap<String, Player> players = mapPlayersFrom(playerRepository.findAll());
         for (Member member : currentMembers.values()) {

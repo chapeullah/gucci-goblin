@@ -21,6 +21,7 @@ services:
       SPRING_DATASOURCE_USERNAME: gucci
       SPRING_DATASOURCE_PASSWORD: gucci
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=Europe/Moscow"
 
 volumes:
   pgdata:

@@ -28,4 +28,10 @@ public final class GucciLogger {
         logger.error(message);
     }
 
+    public void iterStart(long iter) {
+        String left = String.format("ITER=%10d ", iter); // слева фикс. формат
+        int fillCount = Math.max(0, 111 - left.length());
+        System.out.printf("%s%s%n", left, String.valueOf("=").repeat(fillCount));
+    }
+
 }
