@@ -9,14 +9,15 @@ import com.chapeullah.GucciGoblin.model.Member;
 import com.chapeullah.GucciGoblin.model.Player;
 import com.chapeullah.GucciGoblin.repository.MemberRepository;
 import com.chapeullah.GucciGoblin.repository.PlayerRepository;
+import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @RequiredArgsConstructor
@@ -84,7 +85,6 @@ public class GucciService {
      * Synchronize API with DB
      */
     public void synchronize() {
-        System.out.println("═".repeat(115) + "╣");
         updateMembers();
         updatePlayers();
     }
@@ -144,6 +144,23 @@ public class GucciService {
         playerRepository.saveAll(entities);
 
         gucciLogger.info("Players synchronization success.");
+    }
+
+    @Transactional
+    public boolean updateMembersLastActivity(@NonNull String tag) {
+        if (!tag.startsWith("#")) tag = "#" + tag;
+        int updated = memberRepository.updateLastActivity(tag, Instant.now());
+        if (updated == 0) {
+            gucciLogger.warn("Update member's last activity: Member " + tag + " not found.");
+            return false;
+        }
+        gucciLogger.info("Update member's last activity: Member's " + tag + " last activity updated.");
+        return true;
+    }
+
+    public Instant showMembersLastActivity(@NonNull String tag) {
+        if (!tag.startsWith("#")) tag = "#" + tag;
+        return memberRepository.findLastActivity(tag);
     }
 
     private static LinkedHashMap<String, Member> mapFrom(@NonNull ClanMembersResponse res) {

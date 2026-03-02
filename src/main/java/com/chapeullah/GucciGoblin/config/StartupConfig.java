@@ -13,8 +13,6 @@ public class StartupConfig {
     private final GucciService gucciService;
 
     @Bean
-    public ApplicationRunner initialize() {
-        return args -> gucciService.synchronize();
-    }
+    public ApplicationRunner initialize() { return args -> gucciService.synchronize(); }
 
 }

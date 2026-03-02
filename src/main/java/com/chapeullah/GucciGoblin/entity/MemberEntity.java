@@ -80,7 +80,7 @@ public class MemberEntity {
     private Integer totalDonationsReceived;
 
     @Column(name="joined",
-            nullable = true)
+            nullable = false)
     private Instant joined = Instant.now();
 
     private MemberEntity(
@@ -99,7 +99,7 @@ public class MemberEntity {
             Instant lastDonationsReceived,
             Instant lastBuilderBaseTrophiesChanged,
             Instant lastTownHallUpgrade,
-            Instant joined
+            @NonNull Instant joined
     ) {
         this.tag = tag;
         this.name = name;

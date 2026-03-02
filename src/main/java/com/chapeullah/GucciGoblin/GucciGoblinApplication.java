@@ -7,7 +7,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @SpringBootApplication
 public class GucciGoblinApplication {
+
 	public static void main(String[] args) {
 		SpringApplication.run(GucciGoblinApplication.class, args);
 	}
+
 }

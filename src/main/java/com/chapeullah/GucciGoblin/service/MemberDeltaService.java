@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MemberDeltaService {
 
-    private final GucciLogger gucciLogger = GucciLogger.of(GucciService.class);
+    private final GucciLogger gucciLogger = GucciLogger.of(MemberDeltaService.class);
 
     public static List<MemberDelta> memberDeltasFrom(
             @NonNull LinkedHashMap<String, Member> oldMembers,
@@ -73,23 +73,23 @@ public class MemberDeltaService {
         }
     }
 
-    private static void printMemberDelta(@NonNull MemberDelta memberDelta) {
+    private void printMemberDelta(@NonNull MemberDelta memberDelta) {
         switch (memberDelta.getMembershipStatus()) {
             case JOINED -> {
-                System.out.println(headerFor(memberDelta, memberDelta.getNameDelta().newValue()) + "[+] JOINED clan");
+                gucciLogger.info(headerFor(memberDelta, memberDelta.getNameDelta().newValue()) + "[+] JOINED clan");
             }
             case LEFT -> {
-                System.out.println(headerFor(memberDelta, memberDelta.getNameDelta().oldValue()) + "[-] LEFT clan");
+                gucciLogger.info(headerFor(memberDelta, memberDelta.getNameDelta().oldValue()) + "[-] LEFT clan");
             }
             case NO_CHANGE -> {
                 String header = headerFor(memberDelta, memberDelta.getNameDelta().newValue());
-                printIfChange(header, "Name", memberDelta.getNameDelta());
-                printIfChange(header, "Clan role", memberDelta.getRoleDelta());
-                printIfChange(header, "TH level", memberDelta.getTownHallLevelDelta());
-                printIfChange(header, "Level", memberDelta.getExpLevelDelta());
-                printIfChange(header, "Builder base trophies", memberDelta.getBuilderBaseTrophiesDelta());
-                printIfChange(header, "Donations", memberDelta.getDonationsDelta());
-                printIfChange(header, "Donations received", memberDelta.getDonationsReceivedDelta());
+                logIfChange(header, "Name", memberDelta.getNameDelta());
+                logIfChange(header, "Clan role", memberDelta.getRoleDelta());
+                logIfChange(header, "TH level", memberDelta.getTownHallLevelDelta());
+                logIfChange(header, "Level", memberDelta.getExpLevelDelta());
+                logIfChange(header, "Builder base trophies", memberDelta.getBuilderBaseTrophiesDelta());
+                logIfChange(header, "Donations", memberDelta.getDonationsDelta());
+                logIfChange(header, "Donations received", memberDelta.getDonationsReceivedDelta());
             }
         }
     }
@@ -98,13 +98,13 @@ public class MemberDeltaService {
         return String.format("%-7s%-13s%-18s", " ", memberDelta.getTag(), consoleName(name));
     }
 
-    private static <T> void printIfChange(
+    private <T> void logIfChange(
             @NonNull String header,
             @NonNull String field,
             @NonNull MemberDelta.Delta<T> delta
     ) {
         if (delta.changed()) {
-            System.out.println(header + String.format("%-24s ", field) + delta);
+            gucciLogger.info(header + String.format("%-24s ", field) + delta);
         }
     }
 
