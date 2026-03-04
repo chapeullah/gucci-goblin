@@ -20,4 +20,7 @@ public interface MemberRepository extends JpaRepository<MemberEntity, String> {
     @Query("SELECT m.lastActivity FROM MemberEntity m WHERE m.tag = :tag")
     Instant findLastActivity(@NonNull @Param("tag") String tag);
 
+    @Query("SELECT m.name FROM MemberEntity m WHERE m.tag = :tag")
+    String findNameByTag(@NonNull @Param("tag") String tag);
+
 }

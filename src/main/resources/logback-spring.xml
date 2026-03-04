@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+
+    <!-- Подключает конвертеры Spring Boot (включая pid) и стандартные паттерны -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
     <springProperty scope="context" name="LOG_PATH" source="LOG_DIR" defaultValue="./logs"/>
     <property name="LOG_FILE" value="${LOG_PATH}/gucci.log"/>
 
@@ -8,9 +12,11 @@
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_PATH}/gucci.%d{yyyy-MM}.log</fileNamePattern>
+            <maxHistory>12</maxHistory>
         </rollingPolicy>
 
         <encoder>
+            <pattern>%d{dd-MM-yyyy HH:mm}  %-5level --- [%15.15thread] %40.40logger{40} : %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
