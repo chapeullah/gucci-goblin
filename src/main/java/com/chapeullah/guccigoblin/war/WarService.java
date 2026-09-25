@@ -129,7 +129,6 @@ public class WarService {
                         attack.destructionPercentage(),
                         attack.order(),
                         attack.duration());
-
                 warAttackRepository.save(warAttack);
             }
         }
