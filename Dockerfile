@@ -6,6 +6,6 @@ RUN mvn -DskipTests package
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/*.jar GucciGoblin.jar
+COPY --from=build /app/target/*.jar gucci-goblin.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app/GucciGoblin.jar"]
+ENTRYPOINT ["java","-jar","/app/gucci-goblin.jar"]
