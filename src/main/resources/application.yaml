@@ -7,6 +7,10 @@ telegram:
     apiToken: ${TELEGRAM_BOT_TOKEN}
 
 spring:
+  task:
+    scheduling:
+      pool:
+        size: 2
   application:
     name: gucci-goblin
 
