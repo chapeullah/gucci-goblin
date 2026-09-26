@@ -23,6 +23,9 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       JAVA_TOOL_OPTIONS: "-Duser.timezone=Europe/Moscow"
       LOG_DIR: /logs
+
+      COC_API_TOKEN: ${COC_API_TOKEN}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
     tty: true
     stdin_open: true
     volumes:
