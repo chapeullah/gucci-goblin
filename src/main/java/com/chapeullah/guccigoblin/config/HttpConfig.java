@@ -19,6 +19,7 @@ public class HttpConfig {
 
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
         factory.setReadTimeout(Duration.ofSeconds(15));
+
         return RestClient.builder()
                 .baseUrl("https://api.clashofclans.com/v1")
                 .requestFactory(factory)
