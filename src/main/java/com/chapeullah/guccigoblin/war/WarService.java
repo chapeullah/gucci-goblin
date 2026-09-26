@@ -134,6 +134,7 @@ public class WarService {
                         .existsByWarAndAttackOrder(war, attackResponse.order())) {
                     continue;
                 }
+
                 MemberResponse attacker =
                         membersByTag.get(attackResponse.attackerTag());
                 MemberResponse defender =
