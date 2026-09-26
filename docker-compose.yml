@@ -27,7 +27,6 @@ services:
       COC_API_TOKEN: ${COC_API_TOKEN}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       CLAN_TAG: ${CLAN_TAG}
-
     tty: true
     stdin_open: true
     volumes:
