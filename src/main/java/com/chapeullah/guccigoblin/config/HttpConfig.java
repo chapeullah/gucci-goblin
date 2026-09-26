@@ -17,7 +17,7 @@ public class HttpConfig {
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
 
-        var factory = new JdkClientHttpRequestFactory(httpClient);
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
         factory.setReadTimeout(Duration.ofSeconds(15));
 
         return RestClient.builder()
