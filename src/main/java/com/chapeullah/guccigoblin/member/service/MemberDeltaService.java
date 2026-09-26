@@ -1,5 +1,7 @@
-package com.chapeullah.guccigoblin.member;
+package com.chapeullah.guccigoblin.member.service;
 
+import com.chapeullah.guccigoblin.member.Member;
+import com.chapeullah.guccigoblin.member.MemberDelta;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,13 +79,18 @@ public class MemberDeltaService {
             case LEFT -> {
                 log.info("{}[-] LEFT clan", headerFor(memberDelta, memberDelta.getNameDelta().oldValue()));
             }
-            case NO_CHANGE -> {
+            case UNCHANGED -> {
                 String header = headerFor(memberDelta, memberDelta.getNameDelta().newValue());
                 logIfChange(header, "Name", memberDelta.getNameDelta());
                 logIfChange(header, "Clan role", memberDelta.getRoleDelta());
                 logIfChange(header, "TH level", memberDelta.getTownHallLevelDelta());
                 logIfChange(header, "Level", memberDelta.getExpLevelDelta());
                 logIfChange(header, "Builder base trophies", memberDelta.getBuilderBaseTrophiesDelta());
+                logIfChange(header, "Builder base league ID", memberDelta.getBuilderBaseLeagueIdDelta());
+                logIfChange(header, "Builder base league", memberDelta.getBuilderBaseLeagueNameDelta());
+                logIfChange(header, "League tier ID", memberDelta.getLeagueTierIdDelta());
+                logIfChange(header, "League tier", memberDelta.getLeagueTierNameDelta());
+                logIfChange(header, "Clan rank", memberDelta.getClanRankDelta());
                 logIfChange(header, "Donations", memberDelta.getDonationsDelta());
                 logIfChange(header, "Donations received", memberDelta.getDonationsReceivedDelta());
             }
@@ -100,7 +107,12 @@ public class MemberDeltaService {
             @NonNull MemberDelta.Delta<T> delta
     ) {
         if (delta.changed()) {
-            log.info("{}{}{}", header, String.format("%-24s ", field), delta);
+            log.info(
+                    "{}{}{} -> {}",
+                    header,
+                    String.format("%-24s ", field),
+                    delta.oldValue(),
+                    delta.newValue());
         }
     }
 

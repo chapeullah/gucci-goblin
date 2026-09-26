@@ -1,27 +1,39 @@
 package com.chapeullah.guccigoblin.config;
 
-import com.chapeullah.guccigoblin.member.MemberService;
-import com.chapeullah.guccigoblin.player.PlayerService;
+import com.chapeullah.guccigoblin.member.service.MemberSyncService;
 import com.chapeullah.guccigoblin.war.WarService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class Scheduler {
 
-    private final MemberService memberService;
-    private final PlayerService playerService;
+    private final MemberSyncService memberSyncService;
     private final WarService warService;
 
-    @Scheduled(cron = "0 0 * * * *")
-    @Transactional
+    @Scheduled(cron = "0 * * * * *")
     public void sync() {
-        memberService   .syncMembers();
-        playerService   .syncPlayers();
-        warService      .syncWar();
+        try {
+            memberSyncService.sync();
+        } catch (RuntimeException e) {
+            log.error("Members and player events synchronization failed", e);
+        }
+
+        try {
+            warService.syncWar();
+        } catch (RuntimeException e) {
+            log.error("War synchronization failed", e);
+        }
+
+        try {
+            warService.finishEndedWars();
+        } catch (RuntimeException e) {
+            log.error("Finishing ended wars failed", e);
+        }
     }
 
 }

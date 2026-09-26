@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -14,5 +15,9 @@ public interface WarRepository extends JpaRepository<War, Long> {
             String clanTag,
             String opponentTag,
             Instant startsAt);
+
+    List<War> findAllByEndsAtLessThanEqualAndStateNot(
+            Instant now,
+            String state);
 
 }

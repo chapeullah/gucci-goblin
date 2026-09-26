@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -91,6 +93,16 @@ public class War {
             nullable = false)
     private Integer attacksPerMember;
 
+    @CreationTimestamp
+    @Column(name = "created_at",
+            nullable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at",
+            nullable = false)
+    private Instant updatedAt;
+
     public War(
             String clanTag,
             String clanName,
@@ -130,6 +142,14 @@ public class War {
         this.endsAt = endsAt;
         this.teamSize = teamSize;
         this.attacksPerMember = attacksPerMember;
+    }
+
+    public boolean isEnded() {
+        return isEnded(Instant.now());
+    }
+
+    public boolean isEnded(Instant now) {
+        return !now.isBefore(endsAt);
     }
 
 }

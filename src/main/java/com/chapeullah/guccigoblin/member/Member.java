@@ -2,10 +2,7 @@ package com.chapeullah.guccigoblin.member;
 
 import com.chapeullah.guccigoblin.member.dto.MemberResponse;
 import com.chapeullah.guccigoblin.member.dto.MembersResponse;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,50 +17,73 @@ import java.util.Objects;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) return true;
-        if (!(o instanceof Member other)) return false;
-        return getTag() != null && Objects.equals(getTag(), other.getTag());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getTag());
-    }
-
     @Id
-    @Column(name = "tag", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "tag",
+            nullable = false,
+            unique = true)
     private String tag;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name",
+            nullable = false)
     private String name;
 
-    @Column(name = "role", nullable = false)
+    @Column(name = "role",
+            nullable = false)
     private String role;
 
-    @Column(name = "town_hall_level", nullable = false)
+    @Column(name = "town_hall_level",
+            nullable = false)
     private Integer townHallLevel;
 
-    @Column(name = "exp_level", nullable = false)
+    @Column(name = "exp_level",
+            nullable = false)
     private Integer expLevel;
 
-    @Column(name = "builder_base_trophies", nullable = false)
+    @Column(name = "builder_base_trophies",
+            nullable = false)
     private Integer builderBaseTrophies;
 
-    @Column(name = "donations", nullable = false)
+    @Column(name = "builder_base_league_id",
+            nullable = false)
+    private Integer builderBaseLeagueId;
+
+    @Column(name = "builder_base_league_name",
+            nullable = false)
+    private String builderBaseLeagueName;
+
+    @Column(name = "league_tier_id",
+            nullable = false)
+    private Integer leagueTierId;
+
+    @Column(name = "league_tier_name",
+            nullable = false)
+    private String leagueTierName;
+
+    @Column(name = "clan_rank",
+            nullable = false)
+    private Integer clanRank;
+
+    @Column(name = "donations",
+            nullable = false)
     private Integer donations;
 
-    @Column(name = "donations_received", nullable = false)
+    @Column(name = "donations_received",
+            nullable = false)
     private Integer donationsReceived;
 
-    @Column(name = "total_donations", nullable = false)
+    @Column(name = "total_donations",
+            nullable = false)
     private Integer totalDonations;
 
-    @Column(name = "total_donations_received", nullable = false)
+    @Column(name = "total_donations_received",
+            nullable = false)
     private Integer totalDonationsReceived;
 
-    @Column(name = "last_activity", nullable = false)
+    @Column(name = "last_activity",
+            nullable = false)
     private Instant lastActivity;
 
     @Column(name = "last_donation")
@@ -91,6 +111,11 @@ public class Member {
             @NonNull Integer townHallLevel,
             @NonNull Integer expLevel,
             @NonNull Integer builderBaseTrophies,
+            @NonNull Integer builderBaseLeagueId,
+            @NonNull String builderBaseLeagueName,
+            @NonNull Integer leagueTierId,
+            @NonNull String leagueTierName,
+            @NonNull Integer clanRank,
             @NonNull Integer donations,
             @NonNull Integer donationsReceived,
             @NonNull Integer totalDonations,
@@ -101,6 +126,11 @@ public class Member {
         this.townHallLevel = townHallLevel;
         this.expLevel = expLevel;
         this.builderBaseTrophies = builderBaseTrophies;
+        this.builderBaseLeagueId = builderBaseLeagueId;
+        this.builderBaseLeagueName = builderBaseLeagueName;
+        this.leagueTierId = leagueTierId;
+        this.leagueTierName = leagueTierName;
+        this.clanRank = clanRank;
 
         this.donations = donations;
         this.donationsReceived = donationsReceived;
@@ -118,15 +148,28 @@ public class Member {
             @NonNull Integer townHallLevel,
             @NonNull Integer expLevel,
             @NonNull Integer builderBaseTrophies,
+            @NonNull Integer builderBaseLeagueId,
+            @NonNull String builderBaseLeagueName,
+            @NonNull Integer leagueTierId,
+            @NonNull String leagueTierName,
+            @NonNull Integer clanRank,
             @NonNull Integer donations,
-            @NonNull Integer donationsReceived
-    ) {
+            @NonNull Integer donationsReceived) {
+
         this.tag = tag;
         this.name = name;
         this.role = role;
         this.townHallLevel = townHallLevel;
         this.expLevel = expLevel;
+
         this.builderBaseTrophies = builderBaseTrophies;
+        this.builderBaseLeagueId = builderBaseLeagueId;
+        this.builderBaseLeagueName = builderBaseLeagueName;
+
+        this.leagueTierId = leagueTierId;
+        this.leagueTierName = leagueTierName;
+
+        this.clanRank = clanRank;
 
         this.donations = donations;
         this.donationsReceived = donationsReceived;
@@ -146,6 +189,11 @@ public class Member {
                 member.townHallLevel,
                 member.expLevel,
                 member.builderBaseTrophies,
+                member.builderBaseLeagueId,
+                member.builderBaseLeagueName,
+                member.leagueTierId,
+                member.leagueTierName,
+                member.clanRank,
                 member.donations,
                 member.donationsReceived,
                 member.donations,
@@ -168,6 +216,11 @@ public class Member {
                 member.townHallLevel(),
                 member.expLevel(),
                 member.builderBaseTrophies(),
+                member.builderBaseLeague().id(),
+                member.builderBaseLeague().name(),
+                member.leagueTier().id(),
+                member.leagueTier().name(),
+                member.clanRank(),
                 member.donations(),
                 member.donationsReceived());
     }
@@ -202,11 +255,17 @@ public class Member {
                 newMember.townHallLevel,
                 newMember.expLevel,
                 newMember.builderBaseTrophies,
+                newMember.builderBaseLeagueId,
+                newMember.builderBaseLeagueName,
+                newMember.leagueTierId,
+                newMember.leagueTierName,
+                newMember.clanRank,
                 newDonations,
                 newReceived,
                 oldMember.totalDonations + addedDonations,
                 oldMember.totalDonationsReceived + addedReceived);
 
+        member.id = oldMember.id;
         member.joined = oldMember.joined;
         member.lastActivity = oldMember.lastActivity;
         member.lastDonation = oldMember.lastDonation;
@@ -246,6 +305,5 @@ public class Member {
 
         return member;
     }
-
 
 }

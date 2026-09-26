@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class WarService {
     private final WarRepository warRepository;
     private final WarParticipantRepository warParticipantRepository;
     private final WarAttackRepository warAttackRepository;
+    private final Clock clock;
 
 
     @Transactional
@@ -51,6 +53,17 @@ public class WarService {
         saveParticipants(war, response.opponent());
         saveAttacks(war, response);
         return Optional.of(war);
+    }
+
+    @Transactional
+    public void finishEndedWars() {
+        var wars = warRepository.findAllByEndsAtLessThanEqualAndStateNot(
+                clock.instant(),
+                "warEnded");
+        for (War war : wars) {
+            war.setState("warEnded");
+        }
+        warRepository.saveAll(wars);
     }
 
     private War saveOrUpdateWar(WarResponse response) {
@@ -83,9 +96,9 @@ public class WarService {
         war.setOpponentDestructionPercentage(opponent.destructionPercentage());
         war.setOpponentLevel(opponent.clanLevel());
 
-        war.setState(response.state());
         war.setStartsAt(startsAt);
         war.setEndsAt(endsAt);
+        war.setState(war.isEnded(clock.instant()) ? "warEnded" : response.state());
         war.setTeamSize(response.teamSize());
         war.setAttacksPerMember(response.attacksPerMember());
 

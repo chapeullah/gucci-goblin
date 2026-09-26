@@ -1,9 +1,12 @@
-package com.chapeullah.guccigoblin.member;
+package com.chapeullah.guccigoblin.member.service;
 
 import com.chapeullah.guccigoblin.client.Client;
+import com.chapeullah.guccigoblin.member.Member;
+import com.chapeullah.guccigoblin.member.MemberRepository;
 import com.chapeullah.guccigoblin.member.dto.MemberResponse;
+import com.chapeullah.guccigoblin.member.dto.MemberSnapshot;
+import com.chapeullah.guccigoblin.member.dto.MemberSyncResult;
 import com.chapeullah.guccigoblin.member.dto.MembersResponse;
-import com.chapeullah.guccigoblin.player.Player;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -24,30 +27,53 @@ public class MemberService {
     private final MemberDeltaService memberDeltaService;
 
     @Transactional
-    public void syncMembers() {
-        LinkedHashMap<String, Member> currentMembers = mapFrom(client.getMembers());
-        LinkedHashMap<String, Member> oldMembers = mapMembersFrom(memberRepository.findAll());
+    public MemberSyncResult syncMembers() {
+        LinkedHashMap<String, Member> currentMembers =
+                mapFrom(client.getMembers());
+
+        LinkedHashMap<String, Member> oldMembers =
+                mapMembersFrom(memberRepository.findAll());
+
         memberDeltaService.memberDeltaOutput(oldMembers, currentMembers);
+
+        List<MemberSnapshot> joined = currentMembers.values().stream()
+                .filter(member -> !oldMembers.containsKey(member.getTag()))
+                .map(MemberSnapshot::from)
+                .toList();
+
+        List<MemberSnapshot> left = oldMembers.values().stream()
+                .filter(member -> !currentMembers.containsKey(member.getTag()))
+                .map(MemberSnapshot::from)
+                .toList();
+
         LinkedHashMap<String, Member> members = new LinkedHashMap<>();
+
         for (Member newMember : currentMembers.values()) {
             String tag = newMember.getTag();
             upsertMember(members, tag, oldMembers.get(tag), newMember);
         }
-        List<String> leftTags = oldMembers.keySet().stream()
-                .filter(tag -> !currentMembers.containsKey(tag))
+
+        List<String> leftTags = left.stream()
+                .map(MemberSnapshot::tag)
                 .toList();
-        memberRepository.deleteAllByIdInBatch(leftTags);
+
+        memberRepository.deleteAllByTagIn(leftTags);
         memberRepository.saveAll(members.values());
 
-        log.info("Members synchronization success. Members: {}", members.size());
+        log.info(
+                "Members synchronization success. Members: {}, joined: {}, left: {}",
+                members.size(),
+                joined.size(),
+                left.size());
+
+        return new MemberSyncResult(joined, left);
     }
 
     private static void upsertMember(
             @NonNull LinkedHashMap<String, Member> members,
             @NonNull String tag,
             Member oldMember,
-            @NonNull Member newMember
-    ) {
+            @NonNull Member newMember) {
         if (oldMember == null) {
             members.put(tag, Member.initFrom(newMember));
             return;

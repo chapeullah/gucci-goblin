@@ -10,4 +10,7 @@ public record MemberResponse(
         @NonNull Integer expLevel,
         @NonNull Integer donations,
         @NonNull Integer donationsReceived,
-        @NonNull Integer builderBaseTrophies) {}
+        @NonNull Integer builderBaseTrophies,
+        @NonNull BuilderBaseLeagueResponse builderBaseLeague,
+        @NonNull LeagueTierResponse leagueTier,
+        @NonNull Integer clanRank) {}
