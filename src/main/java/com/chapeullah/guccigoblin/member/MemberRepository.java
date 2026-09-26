@@ -11,5 +11,6 @@ public interface MemberRepository
         extends JpaRepository<Member, Long> {
     Optional<Member> findByTag(String tag);
     boolean existsByTag(String tag);
-    void deleteAllByTagIn(List<String> tags);
+    List<Member> findAllByInClanTrue();
+    List<Member> findAllByTagIn(List<String> tags);
 }

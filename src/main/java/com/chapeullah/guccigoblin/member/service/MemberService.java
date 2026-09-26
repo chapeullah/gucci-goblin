@@ -32,7 +32,7 @@ public class MemberService {
                 mapFrom(client.getMembers());
 
         LinkedHashMap<String, Member> oldMembers =
-                mapMembersFrom(memberRepository.findAll());
+                mapMembersFrom(memberRepository.findAllByInClanTrue());
 
         memberDeltaService.memberDeltaOutput(oldMembers, currentMembers);
 
@@ -46,23 +46,32 @@ public class MemberService {
                 .map(MemberSnapshot::from)
                 .toList();
 
+        LinkedHashMap<String, Member> knownMembers = new LinkedHashMap<>(oldMembers);
+        if (!joined.isEmpty()) {
+            List<String> joinedTags = joined.stream()
+                    .map(MemberSnapshot::tag)
+                    .toList();
+            knownMembers.putAll(mapMembersFrom(memberRepository.findAllByTagIn(joinedTags)));
+        }
+
         LinkedHashMap<String, Member> members = new LinkedHashMap<>();
 
         for (Member newMember : currentMembers.values()) {
             String tag = newMember.getTag();
-            upsertMember(members, tag, oldMembers.get(tag), newMember);
+            upsertMember(members, tag, knownMembers.get(tag), newMember);
         }
 
-        List<String> leftTags = left.stream()
-                .map(MemberSnapshot::tag)
-                .toList();
+        for (MemberSnapshot snapshot : left) {
+            Member member = oldMembers.get(snapshot.tag());
+            member.leave();
+            members.put(member.getTag(), member);
+        }
 
-        memberRepository.deleteAllByTagIn(leftTags);
         memberRepository.saveAll(members.values());
 
         log.info(
                 "Members synchronization success. Members: {}, joined: {}, left: {}",
-                members.size(),
+                currentMembers.size(),
                 joined.size(),
                 left.size());
 
@@ -76,6 +85,10 @@ public class MemberService {
             @NonNull Member newMember) {
         if (oldMember == null) {
             members.put(tag, Member.initFrom(newMember));
+            return;
+        }
+        if (!oldMember.isInClan()) {
+            members.put(tag, Member.rejoin(oldMember, newMember));
             return;
         }
         members.put(tag, Member.merge(oldMember, newMember));

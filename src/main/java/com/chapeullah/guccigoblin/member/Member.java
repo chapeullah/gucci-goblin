@@ -1,12 +1,12 @@
 package com.chapeullah.guccigoblin.member;
 
 import com.chapeullah.guccigoblin.member.dto.MemberResponse;
-import com.chapeullah.guccigoblin.member.dto.MembersResponse;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -25,6 +25,10 @@ public class Member {
             nullable = false,
             unique = true)
     private String tag;
+
+    @Column(name = "in_clan", nullable = false)
+    @ColumnDefault("true")
+    private boolean inClan = true;
 
     @Column(name = "name",
             nullable = false)
@@ -225,6 +229,25 @@ public class Member {
                 member.donationsReceived());
     }
 
+    public void leave() {
+        inClan = false;
+    }
+
+    /**
+     * Restores membership without counting counter changes while the player was absent.
+     */
+    public static Member rejoin(
+            @NonNull Member oldMember,
+            @NonNull Member newMember) {
+        Member member = copyWithHistory(
+                oldMember, newMember,
+                oldMember.totalDonations, oldMember.totalDonationsReceived);
+        Instant now = Instant.now();
+        member.joined = now;
+        member.lastActivity = now;
+        return member;
+    }
+
     /**
      * Merges oldMember with newMember.
      *
@@ -248,31 +271,10 @@ public class Member {
                 ? newReceived - oldReceived
                 : newReceived;
 
-        Member member = new Member(
-                newMember.tag,
-                newMember.name,
-                newMember.role,
-                newMember.townHallLevel,
-                newMember.expLevel,
-                newMember.builderBaseTrophies,
-                newMember.builderBaseLeagueId,
-                newMember.builderBaseLeagueName,
-                newMember.leagueTierId,
-                newMember.leagueTierName,
-                newMember.clanRank,
-                newDonations,
-                newReceived,
+        Member member = copyWithHistory(
+                oldMember, newMember,
                 oldMember.totalDonations + addedDonations,
                 oldMember.totalDonationsReceived + addedReceived);
-
-        member.id = oldMember.id;
-        member.joined = oldMember.joined;
-        member.lastActivity = oldMember.lastActivity;
-        member.lastDonation = oldMember.lastDonation;
-        member.lastDonationsReceived = oldMember.lastDonationsReceived;
-        member.lastBuilderBaseTrophiesChanged =
-                oldMember.lastBuilderBaseTrophiesChanged;
-        member.lastTownHallUpgrade = oldMember.lastTownHallUpgrade;
 
         boolean isActive = false;
 
@@ -303,6 +305,39 @@ public class Member {
             member.lastActivity = now;
         }
 
+        return member;
+    }
+
+    private static Member copyWithHistory(
+            Member oldMember,
+            Member newMember,
+            int totalDonations,
+            int totalDonationsReceived) {
+        Member member = new Member(
+                newMember.tag,
+                newMember.name,
+                newMember.role,
+                newMember.townHallLevel,
+                newMember.expLevel,
+                newMember.builderBaseTrophies,
+                newMember.builderBaseLeagueId,
+                newMember.builderBaseLeagueName,
+                newMember.leagueTierId,
+                newMember.leagueTierName,
+                newMember.clanRank,
+                newMember.donations,
+                newMember.donationsReceived,
+                totalDonations,
+                totalDonationsReceived);
+
+        member.id = oldMember.id;
+        member.joined = oldMember.joined;
+        member.lastActivity = oldMember.lastActivity;
+        member.lastDonation = oldMember.lastDonation;
+        member.lastDonationsReceived = oldMember.lastDonationsReceived;
+        member.lastBuilderBaseTrophiesChanged =
+                oldMember.lastBuilderBaseTrophiesChanged;
+        member.lastTownHallUpgrade = oldMember.lastTownHallUpgrade;
         return member;
     }
 
