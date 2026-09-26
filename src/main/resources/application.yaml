@@ -1,10 +1,10 @@
 coc:
   apiToken: ${COC_API_TOKEN}
-  clanTag: '#2C020L9P0'
+  clanTag: ${CLAN_TAG}
 
 telegram:
   bot:
-    apiToken: ${TELEGRAM_BOT_TOKEN}
+    token: ${TELEGRAM_BOT_TOKEN}
 
 spring:
   task:

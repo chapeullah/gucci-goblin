@@ -19,8 +19,7 @@ public class TelegramClient {
 
     private final RestClient restClient;
 
-    public TelegramClient(
-            @Value("${telegram.bot.apiToken}") String token) {
+    public TelegramClient(@Value("${telegram.bot.token}") String token) {
 
         var httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))

@@ -34,8 +34,6 @@ public class TelegramBot {
                 handle(update);
             }
         } catch (RuntimeException exception) {
-            // Не выводим сообщение исключения:
-            // URL может содержать Telegram-токен.
             log.warn(
                     "Telegram polling failed: {}",
                     exception.getClass().getSimpleName());
@@ -68,9 +66,7 @@ public class TelegramBot {
                             message.chat().id(),
                             buildMembersMessage());
 
-            default -> {
-                // Обычные сообщения игнорируем.
-            }
+            default -> {}
         }
     }
 
