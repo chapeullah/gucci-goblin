@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Entity
 @Table(
-        name = "war_attack",
+        name = "war_attacks",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_war_attack_war_order",
                 columnNames = {"war_id", "attack_order"}))
