@@ -27,9 +27,17 @@ public class WarAttack {
             nullable = false)
     private String attackerTag;
 
+    @Column(name = "attacker_name",
+            nullable = false)
+    private String attackerName;
+
     @Column(name = "defender_tag",
             nullable = false)
     private String defenderTag;
+
+    @Column(name = "defender_name",
+            nullable = false)
+    private String defenderName;
 
     @Column(name = "attacker_th",
             nullable = false)
@@ -58,7 +66,9 @@ public class WarAttack {
     public WarAttack(
             War war,
             String attackerTag,
+            String attackerName,
             String defenderTag,
+            String defenderName,
             Integer attackerTH,
             Integer defenderTH,
             Integer stars,
@@ -67,7 +77,9 @@ public class WarAttack {
             Integer durationSeconds) {
         this.war = war;
         this.attackerTag = attackerTag;
+        this.attackerName = attackerName;
         this.defenderTag = defenderTag;
+        this.defenderName = defenderName;
         this.attackerTH = attackerTH;
         this.defenderTH = defenderTH;
         this.stars = stars;

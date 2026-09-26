@@ -147,7 +147,9 @@ public class WarService {
                 WarAttack warAttack = new WarAttack(
                         war,
                         attackResponse.attackerTag(),
+                        attacker.name(),
                         attackResponse.defenderTag(),
+                        defender.name(),
                         attacker.townhallLevel(),
                         defender.townhallLevel(),
                         attackResponse.stars(),
