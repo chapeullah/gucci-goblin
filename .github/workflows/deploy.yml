@@ -6,47 +6,22 @@ on:
     branches:
       - main
       - v2
-
   workflow_dispatch:
-    inputs:
-      reset_database:
-        description: "Удалить PostgreSQL и логи перед деплоем"
-        required: true
-        default: false
-        type: boolean
-
-permissions:
-  contents: read
-
-concurrency:
-  group: gucci-goblin-vps
-  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Set up Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
-
-      - name: Run all tests
-        run: mvn -B verify
 
       - name: Install transfer tools
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass rsync
 
-      - name: Create deployment directory
+      - name: Upload, build and run
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
@@ -56,11 +31,6 @@ jobs:
             "root@$SSH_HOST" \
             "mkdir -p /opt/gucci-goblin"
 
-      - name: Upload project
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSHPASS: ${{ secrets.SSH_PASSWORD }}
-        run: |
           sshpass -e rsync -az --delete \
             --include='/src/***' \
             --include='/pom.xml' \
@@ -69,40 +39,11 @@ jobs:
             --exclude='*' \
             ./ "root@$SSH_HOST:/opt/gucci-goblin/"
 
-      - name: Build and deploy
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSHPASS: ${{ secrets.SSH_PASSWORD }}
-          RESET_DATABASE: ${{ github.event_name == 'workflow_dispatch' && inputs.reset_database || false }}
-        run: |
-          sshpass -e ssh \
-            -o StrictHostKeyChecking=accept-new \
-            "root@$SSH_HOST" \
-            "RESET_DATABASE='$RESET_DATABASE' bash -s" <<'REMOTE_SCRIPT'
-          set -Eeuo pipefail
+          sshpass -e ssh "root@$SSH_HOST" "
+            set -e
+            cd /opt/gucci-goblin
 
-          cd /opt/gucci-goblin
-
-          docker compose config --quiet
-          docker compose pull db
-          docker compose build --pull --no-cache app
-
-          if [ "${RESET_DATABASE:-false}" = "true" ]; then
-            echo "Resetting PostgreSQL and application-log volumes"
-            docker compose down -v --remove-orphans
-          fi
-
-          if ! docker compose up \
-            -d \
-            --force-recreate \
-            --remove-orphans \
-            --wait \
-            --wait-timeout 120; then
-
-            docker compose ps -a
-            docker compose logs --tail=200
-            exit 1
-          fi
-
-          docker compose ps
-          REMOTE_SCRIPT
+            docker compose up -d db
+            docker compose build --no-cache --pull app
+            docker compose up -d --force-recreate --no-deps app
+          "
