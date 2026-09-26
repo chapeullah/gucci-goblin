@@ -1,6 +1,5 @@
-package com.chapeullah.guccigoblin.repository;
+package com.chapeullah.guccigoblin.player;
 
-import com.chapeullah.guccigoblin.player.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

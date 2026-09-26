@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record Clan(
+public record ClanResponse(
         String tag,
         String name,
         Integer clanLevel,
         Integer attacks,
         Integer stars,
         Double destructionPercentage,
-        List<Member> members) {}
+        List<MemberResponse> members) {}

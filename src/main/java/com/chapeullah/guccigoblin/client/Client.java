@@ -1,6 +1,7 @@
 package com.chapeullah.guccigoblin.client;
 
-import com.chapeullah.guccigoblin.member.MembersResponse;
+import com.chapeullah.guccigoblin.member.dto.MembersResponse;
+import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +28,15 @@ public class Client {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
                 .retrieve()
                 .body(MembersResponse.class);
+    }
+
+    public WarResponse getCurrentWar() {
+        return rest.get()
+                .uri("/clans/{tag}/currentwar", clanTag)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
+                .retrieve()
+                .body(WarResponse.class);
     }
 
 }

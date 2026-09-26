@@ -55,6 +55,10 @@ public class Player {
         return player;
     }
 
+    public void updateName(@NonNull String name) {
+        this.name = name;
+    }
+
     public void left() {
         this.leftAt = Instant.now();
     }

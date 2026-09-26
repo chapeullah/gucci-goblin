@@ -1,5 +1,7 @@
 package com.chapeullah.guccigoblin.member;
 
+import com.chapeullah.guccigoblin.member.dto.MemberResponse;
+import com.chapeullah.guccigoblin.member.dto.MembersResponse;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -46,13 +48,13 @@ public class Member {
     @Column(name = "exp_level", nullable = false)
     private Integer expLevel;
 
-    @Column(name = "builder_base_trophies")
+    @Column(name = "builder_base_trophies", nullable = false)
     private Integer builderBaseTrophies;
 
-    @Column(name = "donations")
+    @Column(name = "donations", nullable = false)
     private Integer donations;
 
-    @Column(name = "donations_received")
+    @Column(name = "donations_received", nullable = false)
     private Integer donationsReceived;
 
     @Column(name = "total_donations", nullable = false)
@@ -92,8 +94,7 @@ public class Member {
             @NonNull Integer donations,
             @NonNull Integer donationsReceived,
             @NonNull Integer totalDonations,
-            @NonNull Integer totalDonationsReceived
-    ) {
+            @NonNull Integer totalDonationsReceived) {
         this.tag = tag;
         this.name = name;
         this.role = role;
@@ -134,6 +135,9 @@ public class Member {
         this.totalDonationsReceived = 0;
     }
 
+    /**
+     * Initialize a member from Member.
+     */
     public static Member initFrom(@NonNull Member member) {
         Member createdMember = new Member(
                 member.tag,
@@ -145,8 +149,7 @@ public class Member {
                 member.donations,
                 member.donationsReceived,
                 member.donations,
-                member.donationsReceived
-        );
+                member.donationsReceived);
 
         createdMember.lastActivity = Instant.now();
         createdMember.joined = Instant.now();
@@ -157,7 +160,7 @@ public class Member {
     /**
      * Creates a member from ClanMembersResponse.Member.
      */
-    public static Member from(@NonNull MembersResponse.Member member) {
+    public static Member from(@NonNull MemberResponse member) {
         return new Member(
                 member.tag(),
                 member.name(),
@@ -166,8 +169,7 @@ public class Member {
                 member.expLevel(),
                 member.builderBaseTrophies(),
                 member.donations(),
-                member.donationsReceived()
-        );
+                member.donationsReceived());
     }
 
     /**
@@ -175,80 +177,72 @@ public class Member {
      *
      * @return merged member
      */
-    public static Member merge(@NonNull Member oldMember, @NonNull Member newMember) {
+    public static Member merge(
+            @NonNull Member oldMember,
+            @NonNull Member newMember) {
         Instant now = Instant.now();
-        boolean isActive = false;
 
-        String tag = newMember.tag;
-        String name = newMember.name;
-        String role = newMember.role;
-        Integer townHallLevel = newMember.townHallLevel;
-        Integer expLevel = newMember.expLevel;
+        int oldDonations = oldMember.donations;
+        int newDonations = newMember.donations;
+        int oldReceived = oldMember.donationsReceived;
+        int newReceived = newMember.donationsReceived;
 
-        Integer builderBaseTrophies = newMember.builderBaseTrophies;
-        Integer donations = newMember.donations;
-        Integer donationsReceived = newMember.donationsReceived;
+        int addedDonations = newDonations >= oldDonations
+                ? newDonations - oldDonations
+                : newDonations;
 
-        int oldDon = oldMember.getDonations();
-        int newDon = newMember.getDonations();
-        int oldRec = oldMember.getDonationsReceived();
-        int newRec = newMember.getDonationsReceived();
-
-        int totalDon = oldMember.getTotalDonations();
-        int totalRec = oldMember.getTotalDonationsReceived();
-
-        int deltaDon = newDon - oldDon;
-        int deltaRec = newRec - oldRec;
-
-        totalDon += (deltaDon >= 0) ? deltaDon : newDon;
-        totalRec += (deltaRec >= 0) ? deltaRec : newRec;
-
-        Integer totalDonations = totalDon;
-        Integer totalDonationsReceived = totalRec;
-
-        Instant lastActivity = oldMember.lastActivity;
-        Instant lastDonation = oldMember.lastDonation;
-        Instant lastDonationsReceived = oldMember.lastDonationsReceived;
-        Instant lastBuilderBaseTrophiesChanged = oldMember.lastBuilderBaseTrophiesChanged;
-        Instant lastTownHallUpgrade = oldMember.lastTownHallUpgrade;
-
-        if (!Objects.equals(oldMember.donations, newMember.donations)) {
-            lastDonation = now;
-            isActive = true;
-        }
-        if (!Objects.equals(oldMember.donationsReceived, newMember.donationsReceived)) {
-            lastDonationsReceived = now;
-            isActive = true;
-        }
-        if (!Objects.equals(oldMember.builderBaseTrophies, newMember.builderBaseTrophies)) {
-            lastBuilderBaseTrophiesChanged = now;
-            isActive = true;
-        }
-        if (isActive) lastActivity = now;
-        if (!Objects.equals(oldMember.townHallLevel, newMember.townHallLevel)) {
-            lastTownHallUpgrade = now;
-        }
+        int addedReceived = newReceived >= oldReceived
+                ? newReceived - oldReceived
+                : newReceived;
 
         Member member = new Member(
-                tag,
-                name,
-                role,
-                townHallLevel,
-                expLevel,
-                builderBaseTrophies,
-                donations,
-                donationsReceived,
-                totalDonations,
-                totalDonationsReceived
-        );
-
-        member.lastActivity = lastActivity;
-        member.lastDonation = lastDonation;
-        member.lastDonationsReceived = lastDonationsReceived;
-        member.lastBuilderBaseTrophiesChanged = lastBuilderBaseTrophiesChanged;
-        member.lastTownHallUpgrade = lastTownHallUpgrade;
+                newMember.tag,
+                newMember.name,
+                newMember.role,
+                newMember.townHallLevel,
+                newMember.expLevel,
+                newMember.builderBaseTrophies,
+                newDonations,
+                newReceived,
+                oldMember.totalDonations + addedDonations,
+                oldMember.totalDonationsReceived + addedReceived);
 
         member.joined = oldMember.joined;
+        member.lastActivity = oldMember.lastActivity;
+        member.lastDonation = oldMember.lastDonation;
+        member.lastDonationsReceived = oldMember.lastDonationsReceived;
+        member.lastBuilderBaseTrophiesChanged =
+                oldMember.lastBuilderBaseTrophiesChanged;
+        member.lastTownHallUpgrade = oldMember.lastTownHallUpgrade;
+
+        boolean isActive = false;
+
+        if (addedDonations > 0) {
+            member.lastDonation = now;
+            isActive = true;
+        }
+
+        if (addedReceived > 0) {
+            member.lastDonationsReceived = now;
+            isActive = true;
+        }
+
+        if (!Objects.equals(
+                oldMember.builderBaseTrophies,
+                newMember.builderBaseTrophies)) {
+            member.lastBuilderBaseTrophiesChanged = now;
+            isActive = true;
+        }
+
+        if (!Objects.equals(
+                oldMember.townHallLevel,
+                newMember.townHallLevel)) {
+            member.lastTownHallUpgrade = now;
+        }
+
+        if (isActive) {
+            member.lastActivity = now;
+        }
 
         return member;
     }

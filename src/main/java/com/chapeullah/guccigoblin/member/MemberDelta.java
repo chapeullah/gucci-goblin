@@ -77,8 +77,7 @@ public class MemberDelta {
                 expLevelDelta,
                 builderBaseTrophiesDelta,
                 donationsDelta,
-                donationsReceivedDelta
-        );
+                donationsReceivedDelta);
     }
 
 
@@ -105,8 +104,7 @@ public class MemberDelta {
             @NonNull Delta<Integer> expLevelDelta,
             @NonNull Delta<Integer> builderBaseTrophiesDelta,
             @NonNull Delta<Integer> donationsDelta,
-            @NonNull Delta<Integer> donationsReceivedDelta
-    ) {
+            @NonNull Delta<Integer> donationsReceivedDelta) {
         this.tag = tag;
         this.membershipStatus = membershipStatus;
         this.nameDelta = nameDelta;

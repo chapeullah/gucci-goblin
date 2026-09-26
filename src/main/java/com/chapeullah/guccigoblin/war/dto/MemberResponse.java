@@ -2,15 +2,15 @@ package com.chapeullah.guccigoblin.war.dto;
 
 import java.util.List;
 
-public record Member(
+public record MemberResponse(
         String tag,
         String name,
         Integer townhallLevel,
         Integer mapPosition,
-        List<Attack> attacks,
+        List<AttackResponse> attacks,
         Integer opponentAttacks,
-        Attack bestOpponentAttack) {
-    public Member {
+        AttackResponse bestOpponentAttack) {
+    public MemberResponse {
         attacks = attacks == null ? List.of() : attacks;
     }
 }

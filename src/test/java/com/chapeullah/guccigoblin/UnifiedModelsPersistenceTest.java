@@ -1,14 +1,19 @@
 package com.chapeullah.guccigoblin;
 
 import com.chapeullah.guccigoblin.client.Client;
-import com.chapeullah.guccigoblin.member.MembersResponse;
+import com.chapeullah.guccigoblin.config.Scheduler;
+import com.chapeullah.guccigoblin.member.dto.MemberResponse;
+import com.chapeullah.guccigoblin.member.dto.MembersResponse;
 import com.chapeullah.guccigoblin.member.Member;
 import com.chapeullah.guccigoblin.member.MemberDelta;
 import com.chapeullah.guccigoblin.player.Player;
 import com.chapeullah.guccigoblin.member.MemberRepository;
-import com.chapeullah.guccigoblin.repository.PlayerRepository;
-import com.chapeullah.guccigoblin.service.GucciService;
-import com.chapeullah.guccigoblin.service.MemberDeltaService;
+import com.chapeullah.guccigoblin.player.PlayerRepository;
+import com.chapeullah.guccigoblin.member.MemberDeltaService;
+import com.chapeullah.guccigoblin.member.MemberService;
+import com.chapeullah.guccigoblin.player.PlayerService;
+import com.chapeullah.guccigoblin.war.WarService;
+import com.chapeullah.guccigoblin.war.model.War;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -31,6 +36,7 @@ import javax.sql.DataSource;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,7 +46,8 @@ class UnifiedModelsPersistenceTest {
     private MemberRepository members;
     private PlayerRepository players;
     private StubClient client;
-    private GucciService service;
+    private Scheduler scheduler;
+    private StubWarService wars;
     private TransactionTemplate transaction;
 
     @BeforeAll
@@ -58,11 +65,13 @@ class UnifiedModelsPersistenceTest {
         members = context.getBean(MemberRepository.class);
         players = context.getBean(PlayerRepository.class);
         client = context.getBean(StubClient.class);
-        service = context.getBean(GucciService.class);
+        scheduler = context.getBean(Scheduler.class);
+        wars = context.getBean(StubWarService.class);
         transaction = new TransactionTemplate(context.getBean(PlatformTransactionManager.class));
         members.deleteAllInBatch();
         players.deleteAllInBatch();
         client.response = new MembersResponse(List.of());
+        wars.failWith(null);
     }
 
     @Test
@@ -71,9 +80,12 @@ class UnifiedModelsPersistenceTest {
         Instant memberJoined = member("#A").getJoined();
         Instant playerJoined = player("#A").getJoinedAt();
 
-        synchronize(new MembersResponse.Member("#A", "Renamed", "elder", 16, 201, 125, 47, 3100));
+        synchronize(new MemberResponse(
+                "#A", "Renamed", "elder", 16, 201, 125, 47, 3100));
         Member updated = member("#A");
         assertEquals("Renamed", updated.getName());
+        assertEquals("Renamed", player("#A").getName());
+        assertEquals("#A", player("#A").getTag());
         assertEquals("elder", updated.getRole());
         assertEquals(16, updated.getTownHallLevel());
         assertEquals(201, updated.getExpLevel());
@@ -187,10 +199,11 @@ class UnifiedModelsPersistenceTest {
         Instant joinedAt = player("#B").getJoinedAt();
         client.response = new MembersResponse(List.of(
                 snapshot("#A", 150, 60),
-                new MembersResponse.Member("#C", "x".repeat(256), "member", 15, 200, 1, 1, 3000)
+                new MemberResponse(
+                        "#C", "x".repeat(256), "member", 15, 200, 1, 1, 3000)
         ));
 
-        assertThrows(RuntimeException.class, service::synchronize);
+        assertThrows(RuntimeException.class, scheduler::sync);
         assertEquals(100, member("#A").getTotalDonations());
         assertEquals(40, member("#A").getTotalDonationsReceived());
         assertTrue(members.existsById("#B"));
@@ -198,6 +211,67 @@ class UnifiedModelsPersistenceTest {
         assertEquals(joinedAt, player("#B").getJoinedAt());
         assertNull(player("#B").getLeftAt());
         assertFalse(players.existsById("#C"));
+    }
+
+    @Test
+    void rejoiningPlayerUpdatesNameWithoutCreatingAnotherPlayer() {
+        synchronize(snapshot("#A", 100, 40));
+        synchronize();
+        Instant leftAt = player("#A").getLeftAt();
+
+        synchronize(new MemberResponse(
+                "#A", "New name", "member", 15, 200, 5, 1, 3000));
+
+        Player rejoined = player("#A");
+        assertEquals(1, players.count());
+        assertEquals("#A", rejoined.getTag());
+        assertEquals("New name", rejoined.getName());
+        assertEquals(member("#A").getName(), rejoined.getName());
+        assertNull(rejoined.getLeftAt());
+        assertFalse(rejoined.getJoinedAt().isBefore(leftAt));
+    }
+
+    @Test
+    void warFailureRollsBackMemberAndPlayerChanges() {
+        synchronize(snapshot("#A", 100, 40), snapshot("#B", 20, 10));
+        Instant joinedAt = player("#A").getJoinedAt();
+        client.response = new MembersResponse(List.of(
+                new MemberResponse(
+                        "#A", "Renamed", "elder", 16, 201, 150, 60, 3100),
+                snapshot("#C", 5, 1)
+        ));
+        IllegalStateException failure = new IllegalStateException("War synchronization failed");
+        wars.failWith(failure);
+
+        assertSame(failure, assertThrows(IllegalStateException.class, scheduler::sync));
+        assertEquals("Player #A", member("#A").getName());
+        assertEquals(100, member("#A").getTotalDonations());
+        assertEquals("Player #A", player("#A").getName());
+        assertEquals(joinedAt, player("#A").getJoinedAt());
+        assertTrue(members.existsById("#B"));
+        assertNull(player("#B").getLeftAt());
+        assertFalse(members.existsById("#C"));
+        assertFalse(players.existsById("#C"));
+    }
+
+    @Test
+    void donationResetToZeroPreservesActivityAndAccumulatedTotals() {
+        synchronize(snapshot("#A", 100, 40));
+        synchronize(snapshot("#A", 125, 47));
+        Member before = member("#A");
+        assertNotNull(before.getLastDonation());
+        assertNotNull(before.getLastDonationsReceived());
+
+        synchronize(snapshot("#A", 0, 0));
+
+        Member after = member("#A");
+        assertEquals(0, after.getDonations());
+        assertEquals(0, after.getDonationsReceived());
+        assertEquals(before.getTotalDonations(), after.getTotalDonations());
+        assertEquals(before.getTotalDonationsReceived(), after.getTotalDonationsReceived());
+        assertEquals(before.getLastActivity(), after.getLastActivity());
+        assertEquals(before.getLastDonation(), after.getLastDonation());
+        assertEquals(before.getLastDonationsReceived(), after.getLastDonationsReceived());
     }
 
     private Member member(String tag) {
@@ -208,13 +282,13 @@ class UnifiedModelsPersistenceTest {
         return players.findById(tag).orElseThrow();
     }
 
-    private void synchronize(MembersResponse.Member... snapshots) {
+    private void synchronize(MemberResponse... snapshots) {
         client.response = new MembersResponse(List.of(snapshots));
-        service.synchronize();
+        scheduler.sync();
     }
 
-    private static MembersResponse.Member snapshot(String tag, int donations, int received) {
-        return new MembersResponse.Member(tag, "Player " + tag, "member", 15, 200,
+    private static MemberResponse snapshot(String tag, int donations, int received) {
+        return new MemberResponse(tag, "Player " + tag, "member", 15, 200,
                 donations, received, 3000);
     }
 
@@ -231,9 +305,30 @@ class UnifiedModelsPersistenceTest {
         }
     }
 
+    static class StubWarService extends WarService {
+        private RuntimeException failure;
+
+        StubWarService() {
+            super(null, null, null, null);
+        }
+
+        public void failWith(RuntimeException failure) {
+            this.failure = failure;
+        }
+
+        @Override
+        public Optional<War> syncWar() {
+            if (failure != null) throw failure;
+            return Optional.empty();
+        }
+    }
+
     @Configuration
     @EnableTransactionManagement
-    @EnableJpaRepositories(basePackageClasses = MemberRepository.class)
+    @EnableJpaRepositories(basePackageClasses = {
+            MemberRepository.class,
+            PlayerRepository.class
+    })
     static class PersistenceConfiguration {
         @Bean
         DataSource dataSource() {
@@ -245,7 +340,7 @@ class UnifiedModelsPersistenceTest {
         LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
             var factory = new LocalContainerEntityManagerFactoryBean();
             factory.setDataSource(dataSource);
-            factory.setPackagesToScan("com.chapeullah.guccigoblin.model", "com.chapeullah.guccigoblin.entity");
+            factory.setPackagesToScan(Member.class.getPackageName(), Player.class.getPackageName());
             factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
             factory.setJpaPropertyMap(Map.of("hibernate.hbm2ddl.auto", "create-drop",
                     "hibernate.jdbc.time_zone", "UTC"));
@@ -263,8 +358,23 @@ class UnifiedModelsPersistenceTest {
         }
 
         @Bean
-        GucciService gucciService(StubClient client, MemberRepository members, PlayerRepository players) {
-            return new GucciService(client, members, players, new MemberDeltaService());
+        MemberService memberService(StubClient client, MemberRepository members) {
+            return new MemberService(client, members, new MemberDeltaService());
+        }
+
+        @Bean
+        PlayerService playerService(PlayerRepository players, MemberRepository members) {
+            return new PlayerService(players, members);
+        }
+
+        @Bean
+        StubWarService warService() {
+            return new StubWarService();
+        }
+
+        @Bean
+        Scheduler scheduler(MemberService members, PlayerService players, StubWarService wars) {
+            return new Scheduler(members, players, wars);
         }
     }
 }

@@ -1,7 +1,5 @@
-package com.chapeullah.guccigoblin.service;
+package com.chapeullah.guccigoblin.member;
 
-import com.chapeullah.guccigoblin.member.Member;
-import com.chapeullah.guccigoblin.member.MemberDelta;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +17,7 @@ public class MemberDeltaService {
 
     public static List<MemberDelta> memberDeltasFrom(
             @NonNull LinkedHashMap<String, Member> oldMembers,
-            @NonNull LinkedHashMap<String, Member> newMembers
-    ) {
+            @NonNull LinkedHashMap<String, Member> newMembers) {
         LinkedHashMap<String, Member> oldCopy = new LinkedHashMap<>(oldMembers);
 
         List<MemberDelta> memberDeltas = new ArrayList<>();

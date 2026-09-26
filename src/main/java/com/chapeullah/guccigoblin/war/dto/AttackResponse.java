@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.war.dto;
 
-public record Attack(
+public record AttackResponse(
         String attackerTag,
         String defenderTag,
         Integer stars,

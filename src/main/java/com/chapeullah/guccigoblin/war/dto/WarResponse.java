@@ -2,8 +2,6 @@ package com.chapeullah.guccigoblin.war.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.util.List;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record WarResponse(
         String state,
@@ -13,5 +11,5 @@ public record WarResponse(
         String preparationStartTime,
         String startTime,
         String endTime,
-        Clan clan,
-        Clan opponent) {}
+        ClanResponse clan,
+        ClanResponse opponent) {}
