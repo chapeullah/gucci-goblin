@@ -9,11 +9,13 @@ telegram:
 spring:
   application:
     name: gucci-goblin
+
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         format_sql: 'true'
+
   main:
     web-application-type: none
