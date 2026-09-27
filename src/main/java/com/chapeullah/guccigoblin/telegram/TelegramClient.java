@@ -1,7 +1,7 @@
 package com.chapeullah.guccigoblin.telegram;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.chapeullah.guccigoblin.telegram.dto.ApiResponse;
+import com.chapeullah.guccigoblin.telegram.dto.Update;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -20,13 +20,11 @@ public class TelegramClient {
     private final RestClient restClient;
 
     public TelegramClient(@Value("${telegram.bot.token}") String token) {
-
-        var httpClient = HttpClient.newBuilder()
+        HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
 
-        var requestFactory =
-                new JdkClientHttpRequestFactory(httpClient);
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(Duration.ofSeconds(35));
 
         this.restClient = RestClient.builder()
@@ -41,16 +39,13 @@ public class TelegramClient {
                         .path("/getUpdates")
                         .queryParam("offset", offset)
                         .queryParam("timeout", 25)
-                        .queryParam(
-                                "allowed_updates",
-                                "[\"message\"]")
+                        .queryParam("allowed_updates", "[\"message\"]")
                         .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
 
         if (response == null || !response.ok()) {
-            throw new IllegalStateException(
-                    "Telegram did not return updates");
+            throw new IllegalStateException("Telegram did not return updates");
         }
 
         return response.result() == null
@@ -64,27 +59,10 @@ public class TelegramClient {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of(
                         "chat_id", chatId,
-                        "text", text))
+                        "text", text,
+                        "parse_mode", "HTML"))
                 .retrieve()
                 .toBodilessEntity();
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ApiResponse<T>(
-            boolean ok,
-            T result,
-            String description) {}
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Update(
-            @JsonProperty("update_id") long updateId,
-            Message message) {}
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Message(
-            Chat chat,
-            String text) {}
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Chat(long id) {}
 }
