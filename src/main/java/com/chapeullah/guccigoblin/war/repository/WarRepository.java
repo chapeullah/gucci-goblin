@@ -20,4 +20,10 @@ public interface WarRepository extends JpaRepository<War, Long> {
             Instant now,
             String state);
 
+    Optional<War> findFirstByStateInOrderByStartsAtDesc(
+            List<String> states);
+
+    List<War> findTop5ByStateOrderByEndsAtDesc(
+            String state);
+
 }

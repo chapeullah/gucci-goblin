@@ -94,7 +94,7 @@ class UnifiedModelsPersistenceTest {
         assertEquals(1, wars.getFinishCalls());
         Long memberId = member("#A").getId();
         Long returningMemberId = member("#B").getId();
-        Instant memberJoined = member("#A").getJoined();
+        Instant memberJoined = member("#A").getJoinedAt();
         assertEventTypes("#A", PlayerEventType.JOINED);
         assertEventTypes("#B", PlayerEventType.JOINED);
 
@@ -121,7 +121,7 @@ class UnifiedModelsPersistenceTest {
         assertEquals(updated.getLastActivity(), updated.getLastDonationsReceived());
         assertEquals(updated.getLastActivity(), updated.getLastBuilderBaseTrophiesChanged());
         assertEquals(updated.getLastActivity(), updated.getLastTownHallUpgrade());
-        assertEquals(memberJoined, updated.getJoined());
+        assertEquals(memberJoined, updated.getJoinedAt());
         assertFalse(member("#B").isInClan());
         assertEquals(20, member("#B").getTotalDonations());
         assertEquals(10, member("#B").getTotalDonationsReceived());
@@ -171,7 +171,7 @@ class UnifiedModelsPersistenceTest {
         assertEquals(before.getTotalDonations(), after.getTotalDonations());
         assertEquals(before.getTotalDonationsReceived(), after.getTotalDonationsReceived());
         assertEquals(before.getLastActivity(), after.getLastActivity());
-        assertEquals(before.getJoined(), after.getJoined());
+        assertEquals(before.getJoinedAt(), after.getJoinedAt());
         assertNull(after.getLastDonation());
         assertNull(after.getLastDonationsReceived());
         assertNull(after.getLastBuilderBaseTrophiesChanged());
@@ -191,7 +191,7 @@ class UnifiedModelsPersistenceTest {
         Member left = member("#A");
         assertFalse(left.isInClan());
         assertEquals(before.getId(), left.getId());
-        assertEquals(before.getJoined(), left.getJoined());
+        assertEquals(before.getJoinedAt(), left.getJoinedAt());
         assertEquals(before.getLastActivity(), left.getLastActivity());
         assertEquals(100, left.getTotalDonations());
         assertEquals(40, left.getTotalDonationsReceived());
@@ -224,7 +224,7 @@ class UnifiedModelsPersistenceTest {
                        m.builder_base_league_id, m.builder_base_league_name,
                        m.league_tier_id, m.league_tier_name, m.clan_rank,
                        m.donations, m.donations_received, m.total_donations,
-                       m.total_donations_received, m.last_activity, m.joined,
+                       m.total_donations_received, m.last_activity, m.joined_at,
                        p.id as event_id, p.type, p.detected_at
                 from members m join players p on p.tag = m.tag
                 where m.tag = ?
@@ -402,7 +402,7 @@ class UnifiedModelsPersistenceTest {
         assertEquals(16, after.getTownHallLevel());
         assertNotNull(after.getLastTownHallUpgrade());
         assertEquals(before.getLastActivity(), after.getLastActivity());
-        assertEquals(before.getJoined(), after.getJoined());
+        assertEquals(before.getJoinedAt(), after.getJoinedAt());
         assertEquals(before.getTotalDonations(), after.getTotalDonations());
         assertNull(after.getLastDonation());
         assertNull(after.getLastDonationsReceived());
@@ -447,8 +447,8 @@ class UnifiedModelsPersistenceTest {
         assertEquals(before.getLastDonationsReceived(), rejoined.getLastDonationsReceived());
         assertEquals(before.getLastBuilderBaseTrophiesChanged(), rejoined.getLastBuilderBaseTrophiesChanged());
         assertEquals(before.getLastTownHallUpgrade(), rejoined.getLastTownHallUpgrade());
-        assertFalse(rejoined.getJoined().isBefore(before.getJoined()));
-        assertEquals(rejoined.getJoined(), rejoined.getLastActivity());
+        assertFalse(rejoined.getJoinedAt().isBefore(before.getJoinedAt()));
+        assertEquals(rejoined.getJoinedAt(), rejoined.getLastActivity());
         assertEventTypes("#A", PlayerEventType.JOINED, PlayerEventType.LEFT, PlayerEventType.JOINED);
 
         synchronize(returned);
@@ -456,7 +456,7 @@ class UnifiedModelsPersistenceTest {
         Member unchanged = member("#A");
         assertEquals(150, unchanged.getTotalDonations());
         assertEquals(60, unchanged.getTotalDonationsReceived());
-        assertEquals(rejoined.getJoined(), unchanged.getJoined());
+        assertEquals(rejoined.getJoinedAt(), unchanged.getJoinedAt());
         assertEquals(rejoined.getLastActivity(), unchanged.getLastActivity());
         assertEquals(3, players.count());
 
@@ -469,7 +469,7 @@ class UnifiedModelsPersistenceTest {
         assertEquals(before.getId(), updated.getId());
         assertEquals(157, updated.getTotalDonations());
         assertEquals(63, updated.getTotalDonationsReceived());
-        assertEquals(rejoined.getJoined(), updated.getJoined());
+        assertEquals(rejoined.getJoinedAt(), updated.getJoinedAt());
         assertEquals(updated.getLastActivity(), updated.getLastDonation());
         assertEquals(updated.getLastActivity(), updated.getLastDonationsReceived());
         assertEquals(1, members.count());
@@ -493,7 +493,7 @@ class UnifiedModelsPersistenceTest {
         Member after = member("#A");
         assertFalse(after.isInClan());
         assertEquals(before.getId(), after.getId());
-        assertEquals(before.getJoined(), after.getJoined());
+        assertEquals(before.getJoinedAt(), after.getJoinedAt());
         assertEquals(before.getLastActivity(), after.getLastActivity());
         assertEquals(100, after.getDonations());
         assertEquals(40, after.getDonationsReceived());

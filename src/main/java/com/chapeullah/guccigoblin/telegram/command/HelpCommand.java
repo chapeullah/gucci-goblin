@@ -1,11 +1,14 @@
 package com.chapeullah.guccigoblin.telegram.command;
 
+import com.chapeullah.guccigoblin.telegram.CommandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class HelpCommand implements BotCommand{
+public class HelpCommand implements BotCommand {
+
+    private final CommandService commandService;
 
     @Override
     public String name() {
@@ -14,7 +17,7 @@ public class HelpCommand implements BotCommand{
 
     @Override
     public String execute(String args) {
-        return "Помощь";
+        return commandService.help();
     }
 
 }

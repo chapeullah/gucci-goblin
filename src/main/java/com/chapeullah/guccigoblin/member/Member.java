@@ -102,8 +102,8 @@ public class Member {
     @Column(name = "last_town_hall_upgrade")
     private Instant lastTownHallUpgrade;
 
-    @Column(name = "joined", nullable = false)
-    private Instant joined;
+    @Column(name = "joined_at", nullable = false)
+    private Instant joinedAt;
 
     /**
      * Constructs a member from snapshots.
@@ -204,7 +204,7 @@ public class Member {
                 member.donationsReceived);
 
         createdMember.lastActivity = Instant.now();
-        createdMember.joined = Instant.now();
+        createdMember.joinedAt = Instant.now();
 
         return createdMember;
     }
@@ -243,7 +243,7 @@ public class Member {
                 oldMember, newMember,
                 oldMember.totalDonations, oldMember.totalDonationsReceived);
         Instant now = Instant.now();
-        member.joined = now;
+        member.joinedAt = now;
         member.lastActivity = now;
         return member;
     }
@@ -331,7 +331,7 @@ public class Member {
                 totalDonationsReceived);
 
         member.id = oldMember.id;
-        member.joined = oldMember.joined;
+        member.joinedAt = oldMember.joinedAt;
         member.lastActivity = oldMember.lastActivity;
         member.lastDonation = oldMember.lastDonation;
         member.lastDonationsReceived = oldMember.lastDonationsReceived;
