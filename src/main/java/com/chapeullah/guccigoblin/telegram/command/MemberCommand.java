@@ -53,7 +53,6 @@ public class MemberCommand implements BotCommand {
         ⭐ Уровень: %d
         🏆 Лига: %s
         👤 Роль: %s
-        📍 Статус: %s
 
         <b>Пожертвования</b>
         Текущие: %d отдано · %d получено
@@ -73,7 +72,6 @@ public class MemberCommand implements BotCommand {
                 member.getExpLevel(),
                 member.getLeagueTierName(),
                 member.getRole(),
-                member.isInClan() ? "в клане" : "вышел",
                 member.getDonations(),
                 member.getDonationsReceived(),
                 member.getTotalDonations(),
