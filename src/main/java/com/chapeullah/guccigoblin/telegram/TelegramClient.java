@@ -43,7 +43,6 @@ public class TelegramClient {
                         .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
-
         if (response == null || !response.ok()) {
             throw new IllegalStateException("Telegram did not return updates");
         }
