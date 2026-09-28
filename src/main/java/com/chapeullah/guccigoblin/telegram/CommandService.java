@@ -2,6 +2,10 @@ package com.chapeullah.guccigoblin.telegram;
 
 import com.chapeullah.guccigoblin.member.Member;
 import com.chapeullah.guccigoblin.member.MemberRepository;
+import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
+import com.chapeullah.guccigoblin.raidseason.model.RaidSeasonParticipant;
+import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;
+import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonRepository;
 import com.chapeullah.guccigoblin.war.model.War;
 import com.chapeullah.guccigoblin.war.model.WarAttack;
 import com.chapeullah.guccigoblin.war.model.WarParticipant;
@@ -9,14 +13,18 @@ import com.chapeullah.guccigoblin.war.repository.WarAttackRepository;
 import com.chapeullah.guccigoblin.war.repository.WarParticipantRepository;
 import com.chapeullah.guccigoblin.war.repository.WarRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +34,11 @@ public class CommandService {
     private final WarRepository warRepository;
     private final WarParticipantRepository participantRepository;
     private final WarAttackRepository attackRepository;
+    private final RaidSeasonRepository raidSeasonRepository;
+    private final RaidSeasonParticipantRepository raidSeasonParticipantRepository;
+
+    @Value("${coc.clanTag}")
+    private String clanTag;
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
@@ -45,6 +58,9 @@ public class CommandService {
                 /war — текущая война
                 /wars — история войн
                 /attacks — неиспользованные атаки
+                /raid — текущий или последний рейд
+                /raidmissed — нынешние участники без атак в текущем или последнем рейде
+                /raids — история рейдов
                 """.strip();
     }
 
@@ -350,6 +366,136 @@ public class CommandService {
         }
 
         return result.toString();
+    }
+
+    @Transactional(readOnly = true)
+    public String raid() {
+        RaidSeason season = raidSeasonRepository
+                .findFirstByClanTagOrderByStartTimeDesc(clanTag)
+                .orElse(null);
+
+        if (season == null) {
+            return "Рейды ещё не сохранены.";
+        }
+
+        List<RaidSeasonParticipant> participants =
+                raidSeasonParticipantRepository.findAllByRaidSeason(season);
+        String participantCount = hasCompleteRaidParticipants(season, participants)
+                ? Long.toString(participants.stream().filter(p -> p.getAttacks() > 0).count())
+                : "данные ещё не загружены";
+
+        return """
+                <b>%s</b>
+
+                📌 Статус: %s
+                📅 %s (МСК)
+                💰 Добыча: %d столичного золота
+                🗡 Атаки: %d
+                👥 Участников с атаками: %s
+                🏰 Завершено рейдов: %d
+                💥 Уничтожено районов: %d
+                """.formatted(
+                "ongoing".equals(season.getState()) ? "Текущий рейд" : "Последний рейд",
+                escapeHtml(getRaidState(season)),
+                getRaidPeriod(season),
+                season.getCapitalTotalLoot(),
+                season.getTotalAttacks(),
+                participantCount,
+                season.getRaidsCompleted(),
+                season.getEnemyDistrictsDestroyed()).strip();
+    }
+
+    @Transactional(readOnly = true)
+    public String raidMissed() {
+        RaidSeason season = raidSeasonRepository
+                .findFirstByClanTagOrderByStartTimeDesc(clanTag)
+                .orElse(null);
+
+        if (season == null) {
+            return "Рейды ещё не сохранены.";
+        }
+
+        StringBuilder result = new StringBuilder("<b>Без атак в рейде</b>\n")
+                .append("📌 Статус: ").append(escapeHtml(getRaidState(season)))
+                .append("\n📅 ").append(getRaidPeriod(season)).append(" (МСК)\n")
+                .append("👥 Текущий состав клана\n");
+
+        List<RaidSeasonParticipant> participants =
+                raidSeasonParticipantRepository.findAllByRaidSeason(season);
+        if (!hasCompleteRaidParticipants(season, participants)) {
+            return result.append("\nДанные об участниках рейда пока неполные. "
+                    + "Повтори команду после синхронизации.").toString();
+        }
+
+        List<Member> members = memberRepository.findAllByInClanTrue().stream()
+                .sorted(Comparator.comparingInt(Member::getClanRank).thenComparing(Member::getTag))
+                .toList();
+        if (members.isEmpty()) {
+            return result.append("\nТекущие участники клана не найдены.").toString();
+        }
+
+        Set<String> attackedTags = new HashSet<>();
+        for (RaidSeasonParticipant participant : participants) {
+            if (participant.getAttacks() > 0) {
+                attackedTags.add(participant.getTag());
+            }
+        }
+
+        int missed = 0;
+        for (Member member : members) {
+            if (attackedTags.contains(member.getTag())) {
+                continue;
+            }
+
+            result.append("\n").append(++missed).append(". <b>")
+                    .append(escapeHtml(member.getName())).append("</b> — <code>")
+                    .append(escapeHtml(member.getTag())).append("</code>");
+        }
+
+        if (missed == 0) {
+            return result.append("\nВсе нынешние участники клана сделали хотя бы одну атаку.")
+                    .toString();
+        }
+
+        return result.append("\n\nВсего без атак: ").append(missed).toString();
+    }
+
+    @Transactional(readOnly = true)
+    public String raids() {
+        List<RaidSeason> seasons = raidSeasonRepository
+                .findTop5ByClanTagOrderByStartTimeDesc(clanTag);
+
+        if (seasons.isEmpty()) {
+            return "Рейды ещё не сохранены.";
+        }
+
+        StringBuilder result = new StringBuilder("<b>Последние рейды</b>\n");
+        for (RaidSeason season : seasons) {
+            result.append("\n📅 ").append(getRaidPeriod(season)).append(" (МСК)\n")
+                    .append("📌 ").append(escapeHtml(getRaidState(season))).append("\n")
+                    .append("💰 ").append(season.getCapitalTotalLoot()).append(" столичного золота\n")
+                    .append("🗡 Атаки: ").append(season.getTotalAttacks())
+                    .append(" · 💥 Районы: ").append(season.getEnemyDistrictsDestroyed()).append("\n");
+        }
+        return result.toString().strip();
+    }
+
+    private static boolean hasCompleteRaidParticipants(
+            RaidSeason season, List<RaidSeasonParticipant> participants) {
+        return participants.stream().mapToLong(p -> p.getAttacks()).sum() == season.getTotalAttacks();
+    }
+
+    private static String getRaidPeriod(RaidSeason season) {
+        return DATE_TIME_FORMATTER.format(season.getStartTime()) + " — "
+                + DATE_TIME_FORMATTER.format(season.getEndTime());
+    }
+
+    private static String getRaidState(RaidSeason season) {
+        return switch (season.getState()) {
+            case "ongoing" -> "Идёт";
+            case "ended" -> "Завершён";
+            default -> season.getState();
+        };
     }
 
     private static String escapeHtml(String value) {

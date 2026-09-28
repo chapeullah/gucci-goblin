@@ -7,10 +7,15 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface RaidSeasonRepository extends JpaRepository<RaidSeason, Long> {
+
+    Optional<RaidSeason> findFirstByClanTagOrderByStartTimeDesc(String clanTag);
+
+    List<RaidSeason> findTop5ByClanTagOrderByStartTimeDesc(String clanTag);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<RaidSeason> findByClanTagAndStartTime(
