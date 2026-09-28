@@ -1,6 +1,5 @@
 package com.chapeullah.guccigoblin;
 
-import com.chapeullah.guccigoblin.client.Client;
 import com.chapeullah.guccigoblin.config.Scheduler;
 import com.chapeullah.guccigoblin.member.dto.BuilderBaseLeagueResponse;
 import com.chapeullah.guccigoblin.member.dto.LeagueTierResponse;
@@ -16,6 +15,8 @@ import com.chapeullah.guccigoblin.member.service.MemberDeltaService;
 import com.chapeullah.guccigoblin.member.service.MemberService;
 import com.chapeullah.guccigoblin.member.service.MemberSyncService;
 import com.chapeullah.guccigoblin.player.PlayerEventService;
+import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
+import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.war.WarService;
 import com.chapeullah.guccigoblin.war.model.War;
 import jakarta.persistence.EntityManagerFactory;
@@ -699,7 +700,13 @@ class UnifiedModelsPersistenceTest {
 
         @Bean
         Scheduler scheduler(MemberSyncService memberSyncService, StubWarService wars) {
-            return new Scheduler(memberSyncService, wars);
+            var raids = new RaidSeasonService(null, null, null, null) {
+                @Override
+                public Optional<RaidSeason> syncRaidSeason() {
+                    return Optional.empty();
+                }
+            };
+            return new Scheduler(memberSyncService, wars, raids);
         }
     }
 }

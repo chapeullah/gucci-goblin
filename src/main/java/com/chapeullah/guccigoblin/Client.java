@@ -1,6 +1,7 @@
-package com.chapeullah.guccigoblin.client;
+package com.chapeullah.guccigoblin;
 
 import com.chapeullah.guccigoblin.member.dto.MembersResponse;
+import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +24,7 @@ public class Client {
 
     public MembersResponse getMembers() {
         return rest.get()
-                .uri("/clans/{tag}/members", clanTag)
+                .uri("/clans/{clanTag}/members", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
                 .retrieve()
@@ -32,11 +33,20 @@ public class Client {
 
     public WarResponse getCurrentWar() {
         return rest.get()
-                .uri("/clans/{tag}/currentwar", clanTag)
+                .uri("/clans/{clanTag}/currentwar", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
                 .retrieve()
                 .body(WarResponse.class);
+    }
+
+    public RaidSeasonResponse getCurrentRaid() {
+        return rest.get()
+                .uri("/clans/{clanTag}/capitalraidseasons?limit=1", clanTag)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
+                .retrieve()
+                .body(RaidSeasonResponse.class);
     }
 
 }

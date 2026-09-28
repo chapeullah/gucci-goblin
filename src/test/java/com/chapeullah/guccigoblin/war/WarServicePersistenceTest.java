@@ -1,8 +1,10 @@
 package com.chapeullah.guccigoblin.war;
 
-import com.chapeullah.guccigoblin.client.Client;
+import com.chapeullah.guccigoblin.Client;
 import com.chapeullah.guccigoblin.config.Scheduler;
 import com.chapeullah.guccigoblin.member.service.MemberSyncService;
+import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
+import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.war.dto.AttackResponse;
 import com.chapeullah.guccigoblin.war.dto.ClanResponse;
 import com.chapeullah.guccigoblin.war.dto.MemberResponse;
@@ -43,6 +45,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -110,8 +113,8 @@ class WarServicePersistenceTest {
         assertEquals("inWar", stored.getState());
         assertEquals(2, stored.getTeamSize());
         assertEquals(2, stored.getAttacksPerMember());
-        assertEquals(Instant.parse("2026-09-25T12:00:00Z"), stored.getStartsAt());
-        assertEquals(Instant.parse("2026-09-26T12:00:00Z"), stored.getEndsAt());
+        assertEquals(Instant.parse("2026-09-25T12:00:00Z"), stored.getStartTime());
+        assertEquals(Instant.parse("2026-09-26T12:00:00Z"), stored.getEndTime());
 
         Map<String, WarParticipant> roster = participants.findAll().stream()
                 .collect(Collectors.toMap(WarParticipant::getPlayerTag, Function.identity()));
@@ -358,7 +361,7 @@ class WarServicePersistenceTest {
         assertDoesNotThrow(() -> scheduler().sync());
 
         assertEquals("warEnded", wars.findById(previousWarId).orElseThrow().getState());
-        War current = wars.findByClanTagAndOpponentTagAndStartsAt(
+        War current = wars.findByClanTagAndOpponentTagAndStartTime(
                 "#HOME", "#NEXT", Instant.parse("2026-09-27T12:00:00Z")).orElseThrow();
         assertNotEquals(previousWarId, current.getId());
         assertEquals("preparation", current.getState());
@@ -398,14 +401,14 @@ class WarServicePersistenceTest {
         assertCounts(1, 4, 3);
     }
 
-    private War saveWar(String state, Instant endsAt) {
+    private War saveWar(String state, Instant endTime) {
         ClanResponse clan = battle.clan();
         ClanResponse opponent = battle.opponent();
         return wars.save(new War(clan.tag(), clan.name(), clan.attacks(), clan.stars(),
                 clan.destructionPercentage(), clan.clanLevel(),
                 opponent.tag(), opponent.name(), opponent.attacks(), opponent.stars(),
                 opponent.destructionPercentage(), opponent.clanLevel(),
-                state, endsAt.minusSeconds(86400), endsAt, battle.teamSize(), battle.attacksPerMember()));
+                state, endTime.minusSeconds(86400), endTime, battle.teamSize(), battle.attacksPerMember()));
     }
 
     private Scheduler scheduler() {
@@ -413,7 +416,13 @@ class WarServicePersistenceTest {
             @Override
             public void sync() { }
         };
-        return new Scheduler(members, service);
+        var raids = new RaidSeasonService(null, null, null, null) {
+            @Override
+            public Optional<RaidSeason> syncRaidSeason() {
+                return Optional.empty();
+            }
+        };
+        return new Scheduler(members, service, raids);
     }
 
     private WarResponse withAdditionalHomeAttacks(List<AttackResponse> added, boolean addParticipant) {

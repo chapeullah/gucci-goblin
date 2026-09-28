@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.war;
 
-import com.chapeullah.guccigoblin.client.Client;
+import com.chapeullah.guccigoblin.Client;
 import com.chapeullah.guccigoblin.war.dto.AttackResponse;
 import com.chapeullah.guccigoblin.war.dto.ClanResponse;
 import com.chapeullah.guccigoblin.war.dto.MemberResponse;
@@ -57,7 +57,7 @@ public class WarService {
 
     @Transactional
     public void finishEndedWars() {
-        var wars = warRepository.findAllByEndsAtLessThanEqualAndStateNot(
+        var wars = warRepository.findAllByEndTimeLessThanEqualAndStateNot(
                 clock.instant(),
                 "warEnded");
         for (War war : wars) {
@@ -70,16 +70,16 @@ public class WarService {
         ClanResponse clanResponse = response.clan();
         ClanResponse opponent = response.opponent();
 
-        Instant startsAt = Instant.from(
+        Instant startTime = Instant.from(
                 WAR_TIME_FORMAT.parse(response.startTime()));
-        Instant endsAt = Instant.from(
+        Instant endTime = Instant.from(
                 WAR_TIME_FORMAT.parse(response.endTime()));
 
         War war = warRepository
-                .findByClanTagAndOpponentTagAndStartsAt(
+                .findByClanTagAndOpponentTagAndStartTime(
                         clanResponse.tag(),
                         opponent.tag(),
-                        startsAt)
+                        startTime)
                 .orElseGet(War::new);
 
         war.setClanTag(clanResponse.tag());
@@ -96,8 +96,8 @@ public class WarService {
         war.setOpponentDestructionPercentage(opponent.destructionPercentage());
         war.setOpponentLevel(opponent.clanLevel());
 
-        war.setStartsAt(startsAt);
-        war.setEndsAt(endsAt);
+        war.setStartTime(startTime);
+        war.setEndTime(endTime);
         war.setState(war.isEnded(clock.instant()) ? "warEnded" : response.state());
         war.setTeamSize(response.teamSize());
         war.setAttacksPerMember(response.attacksPerMember());

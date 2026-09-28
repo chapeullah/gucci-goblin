@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.member.service;
 
-import com.chapeullah.guccigoblin.client.Client;
+import com.chapeullah.guccigoblin.Client;
 import com.chapeullah.guccigoblin.member.Member;
 import com.chapeullah.guccigoblin.member.MemberRepository;
 import com.chapeullah.guccigoblin.member.dto.MemberResponse;

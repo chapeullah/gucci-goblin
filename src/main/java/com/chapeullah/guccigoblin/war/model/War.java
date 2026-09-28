@@ -14,7 +14,7 @@ import java.time.Instant;
         name = "wars",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_wars_clans_start",
-                columnNames = {"clan_tag", "opponent_tag", "starts_at"}))
+                columnNames = {"clan_tag", "opponent_tag", "start_time"}))
 @Getter @Setter
 @NoArgsConstructor
 public class War {
@@ -77,13 +77,13 @@ public class War {
             nullable = false)
     private String state;
 
-    @Column(name = "starts_at",
+    @Column(name = "start_time",
             nullable = false)
-    private Instant startsAt;
+    private Instant startTime;
 
-    @Column(name = "ends_at",
+    @Column(name = "end_time",
             nullable = false)
-    private Instant endsAt;
+    private Instant endTime;
 
     @Column(name = "team_size",
             nullable = false)
@@ -119,8 +119,8 @@ public class War {
             Integer opponentLevel,
 
             String state,
-            Instant startsAt,
-            Instant endsAt,
+            Instant startTime,
+            Instant endTime,
             Integer teamSize,
             Integer attacksPerMember) {
         this.clanTag = clanTag;
@@ -138,8 +138,8 @@ public class War {
         this.opponentLevel = opponentLevel;
 
         this.state = state;
-        this.startsAt = startsAt;
-        this.endsAt = endsAt;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.teamSize = teamSize;
         this.attacksPerMember = attacksPerMember;
     }
@@ -149,7 +149,7 @@ public class War {
     }
 
     public boolean isEnded(Instant now) {
-        return !now.isBefore(endsAt);
+        return !now.isBefore(endTime);
     }
 
 }

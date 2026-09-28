@@ -147,8 +147,8 @@ public class CommandService {
             return "Участники клана не найдены.";
         }
 
-        StringBuilder result = new StringBuilder(
-                "<b>Топ по пожертвованиям</b>\n");
+        StringBuilder result =
+                new StringBuilder("<b>Топ по пожертвованиям</b>\n");
 
         for (int i = 0; i < members.size(); i++) {
             Member member = members.get(i);
@@ -169,7 +169,7 @@ public class CommandService {
 
     public String war() {
         War war = warRepository
-                .findFirstByStateInOrderByStartsAtDesc(
+                .findFirstByStateInOrderByStartTimeDesc(
                         List.of("preparation", "inWar"))
                 .orElse(null);
 
@@ -191,10 +191,10 @@ public class CommandService {
 
         if ("preparation".equals(war.getState())) {
             timeTitle = "Начало";
-            time = DATE_TIME_FORMATTER.format(war.getStartsAt());
+            time = DATE_TIME_FORMATTER.format(war.getStartTime());
         } else {
             timeTitle = "Окончание";
-            time = DATE_TIME_FORMATTER.format(war.getEndsAt());
+            time = DATE_TIME_FORMATTER.format(war.getEndTime());
         }
 
         return """
@@ -226,7 +226,7 @@ public class CommandService {
 
     public String wars() {
         List<War> wars = warRepository
-                .findTop5ByStateOrderByEndsAtDesc("warEnded");
+                .findTop5ByStateOrderByEndTimeDesc("warEnded");
 
         if (wars.isEmpty()) {
             return "Завершённые войны не найдены.";
@@ -256,7 +256,7 @@ public class CommandService {
                             war.getOpponentDestructionPercentage()))
                     .append("\n")
                     .append("📅 ")
-                    .append(DATE_TIME_FORMATTER.format(war.getEndsAt()))
+                    .append(DATE_TIME_FORMATTER.format(war.getEndTime()))
                     .append("\n");
         }
 
@@ -289,7 +289,7 @@ public class CommandService {
 
     public String attacks() {
         War war = warRepository
-                .findFirstByStateInOrderByStartsAtDesc(
+                .findFirstByStateInOrderByStartTimeDesc(
                         List.of("preparation", "inWar"))
                 .orElse(null);
 

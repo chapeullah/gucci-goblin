@@ -1,5 +1,6 @@
 package com.chapeullah.guccigoblin.client;
 
+import com.chapeullah.guccigoblin.Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
