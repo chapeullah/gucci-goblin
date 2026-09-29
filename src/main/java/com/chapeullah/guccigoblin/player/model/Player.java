@@ -2,6 +2,7 @@ package com.chapeullah.guccigoblin.player.model;
 
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
 import com.chapeullah.guccigoblin.clan.Clan;
+import com.chapeullah.guccigoblin.label.player.PlayerLabel;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import jakarta.persistence.*;
 
@@ -108,22 +109,50 @@ public class Player {
     @Column(name = "previous_league_season_id")
     private Integer previousLeagueSeasonId;
 
+    @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<Achievement> achievements = new ArrayList<>();
 
+    @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<HouseElement> houseElements = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "player_label_id", nullable = false)
+    private PlayerLabel playerLabel;
+
+    @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<Label> labels = new ArrayList<>();
+    private List<Troop> troops = new ArrayList<>();
+
+    @SuppressWarnings("FieldMayBeFinal")
+    @OneToMany(
+            mappedBy = "player",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Hero> heroes = new ArrayList<>();
+
+    @SuppressWarnings("FieldMayBeFinal")
+    @OneToMany(
+            mappedBy = "player",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<HeroEquipment> heroEquipments = new ArrayList<>();
+
+    @SuppressWarnings("FieldMayBeFinal")
+    @OneToMany(
+            mappedBy = "player",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Spell> spells = new ArrayList<>();
 
 }

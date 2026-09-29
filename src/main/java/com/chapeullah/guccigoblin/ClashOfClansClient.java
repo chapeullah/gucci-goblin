@@ -2,6 +2,7 @@ package com.chapeullah.guccigoblin;
 
 import com.chapeullah.guccigoblin.builderbaseleague.dto.BuilderBaseLeaguesResponse;
 import com.chapeullah.guccigoblin.capitalleague.dto.CapitalLeaguesResponse;
+import com.chapeullah.guccigoblin.label.dto.LabelsResponse;
 import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTiersResponse;
 import com.chapeullah.guccigoblin.location.dto.LocationsResponse;
 import com.chapeullah.guccigoblin.memberdep.dto.MembersResponse;
@@ -97,6 +98,24 @@ public class ClashOfClansClient {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
                 .retrieve()
                 .body(BuilderBaseLeaguesResponse.class);
+    }
+
+    public LabelsResponse getPlayerLabelsResponse() {
+        return rest.get()
+                .uri("/labels/players")
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
+                .retrieve()
+                .body(LabelsResponse.class);
+    }
+
+    public LabelsResponse getClanLabelsResponse() {
+        return rest.get()
+                .uri("/labels/clans")
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
+                .retrieve()
+                .body(LabelsResponse.class);
     }
 
 }
