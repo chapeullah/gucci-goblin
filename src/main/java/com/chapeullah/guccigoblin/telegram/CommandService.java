@@ -1,7 +1,7 @@
 package com.chapeullah.guccigoblin.telegram;
 
-import com.chapeullah.guccigoblin.member.Member;
-import com.chapeullah.guccigoblin.member.MemberRepository;
+import com.chapeullah.guccigoblin.memberdep.Member;
+import com.chapeullah.guccigoblin.memberdep.MemberRepository;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeasonParticipant;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;

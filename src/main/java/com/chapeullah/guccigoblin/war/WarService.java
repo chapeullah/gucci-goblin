@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.war;
 
-import com.chapeullah.guccigoblin.Client;
+import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.war.dto.AttackResponse;
 import com.chapeullah.guccigoblin.war.dto.ClanResponse;
 import com.chapeullah.guccigoblin.war.dto.MemberResponse;
@@ -29,7 +29,7 @@ public class WarService {
     private static final DateTimeFormatter WAR_TIME_FORMAT =
             DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss.SSSX");
 
-    private final Client client;
+    private final ClashOfClansClient client;
 
     private final WarRepository warRepository;
     private final WarParticipantRepository warParticipantRepository;

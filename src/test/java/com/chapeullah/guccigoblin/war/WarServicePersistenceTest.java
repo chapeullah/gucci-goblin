@@ -1,8 +1,8 @@
 package com.chapeullah.guccigoblin.war;
 
-import com.chapeullah.guccigoblin.Client;
+import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.config.Scheduler;
-import com.chapeullah.guccigoblin.member.service.MemberSyncService;
+import com.chapeullah.guccigoblin.memberdep.service.MemberSyncService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.war.dto.AttackResponse;
@@ -59,7 +59,7 @@ class WarServicePersistenceTest {
     private static AnnotationConfigApplicationContext context;
     private WarService service;
     private MutableClock clock;
-    private StubClient client;
+    private StubClashOfClansClient client;
     private WarRepository wars;
     private WarParticipantRepository participants;
     private WarAttackRepository attacks;
@@ -80,7 +80,7 @@ class WarServicePersistenceTest {
         service = context.getBean(WarService.class);
         clock = context.getBean(MutableClock.class);
         clock.setInstant(TEST_TIME);
-        client = context.getBean(StubClient.class);
+        client = context.getBean(StubClashOfClansClient.class);
         wars = context.getBean(WarRepository.class);
         participants = context.getBean(WarParticipantRepository.class);
         attacks = context.getBean(WarAttackRepository.class);
@@ -506,10 +506,10 @@ class WarServicePersistenceTest {
         }
     }
 
-    static class StubClient extends Client {
+    static class StubClashOfClansClient extends ClashOfClansClient {
         private WarResponse response;
         private RuntimeException failure;
-        StubClient() { super(null); }
+        StubClashOfClansClient() { super(null); }
         @Override
         public WarResponse getCurrentWar() {
             if (failure != null) throw failure;
@@ -541,11 +541,11 @@ class WarServicePersistenceTest {
             return new JpaTransactionManager(factory);
         }
         @Bean
-        StubClient client() { return new StubClient(); }
+        StubClashOfClansClient client() { return new StubClashOfClansClient(); }
         @Bean
         MutableClock clock() { return new MutableClock(TEST_TIME); }
         @Bean
-        WarService warService(StubClient client, WarRepository wars,
+        WarService warService(StubClashOfClansClient client, WarRepository wars,
                               WarParticipantRepository participants, WarAttackRepository attacks,
                               Clock clock) {
             return new WarService(client, wars, participants, attacks, clock);

@@ -1,10 +1,10 @@
 package com.chapeullah.guccigoblin;
 
-import com.chapeullah.guccigoblin.member.Member;
-import com.chapeullah.guccigoblin.member.MemberDelta;
-import com.chapeullah.guccigoblin.member.dto.BuilderBaseLeagueResponse;
-import com.chapeullah.guccigoblin.member.dto.LeagueTierResponse;
-import com.chapeullah.guccigoblin.member.dto.MemberResponse;
+import com.chapeullah.guccigoblin.memberdep.Member;
+import com.chapeullah.guccigoblin.memberdep.MemberDelta;
+import com.chapeullah.guccigoblin.memberdep.dto.BuilderBaseLeagueResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.LeagueTierResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberResponse;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

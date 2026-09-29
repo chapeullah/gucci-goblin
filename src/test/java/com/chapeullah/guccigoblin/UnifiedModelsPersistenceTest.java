@@ -1,19 +1,19 @@
 package com.chapeullah.guccigoblin;
 
 import com.chapeullah.guccigoblin.config.Scheduler;
-import com.chapeullah.guccigoblin.member.dto.BuilderBaseLeagueResponse;
-import com.chapeullah.guccigoblin.member.dto.LeagueTierResponse;
-import com.chapeullah.guccigoblin.member.dto.MemberResponse;
-import com.chapeullah.guccigoblin.member.dto.MembersResponse;
-import com.chapeullah.guccigoblin.member.Member;
-import com.chapeullah.guccigoblin.member.MemberDelta;
+import com.chapeullah.guccigoblin.memberdep.dto.BuilderBaseLeagueResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.LeagueTierResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.MembersResponse;
+import com.chapeullah.guccigoblin.memberdep.Member;
+import com.chapeullah.guccigoblin.memberdep.MemberDelta;
 import com.chapeullah.guccigoblin.player.PlayerEvent;
 import com.chapeullah.guccigoblin.player.PlayerEventType;
-import com.chapeullah.guccigoblin.member.MemberRepository;
+import com.chapeullah.guccigoblin.memberdep.MemberRepository;
 import com.chapeullah.guccigoblin.player.PlayerEventRepository;
-import com.chapeullah.guccigoblin.member.service.MemberDeltaService;
-import com.chapeullah.guccigoblin.member.service.MemberService;
-import com.chapeullah.guccigoblin.member.service.MemberSyncService;
+import com.chapeullah.guccigoblin.memberdep.service.MemberDeltaService;
+import com.chapeullah.guccigoblin.memberdep.service.MemberService;
+import com.chapeullah.guccigoblin.memberdep.service.MemberSyncService;
 import com.chapeullah.guccigoblin.player.PlayerEventService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
@@ -60,7 +60,7 @@ class UnifiedModelsPersistenceTest {
     private static AnnotationConfigApplicationContext context;
     private MemberRepository members;
     private PlayerEventRepository players;
-    private StubClient client;
+    private StubClashOfClansClient client;
     private MemberSyncService memberSyncService;
     private Scheduler scheduler;
     private StubWarService wars;
@@ -79,7 +79,7 @@ class UnifiedModelsPersistenceTest {
     void resetData() {
         members = context.getBean(MemberRepository.class);
         players = context.getBean(PlayerEventRepository.class);
-        client = context.getBean(StubClient.class);
+        client = context.getBean(StubClashOfClansClient.class);
         memberSyncService = context.getBean(MemberSyncService.class);
         scheduler = context.getBean(Scheduler.class);
         wars = context.getBean(StubWarService.class);
@@ -584,10 +584,10 @@ class UnifiedModelsPersistenceTest {
                 BUILDER_BASE_LEAGUE, LEAGUE_TIER, CLAN_RANK);
     }
 
-    static class StubClient extends Client {
+    static class StubClashOfClansClient extends ClashOfClansClient {
         private MembersResponse response = new MembersResponse(List.of());
 
-        StubClient() {
+        StubClashOfClansClient() {
             super(null);
         }
 
@@ -674,12 +674,12 @@ class UnifiedModelsPersistenceTest {
         }
 
         @Bean
-        StubClient gucciClient() {
-            return new StubClient();
+        StubClashOfClansClient gucciClient() {
+            return new StubClashOfClansClient();
         }
 
         @Bean
-        MemberService memberService(StubClient client, MemberRepository members) {
+        MemberService memberService(StubClashOfClansClient client, MemberRepository members) {
             return new MemberService(client, members, new MemberDeltaService());
         }
 

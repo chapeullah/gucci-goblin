@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.member.service;
+package com.chapeullah.guccigoblin.memberdep.service;
 
 import com.chapeullah.guccigoblin.player.PlayerEventService;
 import jakarta.transaction.Transactional;

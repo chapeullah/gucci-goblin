@@ -1,12 +1,12 @@
-package com.chapeullah.guccigoblin.member.service;
+package com.chapeullah.guccigoblin.memberdep.service;
 
-import com.chapeullah.guccigoblin.Client;
-import com.chapeullah.guccigoblin.member.Member;
-import com.chapeullah.guccigoblin.member.MemberRepository;
-import com.chapeullah.guccigoblin.member.dto.MemberResponse;
-import com.chapeullah.guccigoblin.member.dto.MemberSnapshot;
-import com.chapeullah.guccigoblin.member.dto.MemberSyncResult;
-import com.chapeullah.guccigoblin.member.dto.MembersResponse;
+import com.chapeullah.guccigoblin.ClashOfClansClient;
+import com.chapeullah.guccigoblin.memberdep.Member;
+import com.chapeullah.guccigoblin.memberdep.MemberRepository;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberSnapshot;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberSyncResult;
+import com.chapeullah.guccigoblin.memberdep.dto.MembersResponse;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberService {
 
-    private final Client client;
+    private final ClashOfClansClient client;
 
     private final MemberRepository memberRepository;
     private final MemberDeltaService memberDeltaService;

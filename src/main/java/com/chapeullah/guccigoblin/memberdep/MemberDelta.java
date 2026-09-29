@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.member;
+package com.chapeullah.guccigoblin.memberdep;
 
 import lombok.Getter;
 import lombok.NonNull;

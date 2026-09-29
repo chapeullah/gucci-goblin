@@ -1,7 +1,7 @@
-package com.chapeullah.guccigoblin.member.service;
+package com.chapeullah.guccigoblin.memberdep.service;
 
-import com.chapeullah.guccigoblin.member.Member;
-import com.chapeullah.guccigoblin.member.MemberDelta;
+import com.chapeullah.guccigoblin.memberdep.Member;
+import com.chapeullah.guccigoblin.memberdep.MemberDelta;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

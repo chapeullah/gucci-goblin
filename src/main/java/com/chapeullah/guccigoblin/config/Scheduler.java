@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.config;
 
-import com.chapeullah.guccigoblin.member.service.MemberSyncService;
+import com.chapeullah.guccigoblin.memberdep.service.MemberSyncService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.war.WarService;
 import lombok.RequiredArgsConstructor;

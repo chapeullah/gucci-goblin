@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.raidseason;
 
-import com.chapeullah.guccigoblin.Client;
+import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonResponse;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeasonAttack;
@@ -30,7 +30,7 @@ public class RaidSeasonService {
     private static final DateTimeFormatter RAID_TIME_FORMAT =
             DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss.SSSX");
 
-    private final Client client;
+    private final ClashOfClansClient client;
     private final RaidSeasonRepository raidSeasonRepository;
     private final RaidSeasonParticipantRepository raidSeasonParticipantRepository;
     private final RaidSeasonAttackRepository raidSeasonAttackRepository;

@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.client;
 
-import com.chapeullah.guccigoblin.Client;
+import com.chapeullah.guccigoblin.ClashOfClansClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -18,16 +18,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-class ClientJsonTest {
+class ClashOfClansClientJsonTest {
 
     private MockRestServiceServer server;
-    private Client client;
+    private ClashOfClansClient client;
 
     @BeforeEach
     void configureClient() {
         RestClient.Builder builder = RestClient.builder().baseUrl("https://api.clashofclans.com/v1");
         server = MockRestServiceServer.bindTo(builder).build();
-        client = new Client(builder.build());
+        client = new ClashOfClansClient(builder.build());
         ReflectionTestUtils.setField(client, "apiToken", "test-token");
         ReflectionTestUtils.setField(client, "clanTag", "#HOME");
     }

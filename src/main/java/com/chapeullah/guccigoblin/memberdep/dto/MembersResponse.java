@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.member.dto;
+package com.chapeullah.guccigoblin.memberdep.dto;
 
 import lombok.NonNull;
 

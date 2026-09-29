@@ -1,6 +1,6 @@
-package com.chapeullah.guccigoblin.member.dto;
+package com.chapeullah.guccigoblin.memberdep.dto;
 
-import com.chapeullah.guccigoblin.member.Member;
+import com.chapeullah.guccigoblin.memberdep.Member;
 
 public record MemberSnapshot(String tag, String name) {
     public static MemberSnapshot from(Member member) {

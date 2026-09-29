@@ -1,10 +1,10 @@
 package com.chapeullah.guccigoblin.telegram;
 
-import com.chapeullah.guccigoblin.member.Member;
-import com.chapeullah.guccigoblin.member.MemberRepository;
-import com.chapeullah.guccigoblin.member.dto.BuilderBaseLeagueResponse;
-import com.chapeullah.guccigoblin.member.dto.LeagueTierResponse;
-import com.chapeullah.guccigoblin.member.dto.MemberResponse;
+import com.chapeullah.guccigoblin.memberdep.Member;
+import com.chapeullah.guccigoblin.memberdep.MemberRepository;
+import com.chapeullah.guccigoblin.memberdep.dto.BuilderBaseLeagueResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.LeagueTierResponse;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberResponse;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeasonParticipant;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;

@@ -1,7 +1,7 @@
 package com.chapeullah.guccigoblin.player;
 
-import com.chapeullah.guccigoblin.member.dto.MemberSnapshot;
-import com.chapeullah.guccigoblin.member.dto.MemberSyncResult;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberSnapshot;
+import com.chapeullah.guccigoblin.memberdep.dto.MemberSyncResult;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
