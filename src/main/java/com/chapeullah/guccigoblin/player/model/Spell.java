@@ -44,7 +44,7 @@ public class Spell {
             Integer maxLevel,
             String village) {
         if (name.isBlank()) {
-            throw new IllegalArgumentException("Player spell must no be blank");
+            throw new IllegalArgumentException("Player spell name must no be blank");
         }
         this.player = player;
         this.name = name;

@@ -5,11 +5,17 @@ import com.chapeullah.guccigoblin.clan.Clan;
 import com.chapeullah.guccigoblin.label.player.PlayerLabel;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity @Table(name = "players")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Player {
 
     @Id
@@ -45,9 +51,9 @@ public class Player {
             nullable = false)
     private Integer warStars;
 
-    @Column(name = "attacks_wins",
+    @Column(name = "attack_wins",
             nullable = false)
-    private Integer attacksWins;
+    private Integer attackWins;
 
     @Column(name = "defense_wins",
             nullable = false)
@@ -66,7 +72,7 @@ public class Player {
     private Integer bestBuilderBaseTrophies;
 
     @Column(name = "role",
-            nullable = false)
+            nullable = true)
     private String role;
 
     @Column(name = "war_preference",
@@ -123,9 +129,16 @@ public class Player {
             orphanRemoval = true)
     private List<HouseElement> houseElements = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "player_label_id", nullable = false)
-    private PlayerLabel playerLabel;
+    @SuppressWarnings("FieldMayBeFinal")
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "player_label_links",
+            joinColumns = @JoinColumn(name = "player_tag", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "label_id", nullable = false),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_player_label_links_player_label",
+                    columnNames = {"player_tag", "label_id"}))
+    private List<PlayerLabel> labels = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
@@ -154,5 +167,62 @@ public class Player {
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<Spell> spells = new ArrayList<>();
+
+    public Player(
+            @NonNull String tag,
+            @NonNull String name,
+            @NonNull Integer townHallLevel,
+            @NonNull Integer townHallWeaponLevel,
+            @NonNull Integer expLevel,
+            @NonNull Integer trophies,
+            @NonNull Integer bestTrophies,
+            @NonNull Integer warStars,
+            @NonNull Integer attackWins,
+            @NonNull Integer defenseWins,
+            @NonNull Integer builderHallLevel,
+            @NonNull Integer builderBaseTrophies,
+            @NonNull Integer bestBuilderBaseTrophies,
+            String role,
+            @NonNull String warPreference,
+            @NonNull Integer donations,
+            @NonNull Integer donationsReceived,
+            @NonNull Integer clanCapitalContributions,
+            Clan clan,
+            LeagueTier leagueTier,
+            BuilderBaseLeague builderBaseLeague,
+            String currentLeagueGroupTag,
+            Integer currentLeagueSeasonId,
+            String previousLeagueGroupTag,
+            Integer previousLeagueSeasonId,
+            List<PlayerLabel> labels) {
+        this.tag = tag;
+        this.name = name;
+        this.townHallLevel = townHallLevel;
+        this.townHallWeaponLevel = townHallWeaponLevel;
+        this.expLevel = expLevel;
+        this.trophies = trophies;
+        this.bestTrophies = bestTrophies;
+        this.warStars = warStars;
+        this.attackWins = attackWins;
+        this.defenseWins = defenseWins;
+        this.builderHallLevel = builderHallLevel;
+        this.builderBaseTrophies = builderBaseTrophies;
+        this.bestBuilderBaseTrophies = bestBuilderBaseTrophies;
+        this.role = role;
+        this.warPreference = warPreference;
+        this.donations = donations;
+        this.donationsReceived = donationsReceived;
+        this.clanCapitalContributions = clanCapitalContributions;
+        this.clan = clan;
+        this.leagueTier = leagueTier;
+        this.builderBaseLeague = builderBaseLeague;
+        this.currentLeagueGroupTag = currentLeagueGroupTag;
+        this.currentLeagueSeasonId = currentLeagueSeasonId;
+        this.previousLeagueGroupTag = previousLeagueGroupTag;
+        this.previousLeagueSeasonId = previousLeagueSeasonId;
+        this.labels = labels;
+    }
+
+
 
 }

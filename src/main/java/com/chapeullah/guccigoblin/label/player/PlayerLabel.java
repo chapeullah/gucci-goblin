@@ -1,10 +1,12 @@
 package com.chapeullah.guccigoblin.label.player;
 
 import com.chapeullah.guccigoblin.label.IconUrls;
+import com.chapeullah.guccigoblin.player.model.Player;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Entity @Table(name = "player_labels")
 @Getter
@@ -24,8 +26,8 @@ public class PlayerLabel {
     private IconUrls iconUrls;
 
     public PlayerLabel(
-            Integer id,
-            String name,
+            @NonNull Integer id,
+            @NonNull String name,
             IconUrls iconUrls) {
         this.id = id;
         this.name = name;

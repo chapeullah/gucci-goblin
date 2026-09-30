@@ -25,13 +25,16 @@ public class Hero {
     @JoinColumn(name = "player_tag", nullable = false)
     private Player player;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name",
+            nullable = false)
     private String name;
 
-    @Column(name = "level", nullable = false)
+    @Column(name = "level",
+            nullable = false)
     private Integer level;
 
-    @Column(name = "max_level", nullable = false)
+    @Column(name = "max_level",
+            nullable = false)
     private Integer maxLevel;
 
     @SuppressWarnings("FieldMayBeFinal")
@@ -41,19 +44,28 @@ public class Hero {
             orphanRemoval = true)
     private List<Equipment> equipments = new ArrayList<>();
 
+    @Column(name = "village",
+            nullable = false)
+    private String village;
+
     public Hero(
             @NonNull Player player,
             @NonNull String name,
             @NonNull Integer level,
             @NonNull Integer maxLevel,
-            @NonNull List<Equipment> equipments) {
+            @NonNull List<Equipment> equipments,
+            @NonNull String village) {
         if (name.isBlank()) {
             throw new IllegalArgumentException("Player hero name must not be blank");
+        }
+        if (village.isBlank()) {
+            throw new IllegalArgumentException("Player hero village must not be blank");
         }
         this.player = player;
         this.name = name;
         this.level = level;
         this.maxLevel = maxLevel;
         this.equipments = equipments;
+        this.village = village;
     }
 }

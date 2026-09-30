@@ -1,6 +1,5 @@
 package com.chapeullah.guccigoblin.memberdep.service;
 
-import com.chapeullah.guccigoblin.player.PlayerEventService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
