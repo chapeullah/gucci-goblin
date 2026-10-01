@@ -11,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,30 +31,6 @@ class ClashOfClansClientJsonTest {
         ReflectionTestUtils.setField(client, "clanTag", "#HOME");
     }
 
-    @Test
-    void readsMembersAndEncodesClanTagWithoutRejectingExtraFields() {
-        server.expect(request -> {
-            assertEquals("https://api.clashofclans.com/v1/clans/%23HOME/members", request.getURI().toString());
-            assertEquals(HttpMethod.GET, request.getMethod());
-            assertEquals("Bearer test-token", request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
-            assertTrue(request.getHeaders().getAccept().contains(MediaType.APPLICATION_JSON));
-        }).andRespond(withSuccess(new ClassPathResource("fixtures/members.json"), MediaType.APPLICATION_JSON));
-
-        var response = client.getMembers();
-
-        assertNotNull(response);
-        assertEquals(1, response.items().size());
-        var member = response.items().getFirst();
-        assertEquals("#A", member.tag());
-        assertEquals(15, member.townHallLevel());
-        assertEquals(100, member.donations());
-        assertEquals(40, member.donationsReceived());
-        assertEquals(1, member.builderBaseLeague().id());
-        assertEquals("Test Builder League", member.builderBaseLeague().name());
-        assertEquals(2, member.leagueTier().id());
-        assertEquals(1, member.clanRank());
-        server.verify();
-    }
 
     @Test
     void readsWarAndNormalizesMissingOrNullAttackLists() {
@@ -94,15 +69,6 @@ class ClashOfClansClientJsonTest {
         server.verify();
     }
 
-    @Test
-    void serverErrorRemainsAnErrorInsteadOfAnEmptyClan() {
-        server.expect(request -> assertEquals(HttpMethod.GET, request.getMethod()))
-                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
-
-        assertThrows(HttpServerErrorException.ServiceUnavailable.class, client::getMembers);
-
-        server.verify();
-    }
 
     @Test
     void forbiddenWarResponseRemainsAnErrorInsteadOfNotInWar() {

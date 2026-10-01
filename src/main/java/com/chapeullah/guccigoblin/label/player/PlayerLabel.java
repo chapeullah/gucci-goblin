@@ -27,7 +27,7 @@ public class PlayerLabel {
 
     public PlayerLabel(
             @NonNull Integer id,
-            @NonNull String name,
+            String name,
             IconUrls iconUrls) {
         this.id = id;
         this.name = name;

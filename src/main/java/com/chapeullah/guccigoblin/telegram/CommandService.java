@@ -1,7 +1,5 @@
 package com.chapeullah.guccigoblin.telegram;
 
-import com.chapeullah.guccigoblin.memberdep.Member;
-import com.chapeullah.guccigoblin.memberdep.MemberRepository;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeasonParticipant;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;
@@ -19,18 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class CommandService {
 
-    private final MemberRepository memberRepository;
     private final WarRepository warRepository;
     private final WarParticipantRepository participantRepository;
     private final WarAttackRepository attackRepository;
@@ -52,135 +46,12 @@ public class CommandService {
         return """
                 <b>Доступные команды</b>
 
-                /member <code>#TAG</code> — информация об участнике
-                /members — список участников клана
-                /top — рейтинг участников
                 /war — текущая война
                 /wars — история войн
                 /attacks — неиспользованные атаки
                 /raid — текущий или последний рейд
-                /raidmissed — нынешние участники без атак в текущем или последнем рейде
                 /raids — история рейдов
                 """.strip();
-    }
-
-    public String member(String args) {
-        if (args == null || args.isBlank()) {
-            return "Нужен тег участника. Пример: /member #ABC123";
-        }
-
-        String tag = args.trim().split("\\s+")[0];
-        tag = tag.toUpperCase();
-        if (!tag.matches("^#[A-Z0-9]+$")) {
-            return "Неверный формат тега. Пример: #ABC123";
-        }
-
-        Member member = memberRepository
-                .findByTag(tag)
-                .orElse(null);
-        if (member == null) {
-            return "Участник с тегом " + tag + " не найден";
-        }
-
-        String joinedAt = DATE_TIME_FORMATTER.format(member.getJoinedAt());
-        String lastActivity = DATE_TIME_FORMATTER.format(member.getLastActivity());
-
-        return """
-        <b>%d. %s</b>
-        <code>%s</code>
-
-        🏠 Ратуша: %d
-        ⭐ Уровень: %d
-        🏆 Лига: %s
-        👤 Роль: %s
-
-        <b>Пожертвования</b>
-        Текущие: %d отдано · %d получено
-        Всего: %d отдано · %d получено
-
-        <b>Деревня строителя</b>
-        🏆 Лига: %s
-        🏅 Кубки: %d
-
-        📅 Дата вступления: %s
-        🕒 Последняя активность: %s
-        """.formatted(
-                member.getClanRank(),
-                escapeHtml(member.getName()),
-                member.getTag(),
-                member.getTownHallLevel(),
-                member.getExpLevel(),
-                escapeHtml(member.getLeagueTierName()),
-                escapeHtml(member.getRole()),
-                member.getDonations(),
-                member.getDonationsReceived(),
-                member.getTotalDonations(),
-                member.getTotalDonationsReceived(),
-                escapeHtml(member.getBuilderBaseLeagueName()),
-                member.getBuilderBaseTrophies(),
-                joinedAt,
-                lastActivity).strip();
-    }
-
-    public String members() {
-        List<Member> members = memberRepository
-                .findAllByInClanTrue()
-                .stream()
-                .sorted(Comparator.comparing(Member::getClanRank))
-                .toList();
-        if (members.isEmpty()) {
-            return "Участники клана не найдены.";
-        }
-        StringBuilder result = new StringBuilder()
-                .append("Участники клана ")
-                .append(members.size())
-                .append("\n");
-        for (Member member : members) {
-            result.append("\n")
-                    .append(member.getClanRank())
-                    .append(" — <code>")
-                    .append(member.getTag())
-                    .append("</code> — <code>")
-                    .append(escapeHtml(member.getName()))
-                    .append("</code> — TH")
-                    .append(member.getTownHallLevel());
-        }
-        return result.toString();
-    }
-
-    public String top() {
-        List<Member> members = memberRepository
-                .findAllByInClanTrue()
-                .stream()
-                .sorted(
-                        Comparator.comparingInt(Member::getDonations)
-                                .reversed()
-                                .thenComparingInt(Member::getClanRank))
-                .limit(10)
-                .toList();
-
-        if (members.isEmpty()) {
-            return "Участники клана не найдены.";
-        }
-
-        StringBuilder result =
-                new StringBuilder("<b>Топ по пожертвованиям</b>\n");
-
-        for (int i = 0; i < members.size(); i++) {
-            Member member = members.get(i);
-
-            result.append("\n")
-                    .append(i + 1)
-                    .append(". <b>")
-                    .append(escapeHtml(member.getName()))
-                    .append("</b> — ")
-                    .append(member.getDonations())
-                    .append(" отдано · ")
-                    .append(member.getDonationsReceived())
-                    .append(" получено");
-        }
-
-        return result.toString();
     }
 
     public String war() {
@@ -403,61 +274,6 @@ public class CommandService {
                 participantCount,
                 season.getRaidsCompleted(),
                 season.getEnemyDistrictsDestroyed()).strip();
-    }
-
-    @Transactional(readOnly = true)
-    public String raidMissed() {
-        RaidSeason season = raidSeasonRepository
-                .findFirstByClanTagOrderByStartTimeDesc(clanTag)
-                .orElse(null);
-
-        if (season == null) {
-            return "Рейды ещё не сохранены.";
-        }
-
-        StringBuilder result = new StringBuilder("<b>Без атак в рейде</b>\n")
-                .append("📌 Статус: ").append(escapeHtml(getRaidState(season)))
-                .append("\n📅 ").append(getRaidPeriod(season)).append(" (МСК)\n")
-                .append("👥 Текущий состав клана\n");
-
-        List<RaidSeasonParticipant> participants =
-                raidSeasonParticipantRepository.findAllByRaidSeason(season);
-        if (!hasCompleteRaidParticipants(season, participants)) {
-            return result.append("\nДанные об участниках рейда пока неполные. "
-                    + "Повтори команду после синхронизации.").toString();
-        }
-
-        List<Member> members = memberRepository.findAllByInClanTrue().stream()
-                .sorted(Comparator.comparingInt(Member::getClanRank).thenComparing(Member::getTag))
-                .toList();
-        if (members.isEmpty()) {
-            return result.append("\nТекущие участники клана не найдены.").toString();
-        }
-
-        Set<String> attackedTags = new HashSet<>();
-        for (RaidSeasonParticipant participant : participants) {
-            if (participant.getAttacks() > 0) {
-                attackedTags.add(participant.getTag());
-            }
-        }
-
-        int missed = 0;
-        for (Member member : members) {
-            if (attackedTags.contains(member.getTag())) {
-                continue;
-            }
-
-            result.append("\n").append(++missed).append(". <b>")
-                    .append(escapeHtml(member.getName())).append("</b> — <code>")
-                    .append(escapeHtml(member.getTag())).append("</code>");
-        }
-
-        if (missed == 0) {
-            return result.append("\nВсе нынешние участники клана сделали хотя бы одну атаку.")
-                    .toString();
-        }
-
-        return result.append("\n\nВсего без атак: ").append(missed).toString();
     }
 
     @Transactional(readOnly = true)

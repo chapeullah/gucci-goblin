@@ -18,14 +18,14 @@ public class PlayerLabelService {
 
     private final PlayerLabelRepository playerLabelRepository;
 
-    public void syncPlayerLabels() {
+    public List<PlayerLabel> syncPlayerLabels() {
         LabelsResponse response = client.getPlayerLabelsResponse();
         List<PlayerLabel> playerLabels = response
                 .items()
                 .stream()
                 .map(this::toPlayerLabel)
                 .toList();
-        playerLabelRepository.saveAll(playerLabels);
+        return playerLabelRepository.saveAll(playerLabels);
     }
 
     private PlayerLabel toPlayerLabel(LabelResponse response) {

@@ -16,14 +16,14 @@ public class BuilderBaseLeagueService {
 
     private final BuilderBaseLeagueRepository builderBaseLeagueRepository;
 
-    public void syncBuilderBaseLeagues() {
+    public List<BuilderBaseLeague> syncBuilderBaseLeagues() {
         BuilderBaseLeaguesResponse response = client.getBuilderBaseLeagues();
         List<BuilderBaseLeague> builderBaseLeagues = response
                 .items()
                 .stream()
                 .map(this::toBuilderBaseLeague)
                 .toList();
-        builderBaseLeagueRepository.saveAll(builderBaseLeagues);
+        return builderBaseLeagueRepository.saveAll(builderBaseLeagues);
     }
 
     private BuilderBaseLeague toBuilderBaseLeague(BuilderBaseLeagueResponse response) {

@@ -1,17 +1,11 @@
 package com.chapeullah.guccigoblin.telegram;
 
-import com.chapeullah.guccigoblin.memberdep.Member;
-import com.chapeullah.guccigoblin.memberdep.MemberRepository;
-import com.chapeullah.guccigoblin.memberdep.dto.BuilderBaseLeagueResponse;
-import com.chapeullah.guccigoblin.memberdep.dto.LeagueTierResponse;
-import com.chapeullah.guccigoblin.memberdep.dto.MemberResponse;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeasonParticipant;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonRepository;
 import com.chapeullah.guccigoblin.telegram.command.HelpCommand;
 import com.chapeullah.guccigoblin.telegram.command.RaidCommand;
-import com.chapeullah.guccigoblin.telegram.command.RaidMissedCommand;
 import com.chapeullah.guccigoblin.telegram.command.RaidsCommand;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.AfterAll;
@@ -45,7 +39,6 @@ class RaidCommandsTest {
 
     private static AnnotationConfigApplicationContext context;
     private CommandDispatcher dispatcher;
-    private MemberRepository members;
     private RaidSeasonRepository seasons;
     private RaidSeasonParticipantRepository participants;
 
@@ -66,38 +59,30 @@ class RaidCommandsTest {
     @BeforeEach
     void resetData() {
         dispatcher = context.getBean(CommandDispatcher.class);
-        members = context.getBean(MemberRepository.class);
         seasons = context.getBean(RaidSeasonRepository.class);
         participants = context.getBean(RaidSeasonParticipantRepository.class);
         participants.deleteAllInBatch();
         seasons.deleteAllInBatch();
-        members.deleteAllInBatch();
     }
 
     @Test
     void commandsExplainMissingSeasonsAndAreListedInHelp() {
-        for (String command : List.of("/raid", "/raidmissed", "/raids")) {
+        for (String command : List.of("/raid", "/raids")) {
             assertEquals("Рейды ещё не сохранены.", execute(command));
         }
         String help = execute("/help");
         assertTrue(help.contains("/raid —"));
-        assertTrue(help.contains("/raidmissed —"));
         assertTrue(help.contains("/raids —"));
     }
 
     @Test
-    void currentRaidShowsOnlyCurrentMembersWithoutAnyAttacks() {
+    void currentRaidShowsSummary() {
         RaidSeason old = season(CLAN_TAG, "ended", RAID_START.minus(7, ChronoUnit.DAYS), 1);
         RaidSeason current = season(CLAN_TAG, "ongoing", RAID_START, 1);
         season("#OTHER", "ongoing", RAID_START.plus(7, ChronoUnit.DAYS), 500);
         participant(old, "#ABSENT", "Absent", 1);
         participant(current, "#ATTACKED", "Previous name", 1);
         participant(current, "#ZERO", "Zero", 0);
-
-        member("#ATTACKED", "Renamed attacker", 3, true);
-        member("#ZERO", "<Zero & player>", 2, true);
-        member("#ABSENT", "Absent", 1, true);
-        member("#LEFT", "Left clan", 4, false);
 
         String summary = execute("/raid");
         assertTrue(summary.contains("<b>Текущий рейд</b>"));
@@ -107,23 +92,12 @@ class RaidCommandsTest {
         assertTrue(summary.contains("Атаки: 1\n"));
         assertTrue(summary.contains("Участников с атаками: 1"));
 
-        String missed = execute("/raidmissed");
-        assertTrue(missed.contains("25.09.2026 10:00"));
-        assertTrue(missed.contains("<code>#ABSENT</code>"));
-        assertTrue(missed.contains("&lt;Zero &amp; player&gt;"));
-        assertTrue(missed.contains("<code>#ZERO</code>"));
-        assertFalse(missed.contains("#ATTACKED"));
-        assertFalse(missed.contains("#LEFT"));
-        assertFalse(missed.contains("18.09.2026"));
-        assertTrue(missed.indexOf("#ABSENT") < missed.indexOf("#ZERO"));
-        assertTrue(missed.contains("Всего без атак: 2"));
     }
 
     @Test
     void latestEndedRaidIsUsedBetweenRaidsEvenIfOlderSeasonStillSaysOngoing() {
         season(CLAN_TAG, "ongoing", RAID_START.minus(7, ChronoUnit.DAYS), 0);
         season(CLAN_TAG, "ended", RAID_START, 0);
-        member("#CURRENT", "Current member", 1, true);
 
         String summary = execute("/raid");
         assertTrue(summary.contains("<b>Последний рейд</b>"));
@@ -131,55 +105,6 @@ class RaidCommandsTest {
         assertTrue(summary.contains("25.09.2026 10:00"));
         assertTrue(summary.contains("Участников с атаками: 0"));
 
-        String missed = execute("/raidmissed");
-        assertTrue(missed.contains("Статус: Завершён"));
-        assertTrue(missed.contains("25.09.2026 10:00"));
-        assertTrue(missed.contains("#CURRENT"));
-        assertTrue(missed.contains("Всего без атак: 1"));
-    }
-
-    @Test
-    void participantCountersAreEnoughEvenWithoutDetailedAttackRows() {
-        RaidSeason current = season(CLAN_TAG, "ongoing", RAID_START, 2);
-        member("#A", "Player A", 1, true);
-        member("#B", "Player B", 2, true);
-        participant(current, "#A", "Player A", 1);
-        participant(current, "#B", "Player B", 1);
-
-        String missed = execute("/raidmissed");
-        assertTrue(missed.contains("Все нынешние участники клана сделали хотя бы одну атаку."));
-        assertTrue(missed.contains("25.09.2026 10:00"));
-        assertFalse(missed.contains("<code>"));
-    }
-
-    @Test
-    void missingOrPartialParticipantsAreNotReportedAsMissedAttacks() {
-        RaidSeason current = season(CLAN_TAG, "ongoing", RAID_START, 3);
-        member("#A", "Player A", 1, true);
-        member("#B", "Player B", 2, true);
-
-        String missing = execute("/raidmissed");
-        assertTrue(missing.contains("Данные об участниках рейда пока неполные."));
-        assertFalse(missing.contains("#A"));
-        assertFalse(missing.contains("#B"));
-        assertTrue(execute("/raid").contains("Участников с атаками: данные ещё не загружены"));
-
-        participant(current, "#A", "Player A", 1);
-        assertTrue(execute("/raidmissed").contains("Данные об участниках рейда пока неполные."));
-
-        participant(current, "#B", "Player B", 2);
-        assertTrue(execute("/raidmissed")
-                .contains("Все нынешние участники клана сделали хотя бы одну атаку."));
-    }
-
-    @Test
-    void emptyCurrentRosterIsNotReportedAsEveryoneHavingAttacked() {
-        season(CLAN_TAG, "ongoing", RAID_START, 0);
-        member("#LEFT", "Left clan", 1, false);
-
-        String result = execute("/raidmissed");
-        assertTrue(result.contains("Текущие участники клана не найдены."));
-        assertFalse(result.contains("Все нынешние участники"));
     }
 
     @Test
@@ -216,19 +141,10 @@ class RaidCommandsTest {
         participants.save(new RaidSeasonParticipant(season, tag, name, attacks, 5, 1, 600));
     }
 
-    private void member(String tag, String name, int rank, boolean inClan) {
-        var snapshot = new MemberResponse(tag, name, "member", 15, 200, 0, 0, 3000,
-                new BuilderBaseLeagueResponse(1, "Builder League"),
-                new LeagueTierResponse(2, "League"), rank);
-        Member member = Member.initFrom(Member.from(snapshot));
-        if (!inClan) member.leave();
-        members.save(member);
-    }
-
     @Configuration(proxyBeanMethods = false)
     @EnableTransactionManagement
-    @EnableJpaRepositories(basePackageClasses = {MemberRepository.class, RaidSeasonRepository.class})
-    @Import({CommandDispatcher.class, RaidCommand.class, RaidMissedCommand.class, RaidsCommand.class, HelpCommand.class})
+    @EnableJpaRepositories(basePackageClasses = {RaidSeasonRepository.class})
+    @Import({CommandDispatcher.class, RaidCommand.class, RaidsCommand.class, HelpCommand.class})
     static class PersistenceConfiguration {
         @Bean
         DataSource dataSource() {
@@ -240,7 +156,7 @@ class RaidCommandsTest {
         LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
             var factory = new LocalContainerEntityManagerFactoryBean();
             factory.setDataSource(dataSource);
-            factory.setPackagesToScan(Member.class.getPackageName(), RaidSeason.class.getPackageName());
+            factory.setPackagesToScan(RaidSeason.class.getPackageName());
             factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
             factory.setJpaPropertyMap(Map.of("hibernate.hbm2ddl.auto", "create-drop",
                     "hibernate.hbm2ddl.halt_on_error", true, "hibernate.jdbc.time_zone", "UTC"));
@@ -253,9 +169,9 @@ class RaidCommandsTest {
         }
 
         @Bean
-        CommandService commandService(MemberRepository members, RaidSeasonRepository seasons,
+        CommandService commandService(RaidSeasonRepository seasons,
                                       RaidSeasonParticipantRepository participants) {
-            return new CommandService(members, null, null, null, seasons, participants);
+            return new CommandService(null, null, null, seasons, participants);
         }
     }
 }

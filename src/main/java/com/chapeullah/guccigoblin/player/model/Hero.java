@@ -42,7 +42,7 @@ public class Hero {
             mappedBy = "hero",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<Equipment> equipments = new ArrayList<>();
+    private List<HeroEquipmentLink> heroEquipmentLinks = new ArrayList<>();
 
     @Column(name = "village",
             nullable = false)
@@ -53,7 +53,7 @@ public class Hero {
             @NonNull String name,
             @NonNull Integer level,
             @NonNull Integer maxLevel,
-            @NonNull List<Equipment> equipments,
+            List<HeroEquipmentLink> heroEquipmentLinks,
             @NonNull String village) {
         if (name.isBlank()) {
             throw new IllegalArgumentException("Player hero name must not be blank");
@@ -65,7 +65,7 @@ public class Hero {
         this.name = name;
         this.level = level;
         this.maxLevel = maxLevel;
-        this.equipments = equipments;
+        this.heroEquipmentLinks = heroEquipmentLinks;
         this.village = village;
     }
 }

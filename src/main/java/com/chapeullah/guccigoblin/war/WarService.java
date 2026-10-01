@@ -102,7 +102,7 @@ public class WarService {
         war.setTeamSize(response.teamSize());
         war.setAttacksPerMember(response.attacksPerMember());
 
-        return warRepository.save(war);
+        return war;
     }
 
     private void saveParticipants(War war, ClanResponse clanResponse) {

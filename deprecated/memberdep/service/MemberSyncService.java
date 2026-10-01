@@ -9,11 +9,9 @@ import org.springframework.stereotype.Service;
 public class MemberSyncService {
 
     private final MemberService memberService;
-    private final PlayerEventService playerEventService;
 
     @Transactional
     public void sync() {
         var result = memberService.syncMembers();
-        playerEventService.syncEvents(result);
     }
 }

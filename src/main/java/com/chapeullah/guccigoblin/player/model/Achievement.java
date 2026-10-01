@@ -52,19 +52,19 @@ public class Achievement {
     public Achievement(
             @NonNull Player player,
             @NonNull String name,
-            @NonNull Integer stars,
-            @NonNull Integer value,
-            @NonNull Integer target,
-            @NonNull String info,
+            Integer stars,
+            Integer value,
+            Integer target,
+            String info,
             String completionInfo,
-            @NonNull String village) {
+            String village) {
         if (name.isBlank()) {
             throw new IllegalArgumentException("Achievement name must not be blank");
         }
-        if (stars < 0 || stars > 3) {
+        if (stars != null && (stars < 0 || stars > 3)) {
             throw new IllegalArgumentException("Achievement stars must be between 0 and 3");
         }
-        if (info.isBlank()) {
+        if (info != null && info.isBlank()) {
             throw new IllegalArgumentException("Achievement info must not be blank");
         }
         if (completionInfo != null && completionInfo.isBlank()) {

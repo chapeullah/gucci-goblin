@@ -5,10 +5,11 @@ import com.chapeullah.guccigoblin.capitalleague.dto.CapitalLeaguesResponse;
 import com.chapeullah.guccigoblin.label.dto.LabelsResponse;
 import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTiersResponse;
 import com.chapeullah.guccigoblin.location.dto.LocationsResponse;
-import com.chapeullah.guccigoblin.memberdep.dto.MembersResponse;
+import com.chapeullah.guccigoblin.player.dto.PlayerResponse;
 import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import com.chapeullah.guccigoblin.warleague.dto.WarLeaguesResponse;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -28,14 +29,15 @@ public class ClashOfClansClient {
     @Value("${coc.clanTag}")
     private String clanTag;
 
-    public MembersResponse getMembers() {
+    public PlayerResponse getPlayer(@NonNull String playerTag) {
         return rest.get()
-                .uri("/clans/{clanTag}/members", clanTag)
+                .uri("/players/{playerTag}", playerTag)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
                 .retrieve()
-                .body(MembersResponse.class);
+                .body(PlayerResponse.class);
     }
+
 
     public WarResponse getCurrentWar() {
         return rest.get()

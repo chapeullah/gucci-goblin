@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.config;
 
-import com.chapeullah.guccigoblin.memberdep.service.MemberSyncService;
+import com.chapeullah.guccigoblin.player.PlayerService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.war.WarService;
 import lombok.RequiredArgsConstructor;
@@ -13,12 +13,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class Scheduler {
 
-    private final MemberSyncService memberSyncService;
     private final WarService warService;
     private final RaidSeasonService raidSeasonService;
+    private final PlayerService playerService;
 
     @Scheduled(cron = "0 * * * * *")
     public void sync() {
+        /*
         try {
             memberSyncService.sync();
         } catch (RuntimeException e) {
@@ -42,6 +43,15 @@ public class Scheduler {
         } catch (RuntimeException e) {
             log.error("Raid season synchronization failed", e);
         }
+        */
+
+        try {
+            log.info("Sync player #92CPVQC9C");
+            playerService.syncPlayer("#92CPVQC9C");
+        } catch (RuntimeException e) {
+            log.error("Player synchronization failed", e);
+        }
+
     }
 
 }

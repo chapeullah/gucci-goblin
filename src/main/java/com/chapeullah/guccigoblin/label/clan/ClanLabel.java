@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Entity @Table(name = "clan_labels")
 @Getter
@@ -24,7 +25,7 @@ public class ClanLabel {
     private IconUrls iconUrls;
 
     public ClanLabel(
-            Integer id,
+            @NonNull Integer id,
             String name,
             IconUrls iconUrls) {
         this.id = id;

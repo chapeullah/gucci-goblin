@@ -2,7 +2,6 @@ package com.chapeullah.guccigoblin.player.model;
 
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
 import com.chapeullah.guccigoblin.clan.Clan;
-import com.chapeullah.guccigoblin.label.player.PlayerLabel;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -32,7 +31,7 @@ public class Player {
     private Integer townHallLevel;
 
     @Column(name = "town_hall_weapon_level",
-            nullable = false)
+            nullable = true)
     private Integer townHallWeaponLevel;
 
     @Column(name = "exp_level",
@@ -40,35 +39,35 @@ public class Player {
     private Integer expLevel;
 
     @Column(name = "trophies",
-            nullable = false)
+            nullable = true)
     private Integer trophies;
 
     @Column(name = "best_trophies",
-            nullable = false)
+            nullable = true)
     private Integer bestTrophies;
 
     @Column(name = "war_stars",
-            nullable = false)
+            nullable = true)
     private Integer warStars;
 
     @Column(name = "attack_wins",
-            nullable = false)
+            nullable = true)
     private Integer attackWins;
 
     @Column(name = "defense_wins",
-            nullable = false)
+            nullable = true)
     private Integer defenseWins;
 
     @Column(name = "builder_hall_level",
-            nullable = false)
+            nullable = true)
     private Integer builderHallLevel;
 
     @Column(name = "builder_base_trophies",
-            nullable = false)
+            nullable = true)
     private Integer builderBaseTrophies;
 
     @Column(name = "best_builder_base_trophies",
-            nullable = false)
+            nullable = true)
     private Integer bestBuilderBaseTrophies;
 
     @Column(name = "role",
@@ -76,43 +75,59 @@ public class Player {
     private String role;
 
     @Column(name = "war_preference",
-            nullable = false)
+            nullable = true)
     private String warPreference;
 
     @Column(name = "donations",
-            nullable = false)
+            nullable = true)
     private Integer donations;
 
     @Column(name = "donations_received",
-            nullable = false)
+            nullable = true)
     private Integer donationsReceived;
 
     @Column(name = "clan_capital_contributions",
-            nullable = false)
+            nullable = true)
     private Integer clanCapitalContributions;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "clan_tag", nullable = true)
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = true)
+    @JoinColumn(
+            name = "clan_tag",
+            nullable = true)
     private Clan clan;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "league_tier_id", nullable = false)
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = true)
+    @JoinColumn(
+            name = "league_tier_id",
+            nullable = true)
     private LeagueTier leagueTier;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "builder_base_league_id", nullable = false)
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = true)
+    @JoinColumn(
+            name = "builder_base_league_id",
+            nullable = true)
     private BuilderBaseLeague builderBaseLeague;
 
-    @Column(name = "current_league_group_tag")
+    @Column(name = "current_league_group_tag",
+            nullable = true)
     private String currentLeagueGroupTag;
 
-    @Column(name = "current_league_season_id")
+    @Column(name = "current_league_season_id",
+            nullable = true)
     private Integer currentLeagueSeasonId;
 
-    @Column(name = "previous_league_group_tag")
+    @Column(name = "previous_league_group_tag",
+            nullable = true)
     private String previousLeagueGroupTag;
 
-    @Column(name = "previous_league_season_id")
+    @Column(name = "previous_league_season_id",
+            nullable = true)
     private Integer previousLeagueSeasonId;
 
     @SuppressWarnings("FieldMayBeFinal")
@@ -130,15 +145,11 @@ public class Player {
     private List<HouseElement> houseElements = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "player_label_links",
-            joinColumns = @JoinColumn(name = "player_tag", nullable = false),
-            inverseJoinColumns = @JoinColumn(name = "label_id", nullable = false),
-            uniqueConstraints = @UniqueConstraint(
-                    name = "uk_player_label_links_player_label",
-                    columnNames = {"player_tag", "label_id"}))
-    private List<PlayerLabel> labels = new ArrayList<>();
+    @OneToMany(
+            mappedBy = "player",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<PlayerLabelLink> labelLinks = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
@@ -172,21 +183,21 @@ public class Player {
             @NonNull String tag,
             @NonNull String name,
             @NonNull Integer townHallLevel,
-            @NonNull Integer townHallWeaponLevel,
+            Integer townHallWeaponLevel,
             @NonNull Integer expLevel,
-            @NonNull Integer trophies,
-            @NonNull Integer bestTrophies,
-            @NonNull Integer warStars,
-            @NonNull Integer attackWins,
-            @NonNull Integer defenseWins,
-            @NonNull Integer builderHallLevel,
-            @NonNull Integer builderBaseTrophies,
-            @NonNull Integer bestBuilderBaseTrophies,
+            Integer trophies,
+            Integer bestTrophies,
+            Integer warStars,
+            Integer attackWins,
+            Integer defenseWins,
+            Integer builderHallLevel,
+            Integer builderBaseTrophies,
+            Integer bestBuilderBaseTrophies,
             String role,
-            @NonNull String warPreference,
-            @NonNull Integer donations,
-            @NonNull Integer donationsReceived,
-            @NonNull Integer clanCapitalContributions,
+            String warPreference,
+            Integer donations,
+            Integer donationsReceived,
+            Integer clanCapitalContributions,
             Clan clan,
             LeagueTier leagueTier,
             BuilderBaseLeague builderBaseLeague,
@@ -194,7 +205,74 @@ public class Player {
             Integer currentLeagueSeasonId,
             String previousLeagueGroupTag,
             Integer previousLeagueSeasonId,
-            List<PlayerLabel> labels) {
+            List<Achievement> achievements,
+            List<HouseElement> houseElements,
+            List<PlayerLabelLink> labelLinks,
+            List<Troop> troops,
+            List<Hero> heroes,
+            List<HeroEquipment> heroEquipments,
+            List<Spell> spells) {
+        if (!tag.matches("^#[A-Z0-9]+$")) {
+            throw new IllegalArgumentException("Player tag must start with # followed by at least one uppercase letter or digit. Example: #ABC123");
+        }
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Player name must not be blank");
+        }
+        if (townHallLevel < 1) {
+            throw new IllegalArgumentException("Player town hall level must be at least 1");
+        }
+        if (townHallWeaponLevel != null && townHallWeaponLevel < 1) {
+            throw new IllegalArgumentException("Player town hall weapon level must be at least 1");
+        }
+        if (expLevel < 1) {
+            throw new IllegalArgumentException("Player exp level must be at least 1");
+        }
+        if (trophies != null && trophies < 0) {
+            throw new IllegalArgumentException("Player trophies must not be negative");
+        }
+        if (bestTrophies != null && bestTrophies < 0) {
+            throw new IllegalArgumentException("Player best trophies must not be negative");
+        }
+        if (warStars != null && warStars < 0) {
+            throw new IllegalArgumentException("Player war stars must not be negative");
+        }
+        if (attackWins != null && attackWins < 0) {
+            throw new IllegalArgumentException("Player attack wins must not be negative");
+        }
+        if (defenseWins != null && defenseWins < 0) {
+            throw new IllegalArgumentException("Player defense wins must not be negative");
+        }
+        if (builderHallLevel != null && builderHallLevel < 1) {
+            throw new IllegalArgumentException("Player builder hall level must be at least 1");
+        }
+        if (builderBaseTrophies != null && builderBaseTrophies < 0) {
+            throw new IllegalArgumentException("Player builder base trophies must not be negative");
+        }
+        if (bestBuilderBaseTrophies != null && bestBuilderBaseTrophies < 0) {
+            throw new IllegalArgumentException("Player best builder base trophies must not be negative");
+        }
+        if (role != null && role.isBlank()) {
+            throw new IllegalArgumentException("Player role must not be blank");
+        }
+        if (warPreference != null && warPreference.isBlank()) {
+            throw new IllegalArgumentException("Player war preference must not be blank");
+        }
+        if (donations != null && donations < 0) {
+            throw new IllegalArgumentException("Player donations must not be negative");
+        }
+        if (donationsReceived != null && donationsReceived < 0) {
+            throw new IllegalArgumentException("Player donations received must not be negative");
+        }
+        if (clanCapitalContributions != null && clanCapitalContributions < 0) {
+            throw new IllegalArgumentException("Player clan capital contributions must not be negative");
+        }
+        if (currentLeagueGroupTag != null && currentLeagueGroupTag.isBlank()) {
+            throw new IllegalArgumentException("Player current league group tag must not be blank");
+        }
+        if (previousLeagueGroupTag != null && previousLeagueGroupTag.isBlank()) {
+            throw new IllegalArgumentException("Player previous league group tag must not be blank");
+        }
+
         this.tag = tag;
         this.name = name;
         this.townHallLevel = townHallLevel;
@@ -213,16 +291,23 @@ public class Player {
         this.donations = donations;
         this.donationsReceived = donationsReceived;
         this.clanCapitalContributions = clanCapitalContributions;
+
         this.clan = clan;
         this.leagueTier = leagueTier;
         this.builderBaseLeague = builderBaseLeague;
+
         this.currentLeagueGroupTag = currentLeagueGroupTag;
         this.currentLeagueSeasonId = currentLeagueSeasonId;
         this.previousLeagueGroupTag = previousLeagueGroupTag;
         this.previousLeagueSeasonId = previousLeagueSeasonId;
-        this.labels = labels;
+
+        this.achievements = achievements;
+        this.houseElements = houseElements;
+        this.labelLinks = labelLinks;
+        this.troops = troops;
+        this.heroes = heroes;
+        this.heroEquipments = heroEquipments;
+        this.spells = spells;
     }
-
-
 
 }

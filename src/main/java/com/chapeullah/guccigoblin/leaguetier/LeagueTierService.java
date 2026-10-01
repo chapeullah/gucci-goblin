@@ -18,14 +18,14 @@ public class LeagueTierService {
     private final LeagueTierRepository leagueTierRepository;
 
     @Transactional
-    public void syncLeagueTiers() {
+    public List<LeagueTier> syncLeagueTiers() {
         LeagueTiersResponse response = client.getLeagueTiers();
         List<LeagueTier> leagueTiers = response
                 .items()
                 .stream()
                 .map(this::toLeagueTier)
                 .toList();
-        leagueTierRepository.saveAll(leagueTiers);
+        return leagueTierRepository.saveAll(leagueTiers);
     }
 
     private LeagueTier toLeagueTier(LeagueTierResponse response) {

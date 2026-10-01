@@ -38,7 +38,6 @@ import javax.sql.DataSource;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,7 +54,6 @@ class UnifiedModelsPersistenceTest {
 
     private static AnnotationConfigApplicationContext context;
     private MemberRepository members;
-    private PlayerEventRepository players;
     private StubClashOfClansClient client;
     private MemberSyncService memberSyncService;
     private Scheduler scheduler;
@@ -74,12 +72,10 @@ class UnifiedModelsPersistenceTest {
     @BeforeEach
     void resetData() {
         members = context.getBean(MemberRepository.class);
-        players = context.getBean(PlayerEventRepository.class);
         client = context.getBean(StubClashOfClansClient.class);
         memberSyncService = context.getBean(MemberSyncService.class);
         scheduler = context.getBean(Scheduler.class);
         wars = context.getBean(StubWarService.class);
-        players.deleteAllInBatch();
         members.deleteAllInBatch();
         client.response = new MembersResponse(List.of());
         wars.reset();
@@ -92,8 +88,6 @@ class UnifiedModelsPersistenceTest {
         Long memberId = member("#A").getId();
         Long returningMemberId = member("#B").getId();
         Instant memberJoined = member("#A").getJoinedAt();
-        assertEventTypes("#A", PlayerEventType.JOINED);
-        assertEventTypes("#B", PlayerEventType.JOINED);
 
         synchronize(new MemberResponse(
                 "#A", "Renamed", "elder", 16, 201, 125, 47, 3100,
@@ -123,28 +117,14 @@ class UnifiedModelsPersistenceTest {
         assertEquals(20, member("#B").getTotalDonations());
         assertEquals(10, member("#B").getTotalDonationsReceived());
         assertEquals(List.of("#A"), members.findAllByInClanTrue().stream().map(Member::getTag).toList());
-        assertEventTypes("#A", PlayerEventType.JOINED);
-        assertEventTypes("#B", PlayerEventType.JOINED, PlayerEventType.LEFT);
 
-        PlayerEvent leftEvent = playerEvents("#B").get(1);
-        assertNotNull(leftEvent.getDetectedAt());
 
         synchronize(snapshot("#A", 3, 2));
         assertEquals(128, member("#A").getTotalDonations());
         assertEquals(49, member("#A").getTotalDonationsReceived());
-        assertEventTypes("#A", PlayerEventType.JOINED);
-        assertEventTypes("#B", PlayerEventType.JOINED, PlayerEventType.LEFT);
 
         synchronize(snapshot("#A", 3, 2), snapshot("#B", 5, 1));
         assertEquals(2, members.count());
-        assertEquals(4, players.count());
-        assertEventTypes(
-                "#B",
-                PlayerEventType.JOINED,
-                PlayerEventType.LEFT,
-                PlayerEventType.JOINED);
-        PlayerEvent rejoinedEvent = playerEvents("#B").get(2);
-        assertFalse(rejoinedEvent.getDetectedAt().isBefore(leftEvent.getDetectedAt()));
         assertEquals(returningMemberId, member("#B").getId());
         assertTrue(member("#B").isInClan());
         assertEquals(20, member("#B").getTotalDonations());
@@ -173,8 +153,6 @@ class UnifiedModelsPersistenceTest {
         assertNull(after.getLastDonationsReceived());
         assertNull(after.getLastBuilderBaseTrophiesChanged());
         assertNull(after.getLastTownHallUpgrade());
-        assertEquals(1, players.count());
-        assertEventTypes("#A", PlayerEventType.JOINED);
     }
 
     @Test
@@ -192,17 +170,11 @@ class UnifiedModelsPersistenceTest {
         assertEquals(before.getLastActivity(), left.getLastActivity());
         assertEquals(100, left.getTotalDonations());
         assertEquals(40, left.getTotalDonationsReceived());
-        assertEquals(2, players.count());
-        assertEventTypes("#A", PlayerEventType.JOINED, PlayerEventType.LEFT);
-        Instant leftDetectedAt = playerEvents("#A").get(1).getDetectedAt();
-        assertNotNull(leftDetectedAt);
 
         synchronize();
 
         assertFalse(member("#A").isInClan());
         assertEquals(1, members.count());
-        assertEquals(2, players.count());
-        assertEquals(leftDetectedAt, playerEvents("#A").get(1).getDetectedAt());
     }
 
     @Test
@@ -221,9 +193,8 @@ class UnifiedModelsPersistenceTest {
                        m.builder_base_league_id, m.builder_base_league_name,
                        m.league_tier_id, m.league_tier_name, m.clan_rank,
                        m.donations, m.donations_received, m.total_donations,
-                       m.total_donations_received, m.last_activity, m.joined_at,
-                       p.id as event_id, p.type, p.detected_at
-                from members m join players p on p.tag = m.tag
+                       m.total_donations_received, m.last_activity, m.joined_at
+                from members m
                 where m.tag = ?
                 """, "#A");
 
@@ -233,15 +204,12 @@ class UnifiedModelsPersistenceTest {
         assertEquals(BUILDER_BASE_LEAGUE.name(), row.get("builder_base_league_name"));
         assertEquals(LEAGUE_TIER.name(), row.get("league_tier_name"));
         assertEquals(CLAN_RANK, ((Number) row.get("clan_rank")).intValue());
-        assertEquals(PlayerEventType.JOINED.name(), row.get("type"));
-        assertNotNull(row.get("detected_at"));
     }
 
     @Test
     void failedSynchronizationRollsBackMembersAndPlayerEvents() {
         synchronize(snapshot("#A", 100, 40), snapshot("#B", 20, 10));
         Long memberId = member("#A").getId();
-        long eventCount = players.count();
         client.response = new MembersResponse(List.of(
                 snapshot("#A", 150, 60),
                 new MemberResponse(
@@ -257,16 +225,11 @@ class UnifiedModelsPersistenceTest {
         assertTrue(members.existsByTag("#B"));
         assertTrue(member("#B").isInClan());
         assertFalse(members.existsByTag("#C"));
-        assertEquals(eventCount, players.count());
-        assertEventTypes("#A", PlayerEventType.JOINED);
-        assertEventTypes("#B", PlayerEventType.JOINED);
-        assertTrue(playerEvents("#C").isEmpty());
     }
 
     @Test
     void schedulerContinuesWarSynchronizationAfterMemberFailure() {
         synchronize(snapshot("#A", 100, 40), snapshot("#B", 20, 10));
-        long eventCount = players.count();
         int warSyncCalls = wars.getSyncCalls();
         int warFinishCalls = wars.getFinishCalls();
         client.response = new MembersResponse(List.of(
@@ -285,38 +248,12 @@ class UnifiedModelsPersistenceTest {
         assertTrue(members.existsByTag("#B"));
         assertTrue(member("#B").isInClan());
         assertFalse(members.existsByTag("#C"));
-        assertEquals(eventCount, players.count());
-        assertEventTypes("#A", PlayerEventType.JOINED);
-        assertEventTypes("#B", PlayerEventType.JOINED);
-        assertTrue(playerEvents("#C").isEmpty());
     }
 
-    @Test
-    void rejoiningCreatesAnotherJoinedEventWithTheCurrentName() {
-        synchronize(snapshot("#A", 100, 40));
-        synchronize();
-
-        synchronize(new MemberResponse(
-                "#A", "New name", "member", 15, 200, 5, 1, 3000,
-                BUILDER_BASE_LEAGUE, LEAGUE_TIER, CLAN_RANK));
-
-        List<PlayerEvent> events = playerEvents("#A");
-        assertEquals(3, events.size());
-        assertEquals(
-                List.of(
-                        PlayerEventType.JOINED,
-                        PlayerEventType.LEFT,
-                        PlayerEventType.JOINED),
-                events.stream().map(PlayerEvent::getType).toList());
-        assertEquals("New name", events.get(2).getName());
-        assertEquals("New name", member("#A").getName());
-        assertFalse(events.get(2).getDetectedAt().isBefore(events.get(1).getDetectedAt()));
-    }
 
     @Test
     void warFailureDoesNotRollBackMembersAndPlayerEvents() {
         synchronize(snapshot("#A", 100, 40), snapshot("#B", 20, 10));
-        long eventCount = players.count();
         int warSyncCalls = wars.getSyncCalls();
         int warFinishCalls = wars.getFinishCalls();
         client.response = new MembersResponse(List.of(
@@ -337,10 +274,6 @@ class UnifiedModelsPersistenceTest {
         assertEquals(60, member("#A").getTotalDonationsReceived());
         assertFalse(member("#B").isInClan());
         assertTrue(members.existsByTag("#C"));
-        assertEquals(eventCount + 2, players.count());
-        assertEventTypes("#A", PlayerEventType.JOINED);
-        assertEventTypes("#B", PlayerEventType.JOINED, PlayerEventType.LEFT);
-        assertEventTypes("#C", PlayerEventType.JOINED);
     }
 
     @Test
@@ -352,7 +285,6 @@ class UnifiedModelsPersistenceTest {
         assertEquals(1, wars.getSyncCalls());
         assertEquals(1, wars.getFinishCalls());
         assertEquals(100, member("#A").getTotalDonations());
-        assertEventTypes("#A", PlayerEventType.JOINED);
 
         wars.failFinishingWith(null);
         assertDoesNotThrow(() -> synchronize(snapshot("#A", 150, 60)));
@@ -360,7 +292,6 @@ class UnifiedModelsPersistenceTest {
         assertEquals(2, wars.getSyncCalls());
         assertEquals(2, wars.getFinishCalls());
         assertEquals(150, member("#A").getTotalDonations());
-        assertEventTypes("#A", PlayerEventType.JOINED);
     }
 
     @Test
@@ -381,8 +312,6 @@ class UnifiedModelsPersistenceTest {
         assertEquals(before.getLastActivity(), after.getLastActivity());
         assertEquals(before.getLastDonation(), after.getLastDonation());
         assertEquals(before.getLastDonationsReceived(), after.getLastDonationsReceived());
-        assertEquals(1, players.count());
-        assertEventTypes("#A", PlayerEventType.JOINED);
     }
 
     @Test
@@ -404,7 +333,6 @@ class UnifiedModelsPersistenceTest {
         assertNull(after.getLastDonation());
         assertNull(after.getLastDonationsReceived());
         assertNull(after.getLastBuilderBaseTrophiesChanged());
-        assertEventTypes("#A", PlayerEventType.JOINED);
 
         synchronize(upgraded);
         assertEquals(after.getLastTownHallUpgrade(), member("#A").getLastTownHallUpgrade());
@@ -421,7 +349,6 @@ class UnifiedModelsPersistenceTest {
         Member before = member("#A");
         synchronize();
         synchronize();
-        assertEventTypes("#A", PlayerEventType.JOINED, PlayerEventType.LEFT);
 
         MemberResponse returned = new MemberResponse(
                 "#A", "Returned player", "elder", 17, 202, donations, received, 3200,
@@ -446,7 +373,6 @@ class UnifiedModelsPersistenceTest {
         assertEquals(before.getLastTownHallUpgrade(), rejoined.getLastTownHallUpgrade());
         assertFalse(rejoined.getJoinedAt().isBefore(before.getJoinedAt()));
         assertEquals(rejoined.getJoinedAt(), rejoined.getLastActivity());
-        assertEventTypes("#A", PlayerEventType.JOINED, PlayerEventType.LEFT, PlayerEventType.JOINED);
 
         synchronize(returned);
 
@@ -455,7 +381,6 @@ class UnifiedModelsPersistenceTest {
         assertEquals(60, unchanged.getTotalDonationsReceived());
         assertEquals(rejoined.getJoinedAt(), unchanged.getJoinedAt());
         assertEquals(rejoined.getLastActivity(), unchanged.getLastActivity());
-        assertEquals(3, players.count());
 
         synchronize(new MemberResponse(
                 returned.tag(), returned.name(), returned.role(), returned.townHallLevel(),
@@ -471,7 +396,6 @@ class UnifiedModelsPersistenceTest {
         assertEquals(updated.getLastActivity(), updated.getLastDonationsReceived());
         assertEquals(1, members.count());
         assertEquals(1, members.findAllByInClanTrue().size());
-        assertEquals(3, players.count());
     }
 
     @Test
@@ -498,14 +422,11 @@ class UnifiedModelsPersistenceTest {
         assertEquals(40, after.getTotalDonationsReceived());
         assertFalse(members.existsByTag("#C"));
         assertTrue(members.findAllByInClanTrue().isEmpty());
-        assertEquals(2, players.count());
-        assertEventTypes("#A", PlayerEventType.JOINED, PlayerEventType.LEFT);
 
         synchronize(snapshot("#A", 200, 90));
         assertTrue(member("#A").isInClan());
         assertEquals(100, member("#A").getTotalDonations());
         assertEquals(40, member("#A").getTotalDonationsReceived());
-        assertEventTypes("#A", PlayerEventType.JOINED, PlayerEventType.LEFT, PlayerEventType.JOINED);
     }
 
     @Test
@@ -554,20 +475,7 @@ class UnifiedModelsPersistenceTest {
         return members.findByTag(tag).orElseThrow();
     }
 
-    private List<PlayerEvent> playerEvents(String tag) {
-        return players.findAll().stream()
-                .filter(player -> player.getTag().equals(tag))
-                .sorted(Comparator.comparing(PlayerEvent::getId))
-                .toList();
-    }
 
-    private void assertEventTypes(String tag, PlayerEventType... expected) {
-        List<PlayerEvent> events = playerEvents(tag);
-        assertEquals(
-                List.of(expected),
-                events.stream().map(PlayerEvent::getType).toList());
-        assertTrue(events.stream().allMatch(event -> event.getDetectedAt() != null));
-    }
 
     private void synchronize(MemberResponse... snapshots) {
         client.response = new MembersResponse(List.of(snapshots));
@@ -643,8 +551,7 @@ class UnifiedModelsPersistenceTest {
     @Configuration
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = {
-            MemberRepository.class,
-            PlayerEventRepository.class
+            MemberRepository.class
     })
     static class PersistenceConfiguration {
         @Bean
@@ -657,7 +564,7 @@ class UnifiedModelsPersistenceTest {
         LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
             var factory = new LocalContainerEntityManagerFactoryBean();
             factory.setDataSource(dataSource);
-            factory.setPackagesToScan(Member.class.getPackageName(), PlayerEvent.class.getPackageName());
+            factory.setPackagesToScan(Member.class.getPackageName());
             factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
             factory.setJpaPropertyMap(Map.of("hibernate.hbm2ddl.auto", "create-drop",
                     "hibernate.jdbc.time_zone", "UTC"));
@@ -679,14 +586,10 @@ class UnifiedModelsPersistenceTest {
             return new MemberService(client, members, new MemberDeltaService());
         }
 
-        @Bean
-        PlayerEventService playerEventService(PlayerEventRepository players) {
-            return new PlayerEventService(players);
-        }
 
         @Bean
-        MemberSyncService memberSyncService(MemberService members, PlayerEventService players) {
-            return new MemberSyncService(members, players);
+        MemberSyncService memberSyncService(MemberService members) {
+            return new MemberSyncService(members);
         }
 
         @Bean
@@ -702,7 +605,7 @@ class UnifiedModelsPersistenceTest {
                     return Optional.empty();
                 }
             };
-            return new Scheduler(memberSyncService, wars, raids);
+            return new Scheduler(memberSyncService, wars, raids, null);
         }
     }
 }

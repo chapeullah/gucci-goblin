@@ -2,7 +2,6 @@ package com.chapeullah.guccigoblin.war;
 
 import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.config.Scheduler;
-import com.chapeullah.guccigoblin.memberdep.service.MemberSyncService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.war.dto.AttackResponse;
@@ -412,17 +411,13 @@ class WarServicePersistenceTest {
     }
 
     private Scheduler scheduler() {
-        var members = new MemberSyncService(null, null) {
-            @Override
-            public void sync() { }
-        };
         var raids = new RaidSeasonService(null, null, null, null) {
             @Override
             public Optional<RaidSeason> syncRaidSeason() {
                 return Optional.empty();
             }
         };
-        return new Scheduler(members, service, raids);
+        return new Scheduler(service, raids, null);
     }
 
     private WarResponse withAdditionalHomeAttacks(List<AttackResponse> added, boolean addParticipant) {

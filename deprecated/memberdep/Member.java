@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 @Entity
-@Table(name = "members")
+@Table(name = "membersdep")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {

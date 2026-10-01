@@ -8,7 +8,11 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Entity
-@Table(name = "player_house_elements")
+@Table(
+        name = "player_house_elements",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_player_house_elements_player_element",
+                columnNames = {"player_tag", "element_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HouseElement {
