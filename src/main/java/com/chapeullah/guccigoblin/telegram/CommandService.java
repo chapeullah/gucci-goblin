@@ -12,6 +12,7 @@ import com.chapeullah.guccigoblin.war.repository.WarParticipantRepository;
 import com.chapeullah.guccigoblin.war.repository.WarRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@DependsOn("environmentVariablesValidator")
 public class CommandService {
 
     private final WarRepository warRepository;
@@ -31,7 +33,7 @@ public class CommandService {
     private final RaidSeasonRepository raidSeasonRepository;
     private final RaidSeasonParticipantRepository raidSeasonParticipantRepository;
 
-    @Value("${coc.clanTag}")
+    @Value("${coc.clan-tag}")
     private String clanTag;
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER =

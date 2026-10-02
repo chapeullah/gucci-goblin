@@ -1,6 +1,7 @@
 coc:
-  apiToken: ${COC_API_TOKEN}
-  clanTag: ${CLAN_TAG}
+  base-url: ${COC_API_BASE_URL}
+  api-token: ${COC_API_TOKEN}
+  clan-tag: ${COC_CLAN_TAG}
 
 telegram:
   bot:
@@ -30,3 +31,7 @@ spring:
 
   main:
     web-application-type: none
+
+logging:
+  level:
+    com.chapeullah.guccigoblin: DEBUG

@@ -46,7 +46,7 @@ class RaidCommandsTest {
     static void startPersistence() {
         context = new AnnotationConfigApplicationContext();
         context.getEnvironment().getPropertySources().addFirst(
-                new MapPropertySource("raid-commands-test", Map.of("coc.clanTag", CLAN_TAG)));
+                new MapPropertySource("raid-commands-test", Map.of("coc.clan-tag", CLAN_TAG)));
         context.register(PersistenceConfiguration.class);
         context.refresh();
     }

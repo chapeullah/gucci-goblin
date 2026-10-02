@@ -52,7 +52,7 @@ public class Clan {
             nullable = true)
     private Integer clanBuilderBasePoints;
 
-    @Column(name = "clan_level",
+    @Column(name = "clan_capital_points",
             nullable = false)
     private Integer clanCapitalPoints;
 

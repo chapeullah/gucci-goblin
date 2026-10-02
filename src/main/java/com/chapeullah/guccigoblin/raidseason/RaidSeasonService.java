@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -25,6 +26,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@DependsOn("environmentVariablesValidator")
 public class RaidSeasonService {
 
     private static final DateTimeFormatter RAID_TIME_FORMAT =
@@ -35,7 +37,7 @@ public class RaidSeasonService {
     private final RaidSeasonParticipantRepository raidSeasonParticipantRepository;
     private final RaidSeasonAttackRepository raidSeasonAttackRepository;
 
-    @Value("${coc.clanTag}")
+    @Value("${coc.clan-tag}")
     private String clanTag;
 
     @Transactional

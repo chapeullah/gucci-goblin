@@ -3,6 +3,7 @@ package com.chapeullah.guccigoblin.telegram;
 import com.chapeullah.guccigoblin.telegram.dto.ApiResponse;
 import com.chapeullah.guccigoblin.telegram.dto.Update;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@DependsOn("environmentVariablesValidator")
 public class TelegramClient {
 
     private final RestClient restClient;
