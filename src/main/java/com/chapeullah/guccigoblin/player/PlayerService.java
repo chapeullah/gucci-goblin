@@ -34,25 +34,65 @@ public class PlayerService {
 
     @Transactional
     public void syncPlayer(String playerTag) {
+        PlayerResponse response = client.getPlayer(playerTag);
         Player player = playerRepository
                 .findById(playerTag)
                 .orElse(null);
         if (player == null) {
-            createPlayer(playerTag);
+            createPlayer(response);
             return;
         }
-        updatePlayer(player);
+        updatePlayer(player, response);
     }
 
     @Transactional
-    private void updatePlayer(Player player) {
+    private void updatePlayer(Player player, PlayerResponse response) {
+        if (!player.getTag().equals(response.tag())) {
+            throw new IllegalStateException("Player tag mismatch");
+        }
+
+        LeagueTier leagueTier = null;
+        if (response.leagueTier() != null) {
+            leagueTier = leagueTierService.syncLeagueTiers()
+                    .stream()
+                    .filter(item -> item.getId().equals(response.leagueTier().id()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new IllegalStateException("League tier not found"));
+        }
+
+        BuilderBaseLeague builderBaseLeague = null;
+        if (response.builderBaseLeague() != null) {
+            builderBaseLeague = builderBaseLeagueService.syncBuilderBaseLeagues()
+                    .stream()
+                    .filter(item ->
+                            item.getId().equals(response.builderBaseLeague().id()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new IllegalStateException("Builder base league not found"));
+        }
+
+        Player updated = toPlayer(
+                response,
+                player.getClan(),
+                leagueTier,
+                builderBaseLeague,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of());
+
+        player.updateFrom(updated);
+
+
 
     }
 
     @Transactional
-    private void createPlayer(String playerTag) {
-        PlayerResponse response = client.getPlayer(playerTag);
-
+    private void createPlayer(PlayerResponse response) {
         Clan clan = null;
 
         LeagueTier leagueTier = null;

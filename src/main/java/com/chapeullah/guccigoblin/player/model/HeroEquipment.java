@@ -57,4 +57,10 @@ public class HeroEquipment {
         this.village = village;
     }
 
+    public void updateFrom(HeroEquipment source) {
+        this.level = source.level;
+        this.maxLevel = source.maxLevel;
+        this.village = source.village;
+    }
+
 }

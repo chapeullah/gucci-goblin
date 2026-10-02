@@ -80,4 +80,14 @@ public class Achievement {
         this.completionInfo = completionInfo;
         this.village = village;
     }
+
+    public void updateFrom(Achievement source) {
+        this.stars = source.stars;
+        this.value = source.value;
+        this.target = source.target;
+        this.info = source.info;
+        this.completionInfo = source.completionInfo;
+    }
+
+
 }

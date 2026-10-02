@@ -49,4 +49,8 @@ public class HouseElement {
         this.elementType = elementType;
     }
 
+    public void updateFrom(HouseElement source) {
+        this.elementType = source.elementType;
+    }
+
 }

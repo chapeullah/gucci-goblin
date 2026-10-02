@@ -68,4 +68,10 @@ public class Hero {
         this.heroEquipmentLinks = heroEquipmentLinks;
         this.village = village;
     }
+
+    public void updateFrom(Hero source) {
+        this.level = source.level;
+        this.maxLevel = source.maxLevel;
+    }
+
 }

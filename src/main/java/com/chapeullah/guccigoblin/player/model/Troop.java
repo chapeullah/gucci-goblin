@@ -54,4 +54,9 @@ public class Troop {
         this.village = village;
     }
 
+    public void updateFrom(Troop source) {
+        this.level = source.level;
+        this.maxLevel = source.maxLevel;
+    }
+
 }

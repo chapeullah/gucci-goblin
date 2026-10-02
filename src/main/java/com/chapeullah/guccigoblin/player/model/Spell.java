@@ -53,4 +53,9 @@ public class Spell {
         this.village = village;
     }
 
+    public void updateFrom(Spell source) {
+        this.level = source.level;
+        this.maxLevel = source.maxLevel;
+    }
+
 }

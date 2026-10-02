@@ -310,4 +310,37 @@ public class Player {
         this.spells = spells;
     }
 
+    public void updateFrom(Player source) {
+        if (!this.tag.equals(source.tag)) {
+            throw new IllegalArgumentException("Player tag mismatch");
+        }
+
+        this.name = source.name;
+        this.townHallLevel = source.townHallLevel;
+        this.townHallWeaponLevel = source.townHallWeaponLevel;
+        this.expLevel = source.expLevel;
+        this.trophies = source.trophies;
+        this.bestTrophies = source.bestTrophies;
+        this.warStars = source.warStars;
+        this.attackWins = source.attackWins;
+        this.defenseWins = source.defenseWins;
+        this.builderHallLevel = source.builderHallLevel;
+        this.builderBaseTrophies = source.builderBaseTrophies;
+        this.bestBuilderBaseTrophies = source.bestBuilderBaseTrophies;
+        this.role = source.role;
+        this.warPreference = source.warPreference;
+        this.donations = source.donations;
+        this.donationsReceived = source.donationsReceived;
+        this.clanCapitalContributions = source.clanCapitalContributions;
+
+        this.clan = source.clan;
+        this.leagueTier = source.leagueTier;
+        this.builderBaseLeague = source.builderBaseLeague;
+
+        this.currentLeagueGroupTag = source.currentLeagueGroupTag;
+        this.currentLeagueSeasonId = source.currentLeagueSeasonId;
+        this.previousLeagueGroupTag = source.previousLeagueGroupTag;
+        this.previousLeagueSeasonId = source.previousLeagueSeasonId;
+    }
+
 }
