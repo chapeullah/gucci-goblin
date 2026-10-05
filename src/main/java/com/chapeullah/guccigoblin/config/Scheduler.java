@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.config;
 
-import com.chapeullah.guccigoblin.player.PlayerService;
+import com.chapeullah.guccigoblin.player.service.PlayerService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.war.WarService;
 import lombok.RequiredArgsConstructor;

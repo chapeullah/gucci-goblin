@@ -6,7 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-@Entity @Table(name = "achievements")
+@Entity @Table(
+        name = "achievements",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_achievements_player_tag_name_village",
+                columnNames = {"player_tag", "name", "village"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Achievement {
@@ -26,19 +30,19 @@ public class Achievement {
     private String name;
 
     @Column(name = "stars",
-            nullable = false)
+            nullable = true)
     private Integer stars;
 
     @Column(name = "value",
-            nullable = false)
+            nullable = true)
     private Integer value;
 
     @Column(name = "target",
-            nullable = false)
+            nullable = true)
     private Integer target;
 
     @Column(name = "info",
-            nullable = false)
+            nullable = true)
     private String info;
 
     @Column(name = "completion_info",
@@ -46,7 +50,7 @@ public class Achievement {
     private String completionInfo;
 
     @Column(name = "village",
-            nullable = false)
+            nullable = true)
     private String village;
 
     public Achievement(
@@ -70,6 +74,9 @@ public class Achievement {
         if (completionInfo != null && completionInfo.isBlank()) {
             throw new IllegalArgumentException("Achievement completion info must not be blank");
         }
+        if (village != null && village.isBlank()) {
+            throw new IllegalArgumentException("Achievement village must not be blank");
+        }
 
         this.player = player;
         this.name = name;
@@ -81,13 +88,13 @@ public class Achievement {
         this.village = village;
     }
 
-    public void updateFrom(Achievement source) {
-        this.stars = source.stars;
-        this.value = source.value;
-        this.target = source.target;
-        this.info = source.info;
-        this.completionInfo = source.completionInfo;
+    public void updateFrom(Achievement achievement) {
+        this.stars =            achievement.stars;
+        this.value =            achievement.value;
+        this.target =           achievement.target;
+        this.info =             achievement.info;
+        this.completionInfo =   achievement.completionInfo;
+        this.village =          achievement.village;
     }
-
 
 }
