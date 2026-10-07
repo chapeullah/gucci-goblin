@@ -14,7 +14,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
-    public List<Member> upsertMembers(
+    public List<Member> syncMembers(
             @NonNull Clan clan,
             @NonNull List<ClanMemberResponse> clanMemberResponses) {
 
