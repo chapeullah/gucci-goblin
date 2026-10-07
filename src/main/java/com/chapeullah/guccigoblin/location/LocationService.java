@@ -20,14 +20,14 @@ public class LocationService {
     private final LocationRepository locationRepository;
 
     @Transactional
-    public void syncLocations() {
+    public List<Location> syncLocations() {
         LocationsResponse response = client.getLocations();
         List<Location> locations = response
                 .items()
                 .stream()
                 .map(this::toLocation)
                 .toList();
-        locationRepository.saveAll(locations);
+        return locationRepository.saveAll(locations);
     }
 
     private Location toLocation(LocationResponse response) {

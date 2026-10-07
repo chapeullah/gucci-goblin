@@ -1,9 +1,9 @@
 package com.chapeullah.guccigoblin.war;
 
 import com.chapeullah.guccigoblin.ClashOfClansClient;
-import com.chapeullah.guccigoblin.war.dto.AttackResponse;
-import com.chapeullah.guccigoblin.war.dto.ClanResponse;
-import com.chapeullah.guccigoblin.war.dto.MemberResponse;
+import com.chapeullah.guccigoblin.war.dto.WarAttackResponse;
+import com.chapeullah.guccigoblin.war.dto.WarClanResponse;
+import com.chapeullah.guccigoblin.war.dto.WarMemberResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import com.chapeullah.guccigoblin.war.model.War;
 import com.chapeullah.guccigoblin.war.model.WarAttack;
@@ -12,6 +12,7 @@ import com.chapeullah.guccigoblin.war.repository.WarAttackRepository;
 import com.chapeullah.guccigoblin.war.repository.WarParticipantRepository;
 import com.chapeullah.guccigoblin.war.repository.WarRepository;
 import jakarta.transaction.Transactional;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,8 +39,8 @@ public class WarService {
 
 
     @Transactional
-    public Optional<War> syncWar() {
-        WarResponse response = client.getCurrentWar();
+    public Optional<War> syncWar(@NonNull String clanTag) {
+        WarResponse response = client.getCurrentWar(clanTag);
 
         if (response == null) {
             throw new IllegalStateException("Empty current war response");
@@ -67,8 +68,8 @@ public class WarService {
     }
 
     private War saveOrUpdateWar(WarResponse response) {
-        ClanResponse clanResponse = response.clan();
-        ClanResponse opponent = response.opponent();
+        WarClanResponse warClanResponse = response.clan();
+        WarClanResponse opponent = response.opponent();
 
         Instant startTime = Instant.from(
                 WAR_TIME_FORMAT.parse(response.startTime()));
@@ -77,17 +78,17 @@ public class WarService {
 
         War war = warRepository
                 .findByClanTagAndOpponentTagAndStartTime(
-                        clanResponse.tag(),
+                        warClanResponse.tag(),
                         opponent.tag(),
                         startTime)
                 .orElseGet(War::new);
 
-        war.setClanTag(clanResponse.tag());
-        war.setClanName(clanResponse.name());
-        war.setClanAttacks(clanResponse.attacks());
-        war.setClanStars(clanResponse.stars());
-        war.setClanDestructionPercentage(clanResponse.destructionPercentage());
-        war.setClanLevel(clanResponse.clanLevel());
+        war.setClanTag(warClanResponse.tag());
+        war.setClanName(warClanResponse.name());
+        war.setClanAttacks(warClanResponse.attacks());
+        war.setClanStars(warClanResponse.stars());
+        war.setClanDestructionPercentage(warClanResponse.destructionPercentage());
+        war.setClanLevel(warClanResponse.clanLevel());
 
         war.setOpponentTag(opponent.tag());
         war.setOpponentName(opponent.name());
@@ -105,58 +106,58 @@ public class WarService {
         return war;
     }
 
-    private void saveParticipants(War war, ClanResponse clanResponse) {
-        for (MemberResponse memberResponse : clanResponse.members()) {
+    private void saveParticipants(War war, WarClanResponse warClanResponse) {
+        for (WarMemberResponse warMemberResponse : warClanResponse.members()) {
             if (warParticipantRepository.existsByWarAndPlayerTag(
-                    war, memberResponse.tag())) {
+                    war, warMemberResponse.tag())) {
                 continue;
             }
             WarParticipant participant = new WarParticipant(
                     war,
-                    memberResponse.tag(),
-                    memberResponse.name(),
-                    clanResponse.tag(),
-                    memberResponse.townhallLevel(),
-                    memberResponse.mapPosition());
+                    warMemberResponse.tag(),
+                    warMemberResponse.name(),
+                    warClanResponse.tag(),
+                    warMemberResponse.townhallLevel(),
+                    warMemberResponse.mapPosition());
             warParticipantRepository.save(participant);
         }
     }
 
     private void saveAttacks(War war, WarResponse response) {
-        Map<String, MemberResponse> membersByTag = new HashMap<>();
-        for (MemberResponse memberResponse : response.clan().members())
-            membersByTag.put(memberResponse.tag(), memberResponse);
-        for (MemberResponse memberResponse : response.opponent().members())
-            membersByTag.put(memberResponse.tag(), memberResponse);
-        for (MemberResponse memberResponse : membersByTag.values()) {
-            for (AttackResponse attackResponse : memberResponse.attacks()) {
+        Map<String, WarMemberResponse> membersByTag = new HashMap<>();
+        for (WarMemberResponse warMemberResponse : response.clan().members())
+            membersByTag.put(warMemberResponse.tag(), warMemberResponse);
+        for (WarMemberResponse warMemberResponse : response.opponent().members())
+            membersByTag.put(warMemberResponse.tag(), warMemberResponse);
+        for (WarMemberResponse warMemberResponse : membersByTag.values()) {
+            for (WarAttackResponse warAttackResponse : warMemberResponse.attacks()) {
                 if (warAttackRepository
-                        .existsByWarAndAttackOrder(war, attackResponse.order())) {
+                        .existsByWarAndAttackOrder(war, warAttackResponse.order())) {
                     continue;
                 }
 
-                MemberResponse attacker =
-                        membersByTag.get(attackResponse.attackerTag());
-                MemberResponse defender =
-                        membersByTag.get(attackResponse.defenderTag());
+                WarMemberResponse attacker =
+                        membersByTag.get(warAttackResponse.attackerTag());
+                WarMemberResponse defender =
+                        membersByTag.get(warAttackResponse.defenderTag());
 
                 if (attacker == null || defender == null) {
                     throw new IllegalStateException(
-                            "Participant not found for attack #" + attackResponse.order());
+                            "Participant not found for attack #" + warAttackResponse.order());
                 }
 
                 WarAttack warAttack = new WarAttack(
                         war,
-                        attackResponse.attackerTag(),
+                        warAttackResponse.attackerTag(),
                         attacker.name(),
-                        attackResponse.defenderTag(),
+                        warAttackResponse.defenderTag(),
                         defender.name(),
                         attacker.townhallLevel(),
                         defender.townhallLevel(),
-                        attackResponse.stars(),
-                        attackResponse.destructionPercentage(),
-                        attackResponse.order(),
-                        attackResponse.duration());
+                        warAttackResponse.stars(),
+                        warAttackResponse.destructionPercentage(),
+                        warAttackResponse.order(),
+                        warAttackResponse.duration());
                 warAttackRepository.save(warAttack);
             }
         }

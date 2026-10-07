@@ -3,15 +3,16 @@ package com.chapeullah.guccigoblin.player.service;
 import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeagueService;
-import com.chapeullah.guccigoblin.clan.Clan;
+import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.label.dto.LabelResponse;
 import com.chapeullah.guccigoblin.label.player.PlayerLabelService;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTierService;
-import com.chapeullah.guccigoblin.player.PlayerRepository;
+import com.chapeullah.guccigoblin.player.repository.PlayerRepository;
 import com.chapeullah.guccigoblin.player.dto.*;
 import com.chapeullah.guccigoblin.player.model.*;
 import jakarta.transaction.Transactional;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,24 +31,21 @@ public class PlayerService {
     private final LeagueTierService leagueTierService;
     private final BuilderBaseLeagueService builderBaseLeagueService;
     private final PlayerLabelService playerLabelService;
-    private final AchievementService achievementService;
-    private final HouseElementService houseElementService;
+    private final PlayerAchievementService playerAchievementService;
+    private final PlayerHouseElementService playerHouseElementService;
+    private final PlayerTroopService playerTroopService;
+    private final PlayerHeroEquipmentService playerHeroEquipmentService;
+    private final PlayerHeroEquipmentLinkService playerHeroEquipmentLinkService;
+    private final PlayerHeroService playerHeroService;
+    private final PlayerSpellService playerSpellService;
 
     @Transactional
-    public Player syncPlayer(String playerTag) {
+    public Player syncPlayer(@NonNull String playerTag) {
         PlayerResponse response = client.getPlayer(playerTag);
-        return playerRepository
-                .findById(playerTag)
-                .map(player -> updatePlayer(player, response))
-                .orElseGet(() -> createPlayer(response));
 
-    }
+        Player existingPlayer = playerRepository.findById(playerTag).orElse(null);
 
-    @Transactional
-    private Player updatePlayer(Player player, PlayerResponse response) {
-        if (!player.getTag().equals(response.tag())) {
-            throw new IllegalStateException("Player tag mismatch");
-        }
+        Clan clan = existingPlayer == null ? null : existingPlayer.getClan(); // TODO ?
 
         LeagueTier leagueTier = null;
         if (response.leagueTier() != null) {
@@ -62,61 +60,12 @@ public class PlayerService {
         if (response.builderBaseLeague() != null) {
             builderBaseLeague = builderBaseLeagueService.syncBuilderBaseLeagues()
                     .stream()
-                    .filter(leagueTierItem -> leagueTierItem.getId().equals(response.builderBaseLeague().id()))
+                    .filter(item -> item.getId().equals(response.builderBaseLeague().id()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Builder base league not found"));
         }
 
-        Player updatedPlayer = toPlayer(
-                response,
-                player.getClan(),
-                leagueTier,
-                builderBaseLeague,
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of());
-
-        player.updateFrom(updatedPlayer);
-
-        achievementService.syncPlayerAchievements(player, response.achievements());
-
-
-
-        Player savedPlayer = playerRepository.save(player);
-        log.info("Player updated: {} ({})",
-                savedPlayer.getName(), savedPlayer.getTag());
-        return savedPlayer;
-    }
-
-    private record AchievementKey(String name, String village) {}
-
-    @Transactional
-    private Player createPlayer(PlayerResponse response) {
-        Clan clan = null;
-
-        LeagueTier leagueTier = null;
-        if (response.leagueTier() != null) {
-            leagueTier = leagueTierService.syncLeagueTiers()
-                    .stream()
-                    .filter(leagueTierItem -> leagueTierItem.getId().equals(response.leagueTier().id()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("League tier not found"));
-        }
-
-        BuilderBaseLeague builderBaseLeague = null;
-        if (response.builderBaseLeague() != null) {
-            builderBaseLeague = builderBaseLeagueService.syncBuilderBaseLeagues()
-                    .stream()
-                    .filter(bbl -> bbl.getId().equals(response.builderBaseLeague().id()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Builder base league not found"));
-        }
-
-        Player player = toPlayer(
+        Player incomingPlayer = toPlayer(
                 response,
                 clan,
                 leagueTier,
@@ -129,51 +78,118 @@ public class PlayerService {
                 new ArrayList<>(),
                 new ArrayList<>());
 
-        List<LabelResponse> labelsResponse = response.labels();
-        if (labelsResponse != null) {
-            List<PlayerLabelLink> playerLabels = playerLabelService.syncPlayerLabels()
-                    .stream()
-                    .filter(label -> labelsResponse.stream()
-                            .anyMatch(labelResponse ->
-                                    labelResponse.id().equals(label.getId())))
-                    .map(label -> new PlayerLabelLink(player, label))
-                    .toList();
-
-            player.getLabelLinks().addAll(playerLabels);
+        Player player;
+        if (existingPlayer == null) {
+            player = playerRepository.save(incomingPlayer);
+        } else {
+            existingPlayer.updateFrom(incomingPlayer);
+            player = existingPlayer;
         }
 
-        player.getTroops().addAll(toTroops(player, response.troops()));
+        List<PlayerAchievement> playerAchievements = playerAchievementService.syncPlayerAchievements(
+                player,
+                response.achievements() == null ? List.of() : response.achievements());
 
-        player.getHeroEquipments()
-                .addAll(toHeroEquipments(player, response.heroEquipments()));
+        player.getPlayerAchievements().clear();
+        player.getPlayerAchievements().addAll(playerAchievements);
 
-        player.getHeroes()
-                .addAll(toHeroes(player, response.heroes()));
-
-        player.getSpells()
-                .addAll(toSpells(player, response.spells()));
-
-        Player savedPlayer = playerRepository.save(player);
-
-        savedPlayer.getAchievements().addAll(
-                achievementService.syncPlayerAchievements(
-                        savedPlayer, response.achievements() == null ? List.of() : response.achievements()));
-
-        List<HouseElementResponse> elements =
+        List<PlayerHouseElementResponse> elements =
                 response.playerHouse() == null || response.playerHouse().elements() == null
                         ? List.of()
                         : response.playerHouse().elements();
-        savedPlayer.getHouseElements().addAll(
-                houseElementService.syncPlayerHouseElements(
-                        savedPlayer, elements));
 
-        // LABEL LINKS
+        List<PlayerHouseElement> playerHouseElements =
+                playerHouseElementService.syncPlayerHouseElements(player, elements);
 
-        savedPlayer.getTroops().addAll(
-                achievementService.syncPlayerAchievements(
-                        savedPlayer, response.achievements() == null ? List.of() : response.achievements()));
+        player.getPlayerHouseElements().clear();
+        player.getPlayerHouseElements().addAll(playerHouseElements);
 
-        log.info("Player created: {} ({})", savedPlayer.getName(), savedPlayer.getTag());
+        List<LabelResponse> labelsResponse =
+                response.labels() == null ? List.of() : response.labels();
+
+        Set<Integer> labelIds = new HashSet<>();
+        labelsResponse.forEach(label -> labelIds.add(label.id()));
+
+        player.getLabelLinks().removeIf(
+                link -> !labelIds.contains(link.getPlayerLabel().getId()));
+
+        if (!labelsResponse.isEmpty()) {
+            playerLabelService.syncPlayerLabels().stream()
+                    .filter(label -> labelIds.contains(label.getId()))
+                    .filter(label -> player.getLabelLinks().stream()
+                            .noneMatch(link ->
+                                    link.getPlayerLabel().getId().equals(label.getId())))
+                    .forEach(label ->
+                            player.getLabelLinks().add(new PlayerLabelLink(player, label)));
+        }
+
+        List<PlayerTroop> playerTroops = playerTroopService.syncTroops(
+                player,
+                response.troops() == null ? List.of() : response.troops());
+
+        player.getPlayerTroops().clear();
+        player.getPlayerTroops().addAll(playerTroops);
+
+        List<PlayerHeroEquipmentResponse> equipmentResponse =
+                response.heroEquipments() == null ? List.of() : response.heroEquipments();
+
+        Set<String> equipmentNames = new HashSet<>();
+        equipmentResponse.forEach(equipment -> equipmentNames.add(equipment.name()));
+
+        boolean linksRemoved = false;
+        for (PlayerHero playerHero : player.getPlayerHeroes()) {
+            linksRemoved |= playerHero.getPlayerHeroEquipmentLinks().removeIf(
+                    link -> !equipmentNames.contains(link.getPlayerHeroEquipment().getName()));
+        }
+
+        if (linksRemoved) {
+            playerRepository.flush();
+        }
+
+        List<PlayerHeroEquipment> playerHeroEquipments =
+                playerHeroEquipmentService.syncHeroEquipments(player, equipmentResponse);
+
+        player.getPlayerHeroEquipments().clear();
+        player.getPlayerHeroEquipments().addAll(playerHeroEquipments);
+
+        List<PlayerHeroResponse> heroesResponse =
+                response.heroes() == null ? List.of() : response.heroes();
+
+        List<PlayerHero> playerHeroes = playerHeroService.syncHeroes(player, heroesResponse);
+
+        player.getPlayerHeroes().clear();
+        player.getPlayerHeroes().addAll(playerHeroes);
+
+        for (PlayerHero playerHero : player.getPlayerHeroes()) {
+            PlayerHeroResponse playerHeroResponse = heroesResponse.stream()
+                    .filter(item -> item.name().equals(playerHero.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Hero response not found: " + playerHero.getName()));
+
+            List<PlayerHeroEquipmentResponse> equipment =
+                    playerHeroResponse.heroEquipmentsResponse() == null
+                            ? List.of()
+                            : playerHeroResponse.heroEquipmentsResponse();
+
+            List<PlayerHeroEquipmentLink> links =
+                    playerHeroEquipmentLinkService.syncHeroEquipmentLinks(playerHero, equipment);
+
+            playerHero.getPlayerHeroEquipmentLinks().clear();
+            playerHero.getPlayerHeroEquipmentLinks().addAll(links);
+        }
+
+        List<PlayerSpell> playerSpells = playerSpellService.syncPlayerSpells(
+                player,
+                response.spells() == null ? List.of() : response.spells());
+
+        player.getPlayerSpells().clear();
+        player.getPlayerSpells().addAll(playerSpells);
+
+        Player savedPlayer = playerRepository.save(player);
+
+        log.info("Player synchronized: {} ({})",
+                savedPlayer.getName(), savedPlayer.getTag());
 
         return savedPlayer;
     }
@@ -183,13 +199,13 @@ public class PlayerService {
             Clan clan,
             LeagueTier leagueTier,
             BuilderBaseLeague builderBaseLeague,
-            List<Achievement> achievements,
-            List<HouseElement> houseElements,
+            List<PlayerAchievement> playerAchievements,
+            List<PlayerHouseElement> playerHouseElements,
             List<PlayerLabelLink> playerLabelLinks,
-            List<Troop> troops,
-            List<Hero> heroes,
-            List<HeroEquipment> heroEquipments,
-            List<Spell> spells) {
+            List<PlayerTroop> playerTroops,
+            List<PlayerHero> playerHeroes,
+            List<PlayerHeroEquipment> playerHeroEquipments,
+            List<PlayerSpell> playerSpells) {
         return new Player(
                 response.tag(),
                 response.name(),
@@ -216,117 +232,13 @@ public class PlayerService {
                 response.currentLeagueSeasonId(),
                 response.previousLeagueGroupTag(),
                 response.previousLeagueSeasonId(),
-                achievements,
-                houseElements,
+                playerAchievements,
+                playerHouseElements,
                 playerLabelLinks,
-                troops,
-                heroes,
-                heroEquipments,
-                spells);
-    }
-
-    private List<Troop> toTroops(Player player, List<TroopResponse> response) {
-        if (response == null) {
-            return List.of();
-        }
-        return response
-                .stream()
-                .map(troop -> toTroop(player, troop))
-                .toList();
-    }
-
-    private Troop toTroop(Player player, TroopResponse response) {
-        return new Troop(
-                player,
-                response.name(),
-                response.level(),
-                response.maxLevel(),
-                response.village());
-    }
-
-    private List<Hero> toHeroes(Player player, List<HeroResponse> response) {
-        if (response == null) {
-            return List.of();
-        }
-        return response
-                .stream()
-                .map(hero -> toHero(player, hero))
-                .toList();
-    }
-
-    private Hero toHero(Player player, HeroResponse response) {
-        Hero hero = new Hero(
-                player,
-                response.name(),
-                response.level(),
-                response.maxLevel(),
-                new ArrayList<>(),
-                response.village());
-        hero.getHeroEquipmentLinks()
-                .addAll(toHeroEquipmentLinks(
-                        hero, response.heroEquipmentsResponse()));
-        return hero;
-    }
-
-    private List<HeroEquipmentLink> toHeroEquipmentLinks(
-            Hero hero, List<HeroEquipmentResponse> response) {
-        if (response == null) {
-            return List.of();
-        }
-        return response
-                .stream()
-                .map(heroEquipmentResponse -> {
-                    HeroEquipment heroEquipment = hero
-                            .getPlayer()
-                            .getHeroEquipments()
-                            .stream()
-                            .filter(item -> item.getName().equals(heroEquipmentResponse.name()))
-                            .findFirst()
-                            .orElseThrow(() -> new IllegalStateException("Hero equipment not found" + heroEquipmentResponse.name()));
-                    return new HeroEquipmentLink(hero, heroEquipment);
-                })
-                .toList();
-    }
-
-    private List<HeroEquipment> toHeroEquipments(
-            Player player, List<HeroEquipmentResponse> response) {
-        if (response == null) {
-            return List.of();
-        }
-        return response
-                .stream()
-                .map(heroEquipment -> toHeroEquipment(player, heroEquipment))
-                .toList();
-    }
-
-    private HeroEquipment toHeroEquipment(
-            Player player,
-            HeroEquipmentResponse response) {
-        return new HeroEquipment(
-                player,
-                response.name(),
-                response.level(),
-                response.maxLevel(),
-                response.village());
-    }
-
-    private List<Spell> toSpells(Player player, List<SpellResponse> response) {
-        if (response == null) {
-            return List.of();
-        }
-        return response
-                .stream()
-                .map(spell -> toSpell(player, spell))
-                .toList();
-    }
-
-    private Spell toSpell(Player player, SpellResponse response) {
-        return new Spell(
-                player,
-                response.name(),
-                response.level(),
-                response.maxLevel(),
-                response.village());
+                playerTroops,
+                playerHeroes,
+                playerHeroEquipments,
+                playerSpells);
     }
 
 }

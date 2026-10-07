@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.telegram.command;
 
-import com.chapeullah.guccigoblin.telegram.CommandService;
+import com.chapeullah.guccigoblin.telegram.TelegramCommandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WarsCommand implements BotCommand {
 
-    private final CommandService commandService;
+    private final TelegramCommandService telegramCommandService;
 
     @Override
     public String name() {
@@ -17,7 +17,7 @@ public class WarsCommand implements BotCommand {
 
     @Override
     public String execute(String args) {
-        return commandService.wars();
+        return telegramCommandService.wars();
     }
 
 }

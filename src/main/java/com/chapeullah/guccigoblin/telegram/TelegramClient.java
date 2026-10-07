@@ -1,7 +1,7 @@
 package com.chapeullah.guccigoblin.telegram;
 
-import com.chapeullah.guccigoblin.telegram.dto.ApiResponse;
-import com.chapeullah.guccigoblin.telegram.dto.Update;
+import com.chapeullah.guccigoblin.telegram.dto.TelegramApiResponse;
+import com.chapeullah.guccigoblin.telegram.dto.TelegramUpdate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.ParameterizedTypeReference;
@@ -35,13 +35,13 @@ public class TelegramClient {
                 .build();
     }
 
-    public List<Update> getUpdates(long offset) {
-        ApiResponse<List<Update>> response = restClient.get()
+    public List<TelegramUpdate> getUpdates(long offset) {
+        TelegramApiResponse<List<TelegramUpdate>> response = restClient.get()
                 .uri(builder -> builder
                         .path("/getUpdates")
                         .queryParam("offset", offset)
                         .queryParam("timeout", 25)
-                        .queryParam("allowed_updates", "[\"message\"]")
+                        .queryParam("allowed_updates", "[\"telegramMessage\"]")
                         .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});

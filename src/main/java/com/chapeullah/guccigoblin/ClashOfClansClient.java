@@ -2,6 +2,7 @@ package com.chapeullah.guccigoblin;
 
 import com.chapeullah.guccigoblin.builderbaseleague.dto.BuilderBaseLeaguesResponse;
 import com.chapeullah.guccigoblin.capitalleague.dto.CapitalLeaguesResponse;
+import com.chapeullah.guccigoblin.clan.dto.ClanResponse;
 import com.chapeullah.guccigoblin.label.dto.LabelsResponse;
 import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTiersResponse;
 import com.chapeullah.guccigoblin.location.dto.LocationsResponse;
@@ -30,9 +31,6 @@ public class ClashOfClansClient {
     @Value("${coc.api-token}")
     private String apiToken;
 
-    @Value("${coc.clan-tag}")
-    private String clanTag;
-
     public PlayerResponse getPlayer(@NonNull String playerTag) {
         log.debug("Fetching player: playerTag={}", playerTag);
         var response = rest.get()
@@ -48,8 +46,23 @@ public class ClashOfClansClient {
         return response;
     }
 
+    public ClanResponse getClan(@NonNull String clanTag) {
+        log.debug("Fetching clan: clanTag={}", clanTag);
+        var response = rest.get()
+                .uri("/clans/{clanTag}", clanTag)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
+                .retrieve()
+                .body(ClanResponse.class);
+        if (response == null) {
+            throw new IllegalStateException("Empty response for clan: clanTag=" + clanTag);
+        }
+        log.debug("Received clan: clanTag={}", response.tag());
+        return response;
+    }
 
-    public WarResponse getCurrentWar() {
+
+    public WarResponse getCurrentWar(@NonNull String clanTag) {
         log.debug("Fetching current war: clanTag={}", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}/currentwar", clanTag)
@@ -64,7 +77,7 @@ public class ClashOfClansClient {
         return response;
     }
 
-    public RaidSeasonResponse getCurrentRaid() {
+    public RaidSeasonResponse getCurrentRaid(@NonNull String clanTag) {
         log.debug("Fetching current raid: clanTag={}", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}/capitalraidseasons?limit=1", clanTag)

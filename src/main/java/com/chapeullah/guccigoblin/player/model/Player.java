@@ -1,7 +1,7 @@
 package com.chapeullah.guccigoblin.player.model;
 
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
-import com.chapeullah.guccigoblin.clan.Clan;
+import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -135,14 +135,14 @@ public class Player {
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<Achievement> achievements = new ArrayList<>();
+    private List<PlayerAchievement> playerAchievements = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<HouseElement> houseElements = new ArrayList<>();
+    private List<PlayerHouseElement> playerHouseElements = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
@@ -156,28 +156,28 @@ public class Player {
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<Troop> troops = new ArrayList<>();
+    private List<PlayerTroop> playerTroops = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<Hero> heroes = new ArrayList<>();
+    private List<PlayerHero> playerHeroes = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<HeroEquipment> heroEquipments = new ArrayList<>();
+    private List<PlayerHeroEquipment> playerHeroEquipments = new ArrayList<>();
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
             mappedBy = "player",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<Spell> spells = new ArrayList<>();
+    private List<PlayerSpell> playerSpells = new ArrayList<>();
 
     public Player(
             @NonNull String tag,
@@ -205,13 +205,13 @@ public class Player {
             Integer currentLeagueSeasonId,
             String previousLeagueGroupTag,
             Integer previousLeagueSeasonId,
-            List<Achievement> achievements,
-            List<HouseElement> houseElements,
+            List<PlayerAchievement> playerAchievements,
+            List<PlayerHouseElement> playerHouseElements,
             List<PlayerLabelLink> labelLinks,
-            List<Troop> troops,
-            List<Hero> heroes,
-            List<HeroEquipment> heroEquipments,
-            List<Spell> spells) {
+            List<PlayerTroop> playerTroops,
+            List<PlayerHero> playerHeroes,
+            List<PlayerHeroEquipment> playerHeroEquipments,
+            List<PlayerSpell> playerSpells) {
         if (!tag.matches("^#[A-Z0-9]+$")) {
             throw new IllegalArgumentException("Player tag must start with # followed by at least one uppercase letter or digit. Example: #ABC123");
         }
@@ -301,13 +301,13 @@ public class Player {
         this.previousLeagueGroupTag = previousLeagueGroupTag;
         this.previousLeagueSeasonId = previousLeagueSeasonId;
 
-        this.achievements = achievements;
-        this.houseElements = houseElements;
+        this.playerAchievements = playerAchievements;
+        this.playerHouseElements = playerHouseElements;
         this.labelLinks = labelLinks;
-        this.troops = troops;
-        this.heroes = heroes;
-        this.heroEquipments = heroEquipments;
-        this.spells = spells;
+        this.playerTroops = playerTroops;
+        this.playerHeroes = playerHeroes;
+        this.playerHeroEquipments = playerHeroEquipments;
+        this.playerSpells = playerSpells;
     }
 
     public void updateFrom(Player source) {
@@ -341,6 +341,10 @@ public class Player {
         this.currentLeagueSeasonId = source.currentLeagueSeasonId;
         this.previousLeagueGroupTag = source.previousLeagueGroupTag;
         this.previousLeagueSeasonId = source.previousLeagueSeasonId;
+    }
+
+    public void changeClan(Clan clan) {
+        this.clan = clan;
     }
 
 }

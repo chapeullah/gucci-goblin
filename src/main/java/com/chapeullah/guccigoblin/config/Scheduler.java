@@ -1,10 +1,12 @@
 package com.chapeullah.guccigoblin.config;
 
+import com.chapeullah.guccigoblin.clan.ClanService;
 import com.chapeullah.guccigoblin.player.service.PlayerService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.war.WarService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,10 @@ public class Scheduler {
     private final WarService warService;
     private final RaidSeasonService raidSeasonService;
     private final PlayerService playerService;
+    private final ClanService clanService;
+
+    @Value("${coc.clan-tag}")
+    private String clanTag;
 
     @Scheduled(cron = "0 * * * * *")
     public void sync() {
@@ -46,11 +52,20 @@ public class Scheduler {
         */
 
         try {
+            log.info("Sync clan: clanTag={}", clanTag);
+            clanService.syncClan(clanTag);
+        } catch (Exception e) {
+            log.error("Sync clan failed", e);
+        }
+
+        /*
+        try {
             log.info("Sync player #92CPVQC9C");
             playerService.syncPlayer("#92CPVQC9C");
-        } catch (RuntimeException e) {
-            log.error("Player synchronization failed", e);
+        } catch (Exception e) {
+            log.error("Sync player failed", e);
         }
+         */
 
     }
 

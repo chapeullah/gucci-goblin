@@ -9,6 +9,7 @@ import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonAttackReposito
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonRepository;
 import jakarta.transaction.Transactional;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,8 +42,8 @@ public class RaidSeasonService {
     private String clanTag;
 
     @Transactional
-    public Optional<RaidSeason> syncRaidSeason() {
-        RaidSeasonResponse response = client.getCurrentRaid();
+    public Optional<RaidSeason> syncRaidSeason(@NonNull String clanTag) {
+        RaidSeasonResponse response = client.getCurrentRaid(clanTag);
 
         if (response == null || response.items() == null) {
             throw new IllegalStateException("Некорректный ответ API рейдов");

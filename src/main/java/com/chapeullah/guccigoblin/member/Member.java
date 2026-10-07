@@ -1,6 +1,7 @@
 package com.chapeullah.guccigoblin.member;
 
-import com.chapeullah.guccigoblin.clan.Clan;
+import com.chapeullah.guccigoblin.clan.model.Clan;
+import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,14 +13,14 @@ import lombok.NonNull;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "clan_tag", nullable = false)
-    private Clan clan;
-
     @Id
     @Column(name = "tag",
             nullable = false)
     private String tag;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "clan_tag", nullable = false)
+    private Clan clan;
 
     @Column(name = "name",
             nullable = false)
@@ -29,12 +30,32 @@ public class Member {
             nullable = false)
     private String role;
 
-    @Column(name = "clan_rank",
+    @Column(name = "town_hall_level",
             nullable = false)
+    private Integer townHallLevel;
+
+    @Column(name = "exp_level",
+            nullable = false)
+    private Integer expLevel;
+
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = true)
+    @JoinColumn(
+            name = "league_tier_id",
+            nullable = true)
+    private LeagueTier leagueTier;
+
+    @Column(name = "trophies", nullable = true)
+    private Integer trophies;
+
+    @Column(name = "builder_base_trophies", nullable = true)
+    private Integer builderBaseTrophies;
+
+    @Column(name = "clan_rank", nullable = false)
     private Integer clanRank;
 
-    @Column(name = "previous_clan_rank",
-            nullable = false)
+    @Column(name = "previous_clan_rank", nullable = false)
     private Integer previousClanRank;
 
     @Column(name = "donations",
@@ -46,8 +67,8 @@ public class Member {
     private Integer donationsReceived;
 
     public Member(
-            @NonNull Clan clan,
             @NonNull String tag,
+            @NonNull Clan clan,
             @NonNull String name,
             @NonNull String role,
             @NonNull Integer clanRank,
@@ -75,9 +96,8 @@ public class Member {
         if (donationsReceived < 0) {
             throw new IllegalArgumentException("Member received donations must not be negative");
         }
-
-        this.clan = clan;
         this.tag = tag;
+        this.clan = clan;
         this.name = name;
         this.role = role;
         this.clanRank = clanRank;
