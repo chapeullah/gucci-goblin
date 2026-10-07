@@ -77,7 +77,6 @@ public class PlayerAchievement {
         if (village != null && village.isBlank()) {
             throw new IllegalArgumentException("Achievement village must not be blank");
         }
-
         this.player = player;
         this.name = name;
         this.stars = stars;

@@ -34,7 +34,7 @@ public class MemberHouseElement {
     public MemberHouseElement(
             @NonNull Member member,
             @NonNull Integer elementId,
-            @NonNull String elementType) {
+            String elementType) {
         if (elementType.isBlank()) {
             throw new IllegalArgumentException("Member house element type must not be blank");
         }
