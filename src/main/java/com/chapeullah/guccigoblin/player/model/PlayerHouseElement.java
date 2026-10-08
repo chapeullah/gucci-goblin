@@ -50,6 +50,11 @@ public class PlayerHouseElement {
     }
 
     public void updateFrom(PlayerHouseElement source) {
+        if (!this.elementId.equals(source.elementId)) {
+            throw new IllegalArgumentException("Player house element IDs mismatch: " +
+                    "currentElementId=" + elementId
+                    + ", sourceElementId=" + source.elementId);
+        }
         this.elementType = source.elementType;
     }
 

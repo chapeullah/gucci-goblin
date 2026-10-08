@@ -2,7 +2,7 @@ package com.chapeullah.guccigoblin.clan.dto;
 
 import com.chapeullah.guccigoblin.builderbaseleague.dto.BuilderBaseLeagueResponse;
 import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTierResponse;
-import com.chapeullah.guccigoblin.member.MemberHouseElementResponses;
+import com.chapeullah.guccigoblin.member.dto.MemberHouseElementResponses;
 
 public record ClanMemberResponse(
         String tag,

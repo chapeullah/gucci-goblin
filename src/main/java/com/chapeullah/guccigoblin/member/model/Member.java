@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.member;
+package com.chapeullah.guccigoblin.member.model;
 
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
 import com.chapeullah.guccigoblin.clan.model.Clan;
@@ -12,12 +12,19 @@ import lombok.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity @Table(name = "members")
+@Entity @Table(
+        name = "members",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_members_tag_clan_tag",
+                columnNames = {"clan_tag", "tag"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(name = "tag",
             nullable = false)
     private String tag;
@@ -71,10 +78,15 @@ public class Member {
     private Integer donationsReceived;
 
     @SuppressWarnings("FieldMayBeFinal")
-    @OneToMany(
-            mappedBy = "member",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "member_house_elements",
+            joinColumns = @JoinColumn(
+                    name = "member_id",
+                    nullable = false),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_member_house_elements_member_element",
+                    columnNames = {"member_id", "element_id"}))
     private List<MemberHouseElement> memberHouseElements = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
@@ -153,7 +165,13 @@ public class Member {
         if (!tag.equals(source.tag)) {
             throw new IllegalArgumentException("Member tags mismatch: currentMemberTag=" + tag + ", sourceMemberTag=" + source.tag);
         }
-        this.clan = source.clan;
+        if (!clan.getTag().equals(source.clan.getTag())) {
+            throw new IllegalArgumentException(
+                    "Member clan tags mismatch: currentClanTag="
+                            + clan.getTag()
+                            + ", sourceClanTag="
+                            + source.clan.getTag());
+        }
         this.name = source.name;
         this.role = source.role;
         this.townHallLevel = source.townHallLevel;
@@ -166,6 +184,13 @@ public class Member {
         this.donations = source.donations;
         this.donationsReceived = source.donationsReceived;
         this.builderBaseLeague = source.builderBaseLeague;
+    }
+
+    public void addHouseElement(
+            @NonNull Integer elementId,
+            @NonNull String elementType) {
+        memberHouseElements.add(
+                new MemberHouseElement(elementId, elementType));
     }
 
     public void rejoin() {

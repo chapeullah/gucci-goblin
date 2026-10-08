@@ -16,6 +16,7 @@ import com.chapeullah.guccigoblin.leaguetier.LeagueTierService;
 import com.chapeullah.guccigoblin.leaguetier.LocationService;
 import com.chapeullah.guccigoblin.location.Location;
 import com.chapeullah.guccigoblin.location.LocationRepository;
+import com.chapeullah.guccigoblin.member.MemberService;
 import com.chapeullah.guccigoblin.player.model.Player;
 import com.chapeullah.guccigoblin.player.service.PlayerService;
 import com.chapeullah.guccigoblin.warleague.WarLeague;
@@ -48,6 +49,7 @@ public class ClanService {
     private final WarLeagueService warLeagueService;
     private final LeagueTierService leagueTierService;
 
+    private final MemberService memberService;
     private final PlayerService playerService;
 
     @Transactional
@@ -139,6 +141,8 @@ public class ClanService {
             existing.updateFrom(clan);
             savedClan = existing;
         }
+
+        memberService.syncMembers(savedClan, clanResponse.memberList());
 
         Set<String> memberTags = clanResponse.memberList().stream()
                 .map(ClanMemberResponse::tag)

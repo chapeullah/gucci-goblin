@@ -1,12 +1,15 @@
 package com.chapeullah.guccigoblin.member;
 
-import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeagueService;
 import com.chapeullah.guccigoblin.clan.dto.ClanMemberResponse;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTierService;
+import com.chapeullah.guccigoblin.member.dto.MemberHouseElementResponse;
+import com.chapeullah.guccigoblin.member.model.Member;
+import com.chapeullah.guccigoblin.member.model.MemberHouseElement;
+import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,17 +24,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MemberService {
 
-    private final ClashOfClansClient client;
-
     private final MemberRepository memberRepository;
 
     private final LeagueTierService leagueTierService;
     private final BuilderBaseLeagueService builderBaseLeagueService;
+    private final MemberDeltaService memberDeltaService;
 
-    public List<Member> syncMembers(@NonNull String clanTag) {
-        return List.of();
-    }
-
+    @Transactional
     public List<Member> syncMembers(
             @NonNull Clan clan,
             @NonNull List<ClanMemberResponse> responses) {
@@ -50,6 +49,8 @@ public class MemberService {
                         Member::getTag,
                         Function.identity()));
 
+        memberDeltaService.memberDeltaOutput(existingMembersByTag, incomingMembers);
+
         List<Member> membersToSave = new ArrayList<>();
 
         for (Map.Entry<String, Member> entry : incomingMembers.entrySet()) {
@@ -62,24 +63,45 @@ public class MemberService {
             }
             boolean rejoining = !existingMember.isInClan();
             existingMember.updateFrom(incomingMember);
+            syncMemberHouseElements(existingMember, incomingMember);
             if (rejoining) {
                 existingMember.rejoin();
             }
             membersToSave.add(existingMember);
         }
-        List<Member> savedMembers = memberRepository.saveAll(membersToSave);
-        return savedMembers.stream()
+        for (Member existingMember : existingMembers) {
+            if (existingMember.isInClan() &&
+                    !incomingMembers.containsKey(existingMember.getTag())) {
+                existingMember.leave();
+                membersToSave.add(existingMember);
+            }
+        }
+        return memberRepository
+                .saveAll(membersToSave)
+                .stream()
                 .filter(Member::isInClan)
                 .toList();
+    }
+
+    private void syncMemberHouseElements(
+            @NonNull Member target,
+            @NonNull Member source) {
+        List<MemberHouseElement> elements =
+                source.getMemberHouseElements().stream()
+                        .map(element -> new MemberHouseElement(
+                                element.getElementId(),
+                                element.getElementType()))
+                        .toList();
+        target.getMemberHouseElements().clear();
+        target.getMemberHouseElements().addAll(elements);
     }
 
     private Member toMember(@NonNull Clan clan, @NonNull ClanMemberResponse response) {
         LeagueTier leagueTier = response.leagueTier() == null ? null
                 : leagueTierService.findById(response.leagueTier().id());
-
         BuilderBaseLeague builderBaseLeague = response.builderBaseLeague() == null ? null
                 : builderBaseLeagueService.findById(response.builderBaseLeague().id());
-        return new Member(
+        Member member = new Member(
                 response.tag(),
                 clan,
                 response.name(),
@@ -94,6 +116,14 @@ public class MemberService {
                 response.donations(),
                 response.donationsReceived(),
                 builderBaseLeague);
+        if (response.playerHouse() != null
+                && response.playerHouse().elements() != null) {
+            for (MemberHouseElementResponse element
+                    : response.playerHouse().elements()) {
+                member.addHouseElement(element.id(), element.type());
+            }
+        }
+        return member;
     }
 
 }

@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.member;
+package com.chapeullah.guccigoblin.member.dto;
 
 import com.chapeullah.guccigoblin.builderbaseleague.dto.BuilderBaseLeagueResponse;
 import com.chapeullah.guccigoblin.clan.dto.ClanLeagueResponse;

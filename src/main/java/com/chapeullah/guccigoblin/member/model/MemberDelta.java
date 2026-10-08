@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.member;
+package com.chapeullah.guccigoblin.member.model;
 
 import lombok.AccessLevel;
 import lombok.Getter;

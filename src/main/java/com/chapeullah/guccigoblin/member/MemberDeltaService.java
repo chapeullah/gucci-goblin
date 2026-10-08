@@ -1,5 +1,7 @@
 package com.chapeullah.guccigoblin.member;
 
+import com.chapeullah.guccigoblin.member.model.Member;
+import com.chapeullah.guccigoblin.member.model.MemberDelta;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,8 +21,7 @@ public class MemberDeltaService {
         if (!log.isDebugEnabled()) {
             return;
         }
-        List<MemberDelta> memberDeltas =
-                memberDeltasFrom(oldMembers, newMembers);
+        List<MemberDelta> memberDeltas = memberDeltasFrom(oldMembers, newMembers);
         if (memberDeltas.isEmpty()) {
             log.debug("Members sync: no changes");
             return;
@@ -104,11 +105,9 @@ public class MemberDeltaService {
             @NonNull String memberName,
             @NonNull String field,
             @NonNull MemberDelta.Delta<T> delta) {
-
         if (!delta.changed()) {
             return;
         }
-
         log.debug(
                 "Member changed: memberTag={}, memberName={}, field={}, oldValue={}, newValue={}",
                 memberDelta.getTag(),

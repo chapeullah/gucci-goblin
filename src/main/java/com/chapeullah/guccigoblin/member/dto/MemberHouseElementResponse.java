@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.member;
+package com.chapeullah.guccigoblin.member.dto;
 
 public record MemberHouseElementResponse(
         String type,
