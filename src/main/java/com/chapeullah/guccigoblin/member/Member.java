@@ -81,6 +81,9 @@ public class Member {
     @JoinColumn(name = "builder_base_league_id", nullable = true)
     private BuilderBaseLeague builderBaseLeague;
 
+    @Column(name = "in_clan", nullable = false)
+    private boolean inClan;
+
     public Member(
             @NonNull String tag,
             @NonNull Clan clan,
@@ -143,6 +146,40 @@ public class Member {
         this.donations = donations;
         this.donationsReceived = donationsReceived;
         this.builderBaseLeague = builderBaseLeague;
+        this.inClan = true;
+    }
+
+    public void updateFrom(@NonNull Member source) {
+        if (!tag.equals(source.tag)) {
+            throw new IllegalArgumentException("Member tags mismatch: currentMemberTag=" + tag + ", sourceMemberTag=" + source.tag);
+        }
+        this.clan = source.clan;
+        this.name = source.name;
+        this.role = source.role;
+        this.townHallLevel = source.townHallLevel;
+        this.expLevel = source.expLevel;
+        this.leagueTier = source.leagueTier;
+        this.trophies = source.trophies;
+        this.builderBaseTrophies = source.builderBaseTrophies;
+        this.clanRank = source.clanRank;
+        this.previousClanRank = source.previousClanRank;
+        this.donations = source.donations;
+        this.donationsReceived = source.donationsReceived;
+        this.builderBaseLeague = source.builderBaseLeague;
+    }
+
+    public void rejoin() {
+        if (this.inClan) {
+            throw new IllegalStateException("Member is already in clan: memberTag=" + tag);
+        }
+        this.inClan = true;
+    }
+
+    public void leave() {
+        if (!this.inClan) {
+            throw new IllegalStateException("Member has already left clan: memberTag=" + tag);
+        }
+        this.inClan = false;
     }
 
 }

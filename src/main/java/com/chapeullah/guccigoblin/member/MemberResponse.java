@@ -1,10 +1,11 @@
-package com.chapeullah.guccigoblin.clan.dto;
+package com.chapeullah.guccigoblin.member;
 
 import com.chapeullah.guccigoblin.builderbaseleague.dto.BuilderBaseLeagueResponse;
+import com.chapeullah.guccigoblin.clan.dto.ClanLeagueResponse;
 import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTierResponse;
-import com.chapeullah.guccigoblin.member.MemberHouseElementResponses;
+import com.chapeullah.guccigoblin.player.dto.PlayerHouseResponse;
 
-public record ClanMemberResponse(
+public record MemberResponse(
         String tag,
         String name,
         String role,
@@ -18,6 +19,5 @@ public record ClanMemberResponse(
         Integer previousClanRank,
         Integer donations,
         Integer donationsReceived,
-        MemberHouseElementResponses playerHouse,
-        BuilderBaseLeagueResponse builderBaseLeague) {
-}
+        PlayerHouseResponse playerHouse,
+        BuilderBaseLeagueResponse builderBaseLeague) {}

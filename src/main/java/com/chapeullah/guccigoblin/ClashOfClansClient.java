@@ -6,6 +6,8 @@ import com.chapeullah.guccigoblin.clan.dto.ClanResponse;
 import com.chapeullah.guccigoblin.label.dto.LabelsResponse;
 import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTiersResponse;
 import com.chapeullah.guccigoblin.location.dto.LocationsResponse;
+import com.chapeullah.guccigoblin.member.MemberResponse;
+import com.chapeullah.guccigoblin.member.MemberResponses;
 import com.chapeullah.guccigoblin.player.dto.PlayerResponse;
 import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
@@ -19,6 +21,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -61,6 +65,20 @@ public class ClashOfClansClient {
         return response;
     }
 
+    public MemberResponses getClanMembers(@NonNull String clanTag) {
+        log.debug("Fetching clan members: clanTag={}", clanTag);
+        var response = rest.get()
+                .uri("/clans/{clanTag}/members", clanTag)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
+                .retrieve()
+                .body(MemberResponses.class);
+        if (response == null) {
+            throw new IllegalStateException("Empty response for clan members: clanTag=" + clanTag);
+        }
+        log.debug("Received clan members: clanTag={}", clanTag);
+        return response;
+    }
 
     public WarResponse getCurrentWar(@NonNull String clanTag) {
         log.debug("Fetching current war: clanTag={}", clanTag);
