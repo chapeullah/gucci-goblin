@@ -25,36 +25,27 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tag",
-            nullable = false)
+    @Column(name = "tag", nullable = false)
     private String tag;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "clan_tag", nullable = false)
     private Clan clan;
 
-    @Column(name = "name",
-            nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "role",
-            nullable = false)
+    @Column(name = "role", nullable = false)
     private String role;
 
-    @Column(name = "town_hall_level",
-            nullable = false)
+    @Column(name = "town_hall_level", nullable = false)
     private Integer townHallLevel;
 
-    @Column(name = "exp_level",
-            nullable = false)
+    @Column(name = "exp_level", nullable = false)
     private Integer expLevel;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = true)
-    @JoinColumn(
-            name = "league_tier_id",
-            nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "league_tier_id", nullable = true)
     private LeagueTier leagueTier;
 
     @Column(name = "trophies", nullable = true)
@@ -69,12 +60,10 @@ public class Member {
     @Column(name = "previous_clan_rank", nullable = true)
     private Integer previousClanRank;
 
-    @Column(name = "donations",
-            nullable = false)
+    @Column(name = "donations", nullable = false)
     private Integer donations;
 
-    @Column(name = "donations_received",
-            nullable = false)
+    @Column(name = "donations_received", nullable = false)
     private Integer donationsReceived;
 
     @SuppressWarnings("FieldMayBeFinal")
@@ -112,37 +101,37 @@ public class Member {
             @NonNull Integer donationsReceived,
             BuilderBaseLeague builderBaseLeague) {
         if (tag.isBlank()) {
-            throw new IllegalArgumentException("Member tag must not be blank");
+            throw new IllegalArgumentException("Member tag must not be blank: tag=\"" + tag + "\"");
         }
         if (name.isBlank()) {
-            throw new IllegalArgumentException("Member name must not be blank");
+            throw new IllegalArgumentException("Member name must not be blank: name=\"" + name + "\"");
         }
         if (role.isBlank()) {
-            throw new IllegalArgumentException("Member role must not be blank");
+            throw new IllegalArgumentException("Member role must not be blank: role=\"" + role + "\"");
         }
         if (townHallLevel < 1) {
-            throw new IllegalArgumentException("Member town hall level must be positive");
+            throw new IllegalArgumentException(
+                    "Member town hall level must be positive: townHallLevel=" + townHallLevel);
         }
         if (expLevel < 1) {
-            throw new IllegalArgumentException("Member experience level must be positive");
+            throw new IllegalArgumentException("Member experience level must be positive: expLevel=" + expLevel);
         }
         if (trophies != null && trophies < 0) {
-            throw new IllegalArgumentException("Member trophies must not be negative");
+            throw new IllegalArgumentException("Member trophies must not be negative: trophies=" + trophies);
         }
         if (builderBaseTrophies != null && builderBaseTrophies < 0) {
-            throw new IllegalArgumentException("Member builder base trophies must not be negative");
+            throw new IllegalArgumentException(
+                    "Member builder base trophies must not be negative: builderBaseTrophies=" + builderBaseTrophies);
         }
         if (clanRank < 1 || clanRank > 50) {
-            throw new IllegalArgumentException("Member clan rank must be between 1 and 50");
-        }
-        if (previousClanRank != null && (previousClanRank < 1 || previousClanRank > 50)) {
-            throw new IllegalArgumentException("Previous member clan rank must be between 1 and 50");
+            throw new IllegalArgumentException("Member clan rank must be between 1 and 50: clanRank=" + clanRank);
         }
         if (donations < 0) {
-            throw new IllegalArgumentException("Member donations must not be negative");
+            throw new IllegalArgumentException("Member donations must not be negative: donations=" + donations);
         }
         if (donationsReceived < 0) {
-            throw new IllegalArgumentException("Member received donations must not be negative");
+            throw new IllegalArgumentException(
+                    "Member received donations must not be negative: donationsReceived=" + donationsReceived);
         }
         this.tag = tag;
         this.clan = clan;
@@ -163,14 +152,20 @@ public class Member {
 
     public void updateFrom(@NonNull Member source) {
         if (!tag.equals(source.tag)) {
-            throw new IllegalArgumentException("Member tags mismatch: currentMemberTag=" + tag + ", sourceMemberTag=" + source.tag);
+            throw new IllegalArgumentException(
+                    "Member tags mismatch: currentMemberTag=\""
+                            + tag
+                            + "\", sourceMemberTag=\""
+                            + source.tag
+                            + "\"");
         }
         if (!clan.getTag().equals(source.clan.getTag())) {
             throw new IllegalArgumentException(
-                    "Member clan tags mismatch: currentClanTag="
+                    "Member clan tags mismatch: currentClanTag=\""
                             + clan.getTag()
-                            + ", sourceClanTag="
-                            + source.clan.getTag());
+                            + "\", sourceClanTag=\""
+                            + source.clan.getTag()
+                            + "\"");
         }
         this.name = source.name;
         this.role = source.role;
@@ -195,14 +190,14 @@ public class Member {
 
     public void rejoin() {
         if (this.inClan) {
-            throw new IllegalStateException("Member is already in clan: memberTag=" + tag);
+            throw new IllegalStateException("Member is already in clan: memberTag=\"" + tag + "\"");
         }
         this.inClan = true;
     }
 
     public void leave() {
         if (!this.inClan) {
-            throw new IllegalStateException("Member has already left clan: memberTag=" + tag);
+            throw new IllegalStateException("Member has already left clan: memberTag=\"" + tag + "\"");
         }
         this.inClan = false;
     }

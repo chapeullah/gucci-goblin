@@ -45,7 +45,7 @@ public class PlayerAchievementService {
                 playerAchievementRepository.delete(playerAchievement);
             }
         }
-        log.debug("Player achievements synchronized {} ({}), count={}",
+        log.debug("Player achievements synchronized: playerName=\"{}\" playerTag=\"{}\" count={}",
                 player.getName(),
                 player.getTag(),
                 savedPlayerAchievements.size());

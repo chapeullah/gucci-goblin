@@ -49,7 +49,7 @@ public class PlayerService {
 
         LeagueTier leagueTier = null;
         if (response.leagueTier() != null) {
-            leagueTier = leagueTierService.syncLeagueTiers()
+            leagueTier = leagueTierService.syncAll()
                     .stream()
                     .filter(item -> item.getId().equals(response.leagueTier().id()))
                     .findFirst()
@@ -58,11 +58,8 @@ public class PlayerService {
 
         BuilderBaseLeague builderBaseLeague = null;
         if (response.builderBaseLeague() != null) {
-            builderBaseLeague = builderBaseLeagueService.syncBuilderBaseLeagues()
-                    .stream()
-                    .filter(item -> item.getId().equals(response.builderBaseLeague().id()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Builder base league not found"));
+            builderBaseLeague = builderBaseLeagueService
+                    .syncAllAndGetById(response.builderBaseLeague().id());
         }
 
         Player incomingPlayer = toPlayer(
@@ -154,27 +151,20 @@ public class PlayerService {
 
         List<PlayerHeroResponse> heroesResponse =
                 response.heroes() == null ? List.of() : response.heroes();
-
         List<PlayerHero> playerHeroes = playerHeroService.syncHeroes(player, heroesResponse);
-
         player.getPlayerHeroes().clear();
         player.getPlayerHeroes().addAll(playerHeroes);
-
         for (PlayerHero playerHero : player.getPlayerHeroes()) {
             PlayerHeroResponse playerHeroResponse = heroesResponse.stream()
                     .filter(item -> item.name().equals(playerHero.getName()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException(
                             "Hero response not found: " + playerHero.getName()));
-
             List<PlayerHeroEquipmentResponse> equipment =
-                    playerHeroResponse.heroEquipmentsResponse() == null
-                            ? List.of()
+                    playerHeroResponse.heroEquipmentsResponse() == null ? List.of()
                             : playerHeroResponse.heroEquipmentsResponse();
-
             List<PlayerHeroEquipmentLink> links =
                     playerHeroEquipmentLinkService.syncHeroEquipmentLinks(playerHero, equipment);
-
             playerHero.getPlayerHeroEquipmentLinks().clear();
             playerHero.getPlayerHeroEquipmentLinks().addAll(links);
         }
@@ -188,7 +178,7 @@ public class PlayerService {
 
         Player savedPlayer = playerRepository.save(player);
 
-        log.info("Player synchronized: {} ({})",
+        log.info("Player synchronized: playerName=\"{}\" playerTag=\"{}\"",
                 savedPlayer.getName(), savedPlayer.getTag());
 
         return savedPlayer;

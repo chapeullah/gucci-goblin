@@ -11,4 +11,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     List<Member> findAllByClanTag(String clanTag);
 
+    List<Member> findAllByClanTagAndInClanTrueOrderByClanRankAsc(String clanTag);
+
 }

@@ -70,7 +70,7 @@ public class MemberService {
         memberRepository.saveAll(members.values());
 
         log.info(
-                "Members synchronization success. Members: {}, joined: {}, left: {}",
+                "Members synchronization success: members={} joined={} left={}",
                 currentMembers.size(),
                 joined.size(),
                 left.size());

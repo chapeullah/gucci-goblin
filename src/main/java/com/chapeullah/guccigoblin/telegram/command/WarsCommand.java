@@ -17,7 +17,7 @@ public class WarsCommand implements BotCommand {
 
     @Override
     public String execute(String args) {
-        return telegramCommandService.wars();
+        return name();
     }
 
 }

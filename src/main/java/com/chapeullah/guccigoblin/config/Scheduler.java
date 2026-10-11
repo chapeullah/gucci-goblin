@@ -1,6 +1,7 @@
 package com.chapeullah.guccigoblin.config;
 
 import com.chapeullah.guccigoblin.clan.ClanService;
+import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.player.service.PlayerService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
 import com.chapeullah.guccigoblin.war.WarService;
@@ -52,15 +53,16 @@ public class Scheduler {
         */
 
         try {
-            log.info("Sync clan: clanTag={}", clanTag);
-            clanService.syncClan(clanTag);
+            log.info("Sync clan: clanTag=\"{}\"", clanTag);
+            Clan clan = clanService.syncClan(clanTag);
+            log.info("Sync clan success: clanTag=\"{}\" members={}", clanTag, clan.getMembers());
         } catch (Exception e) {
-            log.error("Sync clan failed", e);
+            log.error("Sync clan failed: clanTag=\"{}\"", clanTag, e);
         }
 
         /*
         try {
-            log.info("Sync player #92CPVQC9C");
+            log.info("Sync player: playerTag=\"{}\"", "#92CPVQC9C");
             playerService.syncPlayer("#92CPVQC9C");
         } catch (Exception e) {
             log.error("Sync player failed", e);

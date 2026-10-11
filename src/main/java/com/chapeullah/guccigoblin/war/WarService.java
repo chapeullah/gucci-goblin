@@ -43,7 +43,7 @@ public class WarService {
         WarResponse response = client.getCurrentWar(clanTag);
 
         if (response == null) {
-            throw new IllegalStateException("Empty current war response");
+            throw new IllegalStateException("Empty current getCurrentWarMessage response");
         }
 
         if ("notInWar".equals(response.state())) {

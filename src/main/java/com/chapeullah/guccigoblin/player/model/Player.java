@@ -234,7 +234,7 @@ public class Player {
             throw new IllegalArgumentException("Player best trophies must not be negative");
         }
         if (warStars != null && warStars < 0) {
-            throw new IllegalArgumentException("Player war stars must not be negative");
+            throw new IllegalArgumentException("Player getCurrentWarMessage stars must not be negative");
         }
         if (attackWins != null && attackWins < 0) {
             throw new IllegalArgumentException("Player attack wins must not be negative");
@@ -255,7 +255,7 @@ public class Player {
             throw new IllegalArgumentException("Player role must not be blank");
         }
         if (warPreference != null && warPreference.isBlank()) {
-            throw new IllegalArgumentException("Player war preference must not be blank");
+            throw new IllegalArgumentException("Player getCurrentWarMessage preference must not be blank");
         }
         if (donations != null && donations < 0) {
             throw new IllegalArgumentException("Player donations must not be negative");

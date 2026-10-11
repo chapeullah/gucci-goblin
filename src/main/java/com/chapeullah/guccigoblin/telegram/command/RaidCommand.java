@@ -17,7 +17,7 @@ public class RaidCommand implements BotCommand {
 
     @Override
     public String execute(String args) {
-        return telegramCommandService.raid();
+        return name();
     }
 
 }

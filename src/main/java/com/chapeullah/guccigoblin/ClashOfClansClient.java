@@ -33,7 +33,7 @@ public class ClashOfClansClient {
     private String apiToken;
 
     public PlayerResponse getPlayer(@NonNull String playerTag) {
-        log.debug("Fetching player: playerTag={}", playerTag);
+        log.debug("Fetching player: playerTag=\"{}\"", playerTag);
         var response = rest.get()
                 .uri("/players/{playerTag}", playerTag)
                 .accept(MediaType.APPLICATION_JSON)
@@ -43,12 +43,12 @@ public class ClashOfClansClient {
         if (response == null) {
             throw new IllegalStateException("Empty response for player: playerTag=" + playerTag);
         }
-        log.debug("Received player: playerTag={}", response.tag());
+        log.debug("Received player: playerTag=\"{}\"", response.tag());
         return response;
     }
 
     public ClanResponse getClan(@NonNull String clanTag) {
-        log.debug("Fetching clan: clanTag={}", clanTag);
+        log.debug("Fetching clan: clanTag=\"{}\"", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
@@ -58,12 +58,12 @@ public class ClashOfClansClient {
         if (response == null) {
             throw new IllegalStateException("Empty response for clan: clanTag=" + clanTag);
         }
-        log.debug("Received clan: clanTag={}", response.tag());
+        log.debug("Received clan: clanTag=\"{}\"", response.tag());
         return response;
     }
 
     public MemberResponses getClanMembers(@NonNull String clanTag) {
-        log.debug("Fetching clan members: clanTag={}", clanTag);
+        log.debug("Fetching clan members: clanTag=\"{}\"", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}/members", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
@@ -73,12 +73,12 @@ public class ClashOfClansClient {
         if (response == null) {
             throw new IllegalStateException("Empty response for clan members: clanTag=" + clanTag);
         }
-        log.debug("Received clan members: clanTag={}", clanTag);
+        log.debug("Received clan members: clanTag=\"{}\"", clanTag);
         return response;
     }
 
     public WarResponse getCurrentWar(@NonNull String clanTag) {
-        log.debug("Fetching current war: clanTag={}", clanTag);
+        log.debug("Fetching current getCurrentWarMessage: clanTag=\"{}\"", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}/currentwar", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
@@ -86,14 +86,14 @@ public class ClashOfClansClient {
                 .retrieve()
                 .body(WarResponse.class);
         if (response == null) {
-            throw new IllegalStateException("Empty response for current war: clanTag=" + clanTag);
+            throw new IllegalStateException("Empty response for current getCurrentWarMessage: clanTag=" + clanTag);
         }
-        log.debug("Received current war: clanTag={}", clanTag);
+        log.debug("Received current getCurrentWarMessage: clanTag=\"{}\"", clanTag);
         return response;
     }
 
     public RaidSeasonResponse getCurrentRaid(@NonNull String clanTag) {
-        log.debug("Fetching current raid: clanTag={}", clanTag);
+        log.debug("Fetching current raid: clanTag=\"{}\"", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}/capitalraidseasons?limit=1", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
@@ -103,7 +103,7 @@ public class ClashOfClansClient {
         if (response == null) {
             throw new IllegalStateException("Empty response for current raid: clanTag=" + clanTag);
         }
-        log.debug("Received current raid: clanTag={}", clanTag);
+        log.debug("Received current raid: clanTag=\"{}\"", clanTag);
         return response;
     }
 
@@ -153,7 +153,7 @@ public class ClashOfClansClient {
     }
 
     public WarLeaguesResponse getWarLeagues() {
-        log.debug("Fetching war leagues");
+        log.debug("Fetching getCurrentWarMessage leagues");
         var response = rest.get()
                 .uri("/warleagues")
                 .accept(MediaType.APPLICATION_JSON)
@@ -161,9 +161,9 @@ public class ClashOfClansClient {
                 .retrieve()
                 .body(WarLeaguesResponse.class);
         if (response == null) {
-            throw new IllegalStateException("Empty response for war leagues");
+            throw new IllegalStateException("Empty response for getCurrentWarMessage leagues");
         }
-        log.debug("Received war leagues");
+        log.debug("Received getCurrentWarMessage leagues");
         return response;
     }
 

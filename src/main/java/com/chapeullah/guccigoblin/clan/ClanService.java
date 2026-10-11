@@ -2,34 +2,30 @@ package com.chapeullah.guccigoblin.clan;
 
 import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.capitalleague.CapitalLeague;
-import com.chapeullah.guccigoblin.capitalleague.CapitalLeagueRepository;
 import com.chapeullah.guccigoblin.capitalleague.CapitalLeagueService;
 import com.chapeullah.guccigoblin.clan.dto.ClanBadgeUrlsResponse;
+import com.chapeullah.guccigoblin.clan.dto.ClanChatLanguageResponse;
 import com.chapeullah.guccigoblin.clan.dto.ClanMemberResponse;
 import com.chapeullah.guccigoblin.clan.dto.ClanResponse;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.clan.model.ClanBadgeUrls;
 import com.chapeullah.guccigoblin.clan.model.ClanChatLanguage;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
-import com.chapeullah.guccigoblin.leaguetier.LeagueTierRepository;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTierService;
-import com.chapeullah.guccigoblin.leaguetier.LocationService;
 import com.chapeullah.guccigoblin.location.Location;
-import com.chapeullah.guccigoblin.location.LocationRepository;
+import com.chapeullah.guccigoblin.location.LocationService;
 import com.chapeullah.guccigoblin.member.MemberService;
-import com.chapeullah.guccigoblin.player.model.Player;
-import com.chapeullah.guccigoblin.player.service.PlayerService;
 import com.chapeullah.guccigoblin.warleague.WarLeague;
-import com.chapeullah.guccigoblin.warleague.WarLeagueRepository;
 import com.chapeullah.guccigoblin.warleague.WarLeagueService;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClanService {
@@ -38,10 +34,6 @@ public class ClanService {
 
     private final ClanRepository clanRepository;
 
-    private final LocationRepository locationRepository;
-    private final CapitalLeagueRepository capitalLeagueRepository;
-    private final WarLeagueRepository warLeagueRepository;
-    private final LeagueTierRepository leagueTierRepository;
     private final ClanChatLanguageRepository clanChatLanguageRepository;
 
     private final LocationService locationService;
@@ -50,55 +42,42 @@ public class ClanService {
     private final LeagueTierService leagueTierService;
 
     private final MemberService memberService;
-    private final PlayerService playerService;
 
     @Transactional
     public Clan syncClan(@NonNull String clanTag) {
         ClanResponse clanResponse = client.getClan(clanTag);
-
-        locationService.syncLocations();
-        Location location = clanResponse.location() == null
-                ? null
-                : locationRepository.findById(clanResponse.location().id())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Location not found: " + clanResponse.location().id()));
-
+        if (clanResponse.memberList() == null) {
+            throw new IllegalStateException("Clan member list is missing: clanTag=\"" + clanTag + "\"");
+        }
+        
         ClanBadgeUrlsResponse badgeResponse = clanResponse.badgeUrls();
         ClanBadgeUrls badgeUrls = badgeResponse == null ? null : new ClanBadgeUrls(
                 badgeResponse.small(),
                 badgeResponse.large(),
                 badgeResponse.medium());
 
-        capitalLeagueService.syncCapitalLeagues();
-        CapitalLeague capitalLeague = clanResponse.capitalLeague() == null
-                ? null
-                : capitalLeagueRepository.findById(clanResponse.capitalLeague().id())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Capital league not found: " + clanResponse.capitalLeague().id()));
+        syncLocationsIfMissing(clanResponse);
+        Location location = clanResponse.location() == null ? null
+                : locationService.getById(clanResponse.location().id());
 
-        warLeagueService.syncWarLeagues();
-        WarLeague warLeague = clanResponse.warLeague() == null
-                ? null
-                : warLeagueRepository.findById(clanResponse.warLeague().id())
-                .orElseThrow(() -> new IllegalStateException(
-                        "War league not found: " + clanResponse.warLeague().id()));
+        syncCapitalLeaguesIfMissing(clanResponse);
+        CapitalLeague capitalLeague = clanResponse.capitalLeague() == null ? null
+                : capitalLeagueService.getById(clanResponse.capitalLeague().id());
 
-        leagueTierService.syncLeagueTiers();
-        LeagueTier requiredLeagueTier = clanResponse.requiredLeagueTier() == null
-                ? null
-                : leagueTierRepository.findById(clanResponse.requiredLeagueTier().id())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Required league tier not found: " + clanResponse.requiredLeagueTier().id()));
+        syncWarLeaguesIfMissing(clanResponse);
+        WarLeague warLeague = clanResponse.warLeague() == null ? null
+                : warLeagueService.getById(clanResponse.warLeague().id());
 
-        var languageResponse = clanResponse.chatLanguage();
-        ClanChatLanguage chatLanguage = languageResponse == null
-                ? null
-                : clanChatLanguageRepository.save(
-                new ClanChatLanguage(
+        syncLeagueTiersIfMissing(clanResponse);
+        LeagueTier requiredLeagueTier = clanResponse.requiredLeagueTier() == null ? null
+                : leagueTierService.getById(clanResponse.requiredLeagueTier().id());
+
+        ClanChatLanguageResponse languageResponse = clanResponse.chatLanguage();
+        ClanChatLanguage chatLanguage = languageResponse == null ? null
+                : clanChatLanguageRepository.save(new ClanChatLanguage(
                         languageResponse.id(),
                         languageResponse.name(),
                         languageResponse.languageCode()));
-
         Clan clan = new Clan(
                 clanResponse.tag(),
                 clanResponse.name(),
@@ -125,58 +104,69 @@ public class ClanService {
                 clanResponse.requiredTownhallLevel(),
                 requiredLeagueTier,
                 chatLanguage);
-
-        if (clanResponse.memberList() == null) {
-            throw new IllegalStateException("Clan member list is missing");
-        }
-
-        Clan existing = clanRepository.findById(clan.getTag())
-                .orElse(null);
-
+        Clan existingClan = clanRepository.findById(clan.getTag()).orElse(null);
         Clan savedClan;
-
-        if (existing == null) {
+        if (existingClan == null) {
             savedClan = clanRepository.save(clan);
         } else {
-            existing.updateFrom(clan);
-            savedClan = existing;
+            existingClan.updateFrom(clan);
+            savedClan = existingClan;
         }
-
         memberService.syncMembers(savedClan, clanResponse.memberList());
-
-        Set<String> memberTags = clanResponse.memberList().stream()
-                .map(ClanMemberResponse::tag)
-                .collect(Collectors.toSet());
-
-        savedClan.getMemberList().removeIf(player -> {
-            if (!memberTags.contains(player.getTag())) {
-                player.changeClan(null);
-                return true;
-            }
-            return false;
-        });
-
-        for (ClanMemberResponse memberResponse : clanResponse.memberList()) {
-            Player member = playerService.syncPlayer(memberResponse.tag());
-
-            Clan previousClan = member.getClan();
-
-            if (previousClan != null && !previousClan.getTag().equals(savedClan.getTag())) {
-                previousClan.getMemberList().removeIf(player -> player.getTag().equals(member.getTag()));
-            }
-
-            member.changeClan(savedClan);
-
-            boolean alreadyAdded = savedClan.getMemberList().stream()
-                    .anyMatch(player ->
-                            player.getTag().equals(member.getTag()));
-
-            if (!alreadyAdded) {
-                savedClan.getMemberList().add(member);
-            }
-        }
-
         return savedClan;
+    }
+
+    private void syncLocationsIfMissing(
+            @NonNull ClanResponse response) {
+        if (response.location() == null) {
+            log.debug("Clan location is missing: clanTag=\"{}\"", response.tag());
+            return;
+        }
+        Integer locationId = response.location().id();
+        if (locationService.findById(locationId).isEmpty()) {
+            log.info("Location is missing locally; synchronizing locations: locationId={}", locationId);
+            locationService.syncAll();
+        }
+    }
+
+    private void syncCapitalLeaguesIfMissing(
+            @NonNull ClanResponse response) {
+        if (response.capitalLeague() == null) {
+            log.debug("Clan capital league is missing in response: clanTag=\"{}\"", response.tag());
+            return;
+        }
+        Integer capitalLeagueId = response.capitalLeague().id();
+        if (capitalLeagueService.findById(capitalLeagueId).isEmpty()) {
+            log.info("Capital league is missing locally; synchronizing capital leagues: capitalLeagueId={}",
+                    capitalLeagueId);
+            capitalLeagueService.syncAll();
+        }
+    }
+
+    private void syncWarLeaguesIfMissing(
+            @NonNull ClanResponse response) {
+        if (response.warLeague() == null) {
+            log.debug("Clan war league is missing: clanTag=\"{}\"", response.tag());
+            return;
+        }
+        Integer warLeagueId = response.warLeague().id();
+        if (warLeagueService.findById(warLeagueId).isEmpty()) {
+            log.info("War league is missing locally; synchronizing war leagues: warLeagueId={}", warLeagueId);
+            warLeagueService.syncAll();
+        }
+    }
+
+    private void syncLeagueTiersIfMissing(
+            @NonNull ClanResponse response) {
+        if (response.requiredLeagueTier() == null) {
+            log.debug("Clan required league tier is missing: clanTag=\"{}\"", response.tag());
+            return;
+        }
+        Integer leagueTierId = response.requiredLeagueTier().id();
+        if (leagueTierService.findById(leagueTierId).isEmpty()) {
+            log.info("League tier is missing locally; synchronizing league tiers: leagueTierId={}", leagueTierId);
+            leagueTierService.syncAll();
+        }
     }
 
 }

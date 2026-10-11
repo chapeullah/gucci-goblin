@@ -30,24 +30,30 @@ public class MemberService {
     private final BuilderBaseLeagueService builderBaseLeagueService;
     private final MemberDeltaService memberDeltaService;
 
+    public List<Member> getAllMembersByClanTag(@NonNull String clanTag) {
+        return memberRepository.findAllByClanTag(clanTag);
+    }
+
+    @Transactional
+    public List<Member> getCurrentMembersByClanTag(@NonNull String clanTag) {
+        return memberRepository.findAllByClanTagAndInClanTrueOrderByClanRankAsc(clanTag);
+    }
+
     @Transactional
     public List<Member> syncMembers(
             @NonNull Clan clan,
             @NonNull List<ClanMemberResponse> responses) {
-        leagueTierService.syncLeagueTiers();
-        builderBaseLeagueService.syncBuilderBaseLeagues();
+        syncLeagueTiersIfMissing(responses);
+        syncBuilderBaseLeagueIfMissing(responses);
 
         Map<String, Member> incomingMembers = responses.stream()
                 .collect(Collectors.toMap(
                         ClanMemberResponse::tag,
                         response -> toMember(clan, response)));
-
         List<Member> existingMembers = memberRepository.findAllByClanTag(clan.getTag());
 
         Map<String, Member> existingMembersByTag = existingMembers.stream()
-                .collect(Collectors.toMap(
-                        Member::getTag,
-                        Function.identity()));
+                .collect(Collectors.toMap(Member::getTag, Function.identity()));
 
         memberDeltaService.memberDeltaOutput(existingMembersByTag, incomingMembers);
 
@@ -83,6 +89,40 @@ public class MemberService {
                 .toList();
     }
 
+    private void syncLeagueTiersIfMissing(
+            @NonNull List<ClanMemberResponse> responses) {
+        boolean syncRequired = false;
+        for (var response : responses) {
+            if (response.leagueTier() == null) {
+                continue;
+            }
+            if (leagueTierService.findById(response.leagueTier().id()).isEmpty()) {
+                syncRequired = true;
+                break;
+            }
+        }
+        if (syncRequired) {
+            leagueTierService.syncAll();
+        }
+    }
+
+    private void syncBuilderBaseLeagueIfMissing(
+            @NonNull List<ClanMemberResponse> responses) {
+        boolean syncRequired = false;
+        for (var response : responses) {
+            if (response.builderBaseLeague() == null) {
+                continue;
+            }
+            if (builderBaseLeagueService.findById(response.builderBaseLeague().id()).isEmpty()) {
+                syncRequired = true;
+                break;
+            }
+        }
+        if (syncRequired) {
+            builderBaseLeagueService.syncAll();
+        }
+    }
+
     private void syncMemberHouseElements(
             @NonNull Member target,
             @NonNull Member source) {
@@ -98,9 +138,9 @@ public class MemberService {
 
     private Member toMember(@NonNull Clan clan, @NonNull ClanMemberResponse response) {
         LeagueTier leagueTier = response.leagueTier() == null ? null
-                : leagueTierService.findById(response.leagueTier().id());
+                : leagueTierService.getById(response.leagueTier().id());
         BuilderBaseLeague builderBaseLeague = response.builderBaseLeague() == null ? null
-                : builderBaseLeagueService.findById(response.builderBaseLeague().id());
+                : builderBaseLeagueService.getById(response.builderBaseLeague().id());
         Member member = new Member(
                 response.tag(),
                 clan,
@@ -116,10 +156,8 @@ public class MemberService {
                 response.donations(),
                 response.donationsReceived(),
                 builderBaseLeague);
-        if (response.playerHouse() != null
-                && response.playerHouse().elements() != null) {
-            for (MemberHouseElementResponse element
-                    : response.playerHouse().elements()) {
+        if (response.playerHouse() != null && response.playerHouse().elements() != null) {
+            for (MemberHouseElementResponse element : response.playerHouse().elements()) {
                 member.addHouseElement(element.id(), element.type());
             }
         }

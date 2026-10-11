@@ -1,5 +1,9 @@
 package com.chapeullah.guccigoblin.telegram;
 
+import com.chapeullah.guccigoblin.clan.ClanRepository;
+import com.chapeullah.guccigoblin.clan.model.Clan;
+import com.chapeullah.guccigoblin.member.MemberService;
+import com.chapeullah.guccigoblin.member.model.Member;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeason;
 import com.chapeullah.guccigoblin.raidseason.model.RaidSeasonParticipant;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;
@@ -10,6 +14,7 @@ import com.chapeullah.guccigoblin.war.model.WarParticipant;
 import com.chapeullah.guccigoblin.war.repository.WarAttackRepository;
 import com.chapeullah.guccigoblin.war.repository.WarParticipantRepository;
 import com.chapeullah.guccigoblin.war.repository.WarRepository;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
@@ -32,6 +37,8 @@ public class TelegramCommandService {
     private final WarAttackRepository attackRepository;
     private final RaidSeasonRepository raidSeasonRepository;
     private final RaidSeasonParticipantRepository raidSeasonParticipantRepository;
+    private final MemberService memberService;
+    private final ClanRepository clanRepository;
 
     @Value("${coc.clan-tag}")
     private String clanTag;
@@ -48,36 +55,132 @@ public class TelegramCommandService {
         return """
                 <b>Доступные команды</b>
 
-                /war — текущая война
-                /wars — история войн
-                /attacks — неиспользованные атаки
-                /raid — текущий или последний рейд
-                /raids — история рейдов
+                /members — текущий состав клана
                 """.strip();
     }
 
-    public String war() {
-        War war = warRepository
-                .findFirstByStateInOrderByStartTimeDesc(
-                        List.of("preparation", "inWar"))
-                .orElse(null);
+    public String getMembersMessage() {
+        List<Member> members = memberService.getCurrentMembersByClanTag(clanTag);
+        StringBuilder message = new StringBuilder();
+        message.append("");
+        if (members.isEmpty()) {
+            return "Список участников клана пуст";
+        }
+        members.forEach(member -> message
+                .append(String.format("<b>%02d.</b> ", member.getClanRank()))
+                .append(member.getName())
+                .append(" • ")
+                .append(getRoleDisplayName(member.getRole()))
+                .append("\n"));
+        return message.toString();
+    }
 
-        if (war == null) {
-            return "Сейчас активной войны нет.";
+    private static String getRoleDisplayName(@NonNull String role) {
+        return switch (role) {
+            case "leader" -> "Глава";
+            case "coLeader" -> "Соруководитель";
+            case "admin" -> "Старейшина";
+            case "member" -> "Участник";
+            default -> throw new IllegalArgumentException(
+                    "Неизвестная роль участника: " + role);
+        };
+    }
+
+    @Transactional(readOnly = true)
+    public String getClanMessage() {
+        Clan clan = clanRepository.findById(clanTag).orElse(null);
+
+        if (clan == null) {
+            return "Клан не найден: <code>" + escapeHtml(clanTag) + "</code>";
         }
 
+        String type = switch (clan.getType()) {
+            case "open" -> "Открытый";
+            case "inviteOnly" -> "По приглашению";
+            case "closed" -> "Закрытый";
+            default -> clan.getType();
+        };
+
+        String warLeague = clan.getWarLeague() == null
+                ? "Нет данных"
+                : escapeHtml(clan.getWarLeague().getName());
+
+        String location = clan.getLocation() == null
+                ? "Не указано"
+                : escapeHtml(clan.getLocation().getName());
+
+        String description = clan.getDescription() == null
+                || clan.getDescription().isBlank()
+                ? "Без описания"
+                : escapeHtml(clan.getDescription());
+
+        return """
+            <b>%s</b>
+            <code>%s</code>
+
+            📝 %s
+
+            🏰 Уровень: %s
+            👥 Участники: %s из 50
+            🚪 Тип: %s
+            🏆 Очки клана: %s
+            🏛 Очки столицы: %s
+            ⚔️ Военная лига: %s
+            📈 Винрейт: %s
+            ✅ Победы: %s
+            🔥 Серия побед: %s
+            📍 Расположение: %s
+            """.formatted(
+                escapeHtml(clan.getName()),
+                escapeHtml(clan.getTag()),
+                description,
+                valueOrNoData(clan.getClanLevel()),
+                valueOrNoData(clan.getMembers()),
+                escapeHtml(type),
+                valueOrNoData(clan.getClanPoints()),
+                valueOrNoData(clan.getClanCapitalPoints()),
+                warLeague,
+                formatWarWinRate(clan),
+                valueOrNoData(clan.getWarWins()),
+                valueOrNoData(clan.getWarWinStreak()),
+                location
+        ).strip();
+    }
+
+    private static String valueOrNoData(Object value) {
+        return value == null ? "Нет данных" : value.toString();
+    }
+
+    private static String formatWarWinRate(Clan clan) {
+        Integer wins = clan.getWarWins();
+        Integer ties = clan.getWarTies();
+        Integer losses = clan.getWarLosses();
+        if (wins == null || ties == null || losses == null) {
+            return "Нет данных";
+        }
+        int totalWars = wins + ties + losses;
+        if (totalWars == 0) {
+            return "Нет сыгранных войн";
+        }
+        double winRate = (wins + ties) * 100.0 / totalWars;
+        return "%.1f%%".formatted(winRate);
+    }
+
+    public String getCurrentWarMessage() {
+        War war = warRepository
+                .findFirstByStateInOrderByStartTimeDesc(List.of("preparation", "inWar"))
+                .orElse(null);
+        if (war == null) {
+            return "Сейчас активной войны нет";
+        }
         String state = switch (war.getState()) {
             case "preparation" -> "Подготовка";
             case "inWar" -> "Идёт";
             default -> war.getState();
         };
-
-        int maximumAttacks =
-                war.getTeamSize() * war.getAttacksPerMember();
-
+        int maximumAttacks = war.getTeamSize() * war.getAttacksPerMember();
         String timeTitle;
         String time;
-
         if ("preparation".equals(war.getState())) {
             timeTitle = "Начало";
             time = DATE_TIME_FORMATTER.format(war.getStartTime());
@@ -85,7 +188,6 @@ public class TelegramCommandService {
             timeTitle = "Окончание";
             time = DATE_TIME_FORMATTER.format(war.getEndTime());
         }
-
         return """
             <b>Текущая война</b>
 
@@ -97,36 +199,30 @@ public class TelegramCommandService {
             👥 Размер: %d на %d
             🕒 %s: %s
             """.formatted(
-                escapeHtml(war.getClanName()),
-                escapeHtml(war.getOpponentName()),
-                escapeHtml(state),
-                war.getClanStars(),
-                war.getOpponentStars(),
-                war.getClanDestructionPercentage(),
-                war.getOpponentDestructionPercentage(),
-                war.getClanAttacks(),
-                maximumAttacks,
-                war.getTeamSize(),
-                war.getTeamSize(),
-                timeTitle,
-                time
-        ).strip();
+                    escapeHtml(war.getClanName()),
+                    escapeHtml(war.getOpponentName()),
+                    escapeHtml(state),
+                    war.getClanStars(),
+                    war.getOpponentStars(),
+                    war.getClanDestructionPercentage(),
+                    war.getOpponentDestructionPercentage(),
+                    war.getClanAttacks(),
+                    maximumAttacks,
+                    war.getTeamSize(),
+                    war.getTeamSize(),
+                    timeTitle,
+                    time)
+                .strip();
     }
 
     public String wars() {
-        List<War> wars = warRepository
-                .findTop5ByStateOrderByEndTimeDesc("warEnded");
-
+        List<War> wars = warRepository.findTop5ByStateOrderByEndTimeDesc("warEnded");
         if (wars.isEmpty()) {
             return "Завершённые войны не найдены.";
         }
-
-        StringBuilder result = new StringBuilder(
-                "<b>Последние войны</b>\n");
-
+        StringBuilder result = new StringBuilder("<b>Последние войны</b>\n");
         for (War war : wars) {
             String warResult = getWarResult(war);
-
             result.append("\n")
                     .append(warResult)
                     .append(" <b>")
@@ -148,7 +244,6 @@ public class TelegramCommandService {
                     .append(DATE_TIME_FORMATTER.format(war.getEndTime()))
                     .append("\n");
         }
-
         return result.toString().strip();
     }
 

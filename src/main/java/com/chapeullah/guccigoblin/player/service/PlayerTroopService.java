@@ -49,7 +49,7 @@ public class PlayerTroopService {
                 playerTroopRepository.delete(playerTroop);
             }
         }
-        log.debug("Player troops synchronized: playerName={}, playerTag={}, count={}",
+        log.debug("Player troops synchronized: playerName=\"{}\" playerTag=\"{}\" count={}",
                 player.getName(),
                 player.getTag(),
                 savedPlayerTroops.size());

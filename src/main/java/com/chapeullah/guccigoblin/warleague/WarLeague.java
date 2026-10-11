@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "war_leagues")
 @Getter
@@ -29,6 +31,22 @@ public class WarLeague {
             @NonNull String name) {
         this.id = id;
         this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof WarLeague other)) {
+            return false;
+        }
+        return Objects.equals(this.getId(), other.getId()) && Objects.equals(this.getName(), other.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId(), this.getName());
     }
 
 }

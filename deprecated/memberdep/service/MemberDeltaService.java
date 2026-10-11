@@ -74,10 +74,16 @@ public class MemberDeltaService {
     private void printMemberDelta(@NonNull MemberDelta memberDelta) {
         switch (memberDelta.getMembershipStatus()) {
             case JOINED -> {
-                log.info("{}[+] JOINED clan", headerFor(memberDelta, memberDelta.getNameDelta().newValue()));
+                log.info(
+                        "Member joined clan: memberTag=\"{}\" memberName=\"{}\"",
+                        memberDelta.getTag(),
+                        memberDelta.getNameDelta().newValue());
             }
             case LEFT -> {
-                log.info("{}[-] LEFT clan", headerFor(memberDelta, memberDelta.getNameDelta().oldValue()));
+                log.info(
+                        "Member left clan: memberTag=\"{}\" memberName=\"{}\"",
+                        memberDelta.getTag(),
+                        memberDelta.getNameDelta().oldValue());
             }
             case UNCHANGED -> {
                 String header = headerFor(memberDelta, memberDelta.getNameDelta().newValue());
@@ -108,12 +114,16 @@ public class MemberDeltaService {
     ) {
         if (delta.changed()) {
             log.info(
-                    "{}{}{} -> {}",
-                    header,
-                    String.format("%-24s ", field),
-                    delta.oldValue(),
-                    delta.newValue());
+                    "Member changed: member=\"{}\" field=\"{}\" oldValue={} newValue={}",
+                    header.trim(),
+                    field,
+                    formatLogValue(delta.oldValue()),
+                    formatLogValue(delta.newValue()));
         }
+    }
+
+    private static Object formatLogValue(Object value) {
+        return value instanceof String text ? "\"" + text + "\"" : value;
     }
 
     private static String consoleName(@NonNull String s) {

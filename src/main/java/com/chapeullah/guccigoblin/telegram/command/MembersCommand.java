@@ -6,18 +6,18 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AttacksCommand implements BotCommand {
+public class MembersCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
     @Override
     public String name() {
-        return "/attacks";
+        return "/members";
     }
 
     @Override
     public String execute(String args) {
-        return telegramCommandService.attacks();
+        return telegramCommandService.getMembersMessage();
     }
 
 }

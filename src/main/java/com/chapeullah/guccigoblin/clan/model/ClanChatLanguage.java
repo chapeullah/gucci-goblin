@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "chat_languages")
 @Getter
@@ -43,6 +45,24 @@ public class ClanChatLanguage {
         }
         this.name = clanChatLanguage.name;
         this.languageCode = clanChatLanguage.languageCode;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof ClanChatLanguage other)) {
+            return false;
+        }
+        return Objects.equals(this.getId(), other.getId()) &&
+                Objects.equals(this.getName(), other.getName()) &&
+                Objects.equals(this.getLanguageCode(), other.getLanguageCode());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId(), this.getName(), this.getLanguageCode());
     }
 
 }

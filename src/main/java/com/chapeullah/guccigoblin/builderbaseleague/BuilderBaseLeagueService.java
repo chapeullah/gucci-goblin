@@ -2,13 +2,13 @@ package com.chapeullah.guccigoblin.builderbaseleague;
 
 import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.builderbaseleague.dto.BuilderBaseLeagueResponse;
-import com.chapeullah.guccigoblin.builderbaseleague.dto.BuilderBaseLeaguesResponse;
-import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,19 +18,35 @@ public class BuilderBaseLeagueService {
 
     private final BuilderBaseLeagueRepository builderBaseLeagueRepository;
 
-    public BuilderBaseLeague findById(@NonNull Integer id) {
+    @Transactional(readOnly = true)
+    public Optional<BuilderBaseLeague> findById(@NonNull Integer id) {
+        return builderBaseLeagueRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public BuilderBaseLeague getById(@NonNull Integer id) {
         return builderBaseLeagueRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Builder base league not found: id=" + id));
     }
 
-    public List<BuilderBaseLeague> syncBuilderBaseLeagues() {
-        BuilderBaseLeaguesResponse response = client.getBuilderBaseLeagues();
-        List<BuilderBaseLeague> builderBaseLeagues = response
-                .items()
+    @Transactional
+    public List<BuilderBaseLeague> syncAll() {
+        return builderBaseLeagueRepository.saveAll(client.getBuilderBaseLeagues().items()
                 .stream()
                 .map(this::toBuilderBaseLeague)
-                .toList();
-        return builderBaseLeagueRepository.saveAll(builderBaseLeagues);
+                .toList());
+    }
+
+    @Transactional
+    public BuilderBaseLeague syncAllAndGetById(@NonNull Integer id) {
+        return builderBaseLeagueRepository.saveAll(client.getBuilderBaseLeagues().items()
+                        .stream()
+                        .map(this::toBuilderBaseLeague)
+                        .toList())
+                .stream()
+                .filter(item -> item.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Builder base league not found: id=" + id));
     }
 
     private BuilderBaseLeague toBuilderBaseLeague(BuilderBaseLeagueResponse response) {

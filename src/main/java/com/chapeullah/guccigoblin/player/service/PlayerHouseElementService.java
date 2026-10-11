@@ -45,7 +45,7 @@ public class PlayerHouseElementService {
                 playerHouseElementRepository.delete(playerHouseElement);
             }
         }
-        log.debug("Player house elements synchronized {} ({}), count={}",
+        log.debug("Player house elements synchronized: playerName=\"{}\" playerTag=\"{}\" count={}",
                 player.getName(),
                 player.getTag(),
                 savedPlayerHouseElements.size());

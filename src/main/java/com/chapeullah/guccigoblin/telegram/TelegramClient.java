@@ -41,7 +41,7 @@ public class TelegramClient {
                         .path("/getUpdates")
                         .queryParam("offset", offset)
                         .queryParam("timeout", 25)
-                        .queryParam("allowed_updates", "[\"telegramMessage\"]")
+                        .queryParam("allowed_updates", "[\"message\"]")
                         .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});

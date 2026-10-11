@@ -19,6 +19,7 @@ public class TelegramBot {
 
     @Scheduled(fixedDelayString = "${telegram.bot.poll-delay-ms:1000}")
     public void poll() {
+        log.debug("Telegram polling...");
         try {
             for (var update : telegramClient.getUpdates(nextOffset)) {
                 nextOffset = Math.max(nextOffset, update.updateId() + 1);
@@ -27,6 +28,7 @@ public class TelegramBot {
         } catch (RuntimeException exception) {
             log.warn("Telegram polling failed", exception);
         }
+        log.debug("Telegram polling success");
     }
 
     private void handle(TelegramUpdate telegramUpdate) {

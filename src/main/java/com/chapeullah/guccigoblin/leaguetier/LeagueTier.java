@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
+import java.util.Objects;
+
 @Entity @Table(name = "league_tiers")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -45,6 +47,29 @@ public class LeagueTier {
         this.name = name;
         this.smallIconUrl = smallIconUrl;
         this.largeIconUrl = largeIconUrl;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof LeagueTier other)) {
+            return false;
+        }
+        return Objects.equals(this.getId(), other.getId()) &&
+                Objects.equals(this.getName(), other.getName()) &&
+                Objects.equals(this.getSmallIconUrl(), other.getSmallIconUrl()) &&
+                Objects.equals(this.getLargeIconUrl(), other.getLargeIconUrl());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                this.getId(),
+                this.getName(),
+                this.getSmallIconUrl(),
+                this.getLargeIconUrl());
     }
 
 }

@@ -32,7 +32,10 @@ public class HttpConfig {
                 .baseUrl(baseUrl)
                 .requestFactory(factory)
                 .requestInterceptor((request, body, execution) -> {
-                    log.debug("HTTP {} {}", request.getMethod(), request.getURI());
+                    log.debug(
+                            "HTTP request: method=\"{}\" uri=\"{}\"",
+                            request.getMethod(),
+                            request.getURI());
                     return execution.execute(request, body);
                 })
                 .build();

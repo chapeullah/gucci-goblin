@@ -12,12 +12,12 @@ public class WarCommand implements BotCommand {
 
     @Override
     public String name() {
-        return "/war";
+        return "/getCurrentWarMessage";
     }
 
     @Override
     public String execute(String args) {
-        return telegramCommandService.war();
+        return name();
     }
 
 }

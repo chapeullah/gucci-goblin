@@ -59,7 +59,7 @@ public class RaidSeasonService {
         RaidSeason season = saveOrUpdateSeason(dto);
 
         if (dto.members() == null) {
-            log.warn("У сезона {} отсутствует members. Сохранённые участники и атаки не изменены",
+            log.warn("У сезона отсутствует members; сохранённые участники и атаки не изменены: startTime=\"{}\"",
                     season.getStartTime());
 
             return Optional.of(season);
@@ -164,7 +164,9 @@ public class RaidSeasonService {
             RaidSeasonResponse.Season dto,
             Map<String, RaidSeasonParticipant> participantsByTag) {
         if (dto.attackLog() == null) {
-            log.warn("У сезона {} отсутствует attackLog. Старые атаки сохранены", season.getStartTime());
+            log.warn(
+                    "У сезона отсутствует attackLog; старые атаки сохранены: startTime=\"{}\"",
+                    season.getStartTime());
             return;
         }
 
@@ -176,7 +178,7 @@ public class RaidSeasonService {
                     || entry.defender() == null
                     || entry.districts() == null) {
 
-                log.warn("У сезона {} неполный attackLog. Старые атаки сохранены",
+                log.warn("У сезона неполный attackLog; старые атаки сохранены: startTime=\"{}\"",
                         season.getStartTime());
                 return;
             }
@@ -204,8 +206,8 @@ public class RaidSeasonService {
 
                     if (participant == null) {
                         log.warn(
-                                "У сезона {} нет участника {} из журнала атак. "
-                                        + "Старые атаки сохранены",
+                                "У сезона нет участника из журнала атак; старые атаки сохранены: "
+                                        + "startTime=\"{}\" attackerTag=\"{}\"",
                                 season.getStartTime(),
                                 attackerTag);
                         return;
@@ -235,8 +237,8 @@ public class RaidSeasonService {
 
         if (attacks.size() != season.getTotalAttacks()) {
             log.warn(
-                    "У сезона {} получено {} атак, ожидалось {}. "
-                            + "Старые атаки сохранены",
+                    "Количество атак сезона не совпадает; старые атаки сохранены: "
+                            + "startTime=\"{}\" actualAttacks={} expectedAttacks={}",
                     season.getStartTime(),
                     attacks.size(),
                     season.getTotalAttacks());
@@ -249,8 +251,8 @@ public class RaidSeasonService {
 
             if (actualCount != participant.getAttacks()) {
                 log.warn(
-                        "У сезона {} для игрока {} получено {} атак, "
-                                + "ожидалось {}. Старые атаки сохранены",
+                        "Количество атак участника не совпадает; старые атаки сохранены: "
+                                + "startTime=\"{}\" participantTag=\"{}\" actualAttacks={} expectedAttacks={}",
                         season.getStartTime(),
                         participant.getTag(),
                         actualCount,
@@ -264,7 +266,7 @@ public class RaidSeasonService {
         raidSeasonAttackRepository.saveAll(attacks);
 
         log.info(
-                "Сезон {} синхронизирован: участников {}, атак {}",
+                "Сезон синхронизирован: startTime=\"{}\" participants={} attacks={}",
                 season.getStartTime(),
                 participantsByTag.size(),
                 attacks.size());

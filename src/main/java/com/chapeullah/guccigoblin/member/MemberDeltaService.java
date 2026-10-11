@@ -62,11 +62,11 @@ public class MemberDeltaService {
     private void printMemberDelta(@NonNull MemberDelta memberDelta) {
         switch (memberDelta.getMembershipStatus()) {
             case JOINED -> log.debug(
-                    "Member joined clan: memberTag={}, memberName={}",
+                    "Member joined clan: memberTag=\"{}\" memberName=\"{}\"",
                     memberDelta.getTag(),
                     memberDelta.getNameDelta().newValue());
             case LEFT -> log.debug(
-                    "Member left clan: memberTag={}, memberName={}",
+                    "Member left clan: memberTag=\"{}\" memberName=\"{}\"",
                     memberDelta.getTag(),
                     memberDelta.getNameDelta().oldValue());
             case UNCHANGED -> {
@@ -109,11 +109,15 @@ public class MemberDeltaService {
             return;
         }
         log.debug(
-                "Member changed: memberTag={}, memberName={}, field={}, oldValue={}, newValue={}",
+                "Member changed: memberTag=\"{}\" memberName=\"{}\" field=\"{}\" oldValue={} newValue={}",
                 memberDelta.getTag(),
                 memberName,
                 field,
-                delta.oldValue(),
-                delta.newValue());
+                formatLogValue(delta.oldValue()),
+                formatLogValue(delta.newValue()));
+    }
+
+    private static Object formatLogValue(Object value) {
+        return value instanceof String text ? "\"" + text + "\"" : value;
     }
 }
