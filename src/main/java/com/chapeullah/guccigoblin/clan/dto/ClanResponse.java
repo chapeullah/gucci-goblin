@@ -5,6 +5,7 @@ import com.chapeullah.guccigoblin.label.dto.LabelResponse;
 import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTierResponse;
 import com.chapeullah.guccigoblin.location.dto.LocationResponse;
 import com.chapeullah.guccigoblin.warleague.dto.WarLeagueResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -29,11 +30,11 @@ public record ClanResponse(
         Integer warLosses,
         Boolean isWarLogPublic,
         WarLeagueResponse warLeague,
-        Integer members,
+        @JsonProperty("members") Integer memberCount,
         List<ClanMemberResponse> memberList,
         List<LabelResponse> labels,
         Integer requiredBuilderBaseTrophies,
-        Integer requiredTownhallLevel,
+        @JsonProperty("requiredTownhallLevel") Integer requiredTownHallLevel,
         LeagueTierResponse requiredLeagueTier,
         ClanCapitalResponse clanCapital,
         ClanChatLanguageResponse chatLanguage) {}

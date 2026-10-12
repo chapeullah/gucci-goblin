@@ -135,7 +135,7 @@ public class TelegramCommandService {
                 escapeHtml(clan.getTag()),
                 description,
                 valueOrNoData(clan.getClanLevel()),
-                valueOrNoData(clan.getMembers()),
+                valueOrNoData(clan.getMemberCount()),
                 escapeHtml(type),
                 valueOrNoData(clan.getClanPoints()),
                 valueOrNoData(clan.getClanCapitalPoints()),

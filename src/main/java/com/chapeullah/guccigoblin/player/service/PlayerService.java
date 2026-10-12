@@ -111,7 +111,7 @@ public class PlayerService {
                 link -> !labelIds.contains(link.getPlayerLabel().getId()));
 
         if (!labelsResponse.isEmpty()) {
-            playerLabelService.syncPlayerLabels().stream()
+            playerLabelService.syncAll().stream()
                     .filter(label -> labelIds.contains(label.getId()))
                     .filter(label -> player.getLabelLinks().stream()
                             .noneMatch(link ->

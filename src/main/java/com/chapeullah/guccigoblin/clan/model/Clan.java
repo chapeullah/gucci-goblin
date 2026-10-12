@@ -6,15 +6,13 @@ import com.chapeullah.guccigoblin.location.Location;
 import com.chapeullah.guccigoblin.member.model.Member;
 import com.chapeullah.guccigoblin.warleague.WarLeague;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Entity @Table(name = "clans")
 @Getter
@@ -136,11 +134,11 @@ public class Clan {
     @Column(name = "war_league_changed_at", nullable = true)
     private Instant warLeagueChangedAt;
 
-    @Column(name = "members", nullable = true)
-    private Integer members;
+    @Column(name = "member_count", nullable = true)
+    private Integer memberCount;
 
-    @Column(name = "members_changed_at", nullable = true)
-    private Instant membersChangedAt;
+    @Column(name = "member_count_changed_at", nullable = true)
+    private Instant memberCountChangedAt;
 
     @SuppressWarnings("FieldMayBeFinal")
     @OneToMany(
@@ -165,10 +163,10 @@ public class Clan {
     private Instant requiredBuilderBaseTrophiesChangedAt;
 
     @Column(name = "required_townhall_level", nullable = true)
-    private Integer requiredTownhallLevel;
+    private Integer requiredTownHallLevel;
 
     @Column(name = "required_townhall_level_changed_at", nullable = true)
-    private Instant requiredTownhallLevelChangedAt;
+    private Instant requiredTownHallLevelChangedAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "required_league_tier_id", nullable = true)
@@ -183,6 +181,14 @@ public class Clan {
 
     @Column(name = "clan_chat_language_changed_at", nullable = true)
     private Instant clanChatLanguageChangedAt;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = true)
+    private Instant updatedAt;
 
     public Clan(
             @NonNull String tag,
@@ -205,9 +211,9 @@ public class Clan {
             Integer warLosses,
             Boolean isWarLogPublic,
             WarLeague warLeague,
-            Integer members,
+            Integer memberCount,
             Integer requiredBuilderBaseTrophies,
-            Integer requiredTownhallLevel,
+            Integer requiredTownHallLevel,
             LeagueTier requiredLeagueTier,
             ClanChatLanguage clanChatLanguage) {
         this.tag = tag;
@@ -230,129 +236,207 @@ public class Clan {
         this.warLosses = warLosses;
         this.isWarLogPublic = isWarLogPublic;
         this.warLeague = warLeague;
-        this.members = members;
+        this.memberCount = memberCount;
         this.requiredBuilderBaseTrophies = requiredBuilderBaseTrophies;
-        this.requiredTownhallLevel = requiredTownhallLevel;
+        this.requiredTownHallLevel = requiredTownHallLevel;
         this.requiredLeagueTier = requiredLeagueTier;
         this.clanChatLanguage = clanChatLanguage;
     }
 
-    public void updateFrom(@NonNull Clan source) {
-        if (!this.tag.equals(source.tag)) {
-            throw new IllegalArgumentException("Clan tag mismatch");
-        }
+    public void setType(String type) {
+        this.type = type;
+    }
 
-        Instant now = Instant.now();
+    public void setTypeChangedAt(Instant typeChangedAt) {
+        this.typeChangedAt = typeChangedAt;
+    }
 
-        if (!Objects.equals(this.type, source.type)) {
-            this.type = source.type;
-            this.typeChangedAt = now;
-        }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-        if (!Objects.equals(this.description, source.description)) {
-            this.description = source.description;
-            this.descriptionChangedAt = now;
-        }
+    public void setDescriptionChangedAt(Instant descriptionChangedAt) {
+        this.descriptionChangedAt = descriptionChangedAt;
+    }
 
-        if (!Objects.equals(this.location, source.location)) {
-            this.location = source.location;
-            this.locationChangedAt = now;
-        }
+    public void setLocation(Location location) {
+        this.location = location;
+    }
 
-        if (!Objects.equals(this.clanBadgeUrls, source.clanBadgeUrls)) {
-            this.clanBadgeUrls = source.clanBadgeUrls;
-            this.clanBadgeUrlsChangedAt = now;
-        }
+    public void setLocationChangedAt(Instant locationChangedAt) {
+        this.locationChangedAt = locationChangedAt;
+    }
 
-        if (!Objects.equals(this.clanLevel, source.clanLevel)) {
-            this.clanLevel = source.clanLevel;
-            this.clanLevelChangedAt = now;
-        }
+    public void setFamilyFriendly(Boolean familyFriendly) {
+        isFamilyFriendly = familyFriendly;
+    }
 
-        if (!Objects.equals(this.clanPoints, source.clanPoints)) {
-            this.clanPoints = source.clanPoints;
-            this.clanPointsChangedAt = now;
-        }
+    public void setClanBadgeUrls(ClanBadgeUrls clanBadgeUrls) {
+        this.clanBadgeUrls = clanBadgeUrls;
+    }
 
-        if (!Objects.equals(this.clanBuilderBasePoints, source.clanBuilderBasePoints)) {
-            this.clanBuilderBasePoints = source.clanBuilderBasePoints;
-            this.clanBuilderBasePointsChangedAt = now;
-        }
+    public void setClanBadgeUrlsChangedAt(Instant clanBadgeUrlsChangedAt) {
+        this.clanBadgeUrlsChangedAt = clanBadgeUrlsChangedAt;
+    }
 
-        if (!Objects.equals(this.clanCapitalPoints, source.clanCapitalPoints)) {
-            this.clanCapitalPoints = source.clanCapitalPoints;
-            this.clanCapitalPointsChangedAt = now;
-        }
+    public void setClanLevel(Integer clanLevel) {
+        this.clanLevel = clanLevel;
+    }
 
-        if (!Objects.equals(this.capitalLeague, source.capitalLeague)) {
-            this.capitalLeague = source.capitalLeague;
-            this.capitalLeagueChangedAt = now;
-        }
+    public void setClanLevelChangedAt(Instant clanLevelChangedAt) {
+        this.clanLevelChangedAt = clanLevelChangedAt;
+    }
 
-        if (!Objects.equals(this.requiredTrophies, source.requiredTrophies)) {
-            this.requiredTrophies = source.requiredTrophies;
-            this.requiredTrophiesChangedAt = now;
-        }
+    public void setClanPoints(Integer clanPoints) {
+        this.clanPoints = clanPoints;
+    }
 
-        if (!Objects.equals(this.warFrequency, source.warFrequency)) {
-            this.warFrequency = source.warFrequency;
-            this.warFrequencyChangedAt = now;
-        }
+    public void setClanPointsChangedAt(Instant clanPointsChangedAt) {
+        this.clanPointsChangedAt = clanPointsChangedAt;
+    }
 
-        if (!Objects.equals(this.warWinStreak, source.warWinStreak)) {
-            this.warWinStreak = source.warWinStreak;
-            this.warWinStreakChangedAt = now;
-        }
+    public void setClanBuilderBasePoints(Integer clanBuilderBasePoints) {
+        this.clanBuilderBasePoints = clanBuilderBasePoints;
+    }
 
-        if (!Objects.equals(this.warWins, source.warWins)) {
-            this.warWins = source.warWins;
-            this.warWinsChangedAt = now;
-        }
+    public void setClanBuilderBasePointsChangedAt(Instant clanBuilderBasePointsChangedAt) {
+        this.clanBuilderBasePointsChangedAt = clanBuilderBasePointsChangedAt;
+    }
 
-        if (!Objects.equals(this.warTies, source.warTies)) {
-            this.warTies = source.warTies;
-            this.warTiesChangedAt = now;
-        }
+    public void setClanCapitalPoints(Integer clanCapitalPoints) {
+        this.clanCapitalPoints = clanCapitalPoints;
+    }
 
-        if (!Objects.equals(this.warLosses, source.warLosses)) {
-            this.warLosses = source.warLosses;
-            this.warLossesChangedAt = now;
-        }
+    public void setClanCapitalPointsChangedAt(Instant clanCapitalPointsChangedAt) {
+        this.clanCapitalPointsChangedAt = clanCapitalPointsChangedAt;
+    }
 
-        if (!Objects.equals(this.isWarLogPublic, source.isWarLogPublic)) {
-            this.isWarLogPublic = source.isWarLogPublic;
-            this.isWarLogPublicChangedAt = now;
-        }
+    public void setCapitalLeague(CapitalLeague capitalLeague) {
+        this.capitalLeague = capitalLeague;
+    }
 
-        if (!Objects.equals(this.warLeague, source.warLeague)) {
-            this.warLeague = source.warLeague;
-            this.warLeagueChangedAt = now;
-        }
+    public void setCapitalLeagueChangedAt(Instant capitalLeagueChangedAt) {
+        this.capitalLeagueChangedAt = capitalLeagueChangedAt;
+    }
 
-        if (!Objects.equals(this.members, source.members)) {
-            this.members = source.members;
-            this.membersChangedAt = now;
-        }
+    public void setRequiredTrophies(Integer requiredTrophies) {
+        this.requiredTrophies = requiredTrophies;
+    }
 
-        if (!Objects.equals(this.requiredBuilderBaseTrophies, source.requiredBuilderBaseTrophies)) {
-            this.requiredBuilderBaseTrophies = source.requiredBuilderBaseTrophies;
-            this.requiredBuilderBaseTrophiesChangedAt = now;
-        }
+    public void setRequiredTrophiesChangedAt(Instant requiredTrophiesChangedAt) {
+        this.requiredTrophiesChangedAt = requiredTrophiesChangedAt;
+    }
 
-        if (!Objects.equals(this.requiredTownhallLevel, source.requiredTownhallLevel)) {
-            this.requiredTownhallLevel = source.requiredTownhallLevel;
-            this.requiredTownhallLevelChangedAt = now;
-        }
+    public void setWarFrequency(String warFrequency) {
+        this.warFrequency = warFrequency;
+    }
 
-        if (!Objects.equals(this.requiredLeagueTier, source.requiredLeagueTier)) {
-            this.requiredLeagueTier = source.requiredLeagueTier;
-            this.requiredLeagueTierChangedAt = now;
-        }
+    public void setWarFrequencyChangedAt(Instant warFrequencyChangedAt) {
+        this.warFrequencyChangedAt = warFrequencyChangedAt;
+    }
 
-        if (!Objects.equals(this.clanChatLanguage, source.clanChatLanguage)) {
-            this.clanChatLanguage = source.clanChatLanguage;
-            this.clanChatLanguageChangedAt = now;
-        }
+    public void setWarWinStreak(Integer warWinStreak) {
+        this.warWinStreak = warWinStreak;
+    }
+
+    public void setWarWinStreakChangedAt(Instant warWinStreakChangedAt) {
+        this.warWinStreakChangedAt = warWinStreakChangedAt;
+    }
+
+    public void setWarWins(Integer warWins) {
+        this.warWins = warWins;
+    }
+
+    public void setWarWinsChangedAt(Instant warWinsChangedAt) {
+        this.warWinsChangedAt = warWinsChangedAt;
+    }
+
+    public void setWarTies(Integer warTies) {
+        this.warTies = warTies;
+    }
+
+    public void setWarTiesChangedAt(Instant warTiesChangedAt) {
+        this.warTiesChangedAt = warTiesChangedAt;
+    }
+
+    public void setWarLosses(Integer warLosses) {
+        this.warLosses = warLosses;
+    }
+
+    public void setWarLossesChangedAt(Instant warLossesChangedAt) {
+        this.warLossesChangedAt = warLossesChangedAt;
+    }
+
+    public void setIsWarLogPublic(Boolean warLogPublic) {
+        this.isWarLogPublic = warLogPublic;
+    }
+
+    public void setIsWarLogPublicChangedAt(Instant isWarLogPublicChangedAt) {
+        this.isWarLogPublicChangedAt = isWarLogPublicChangedAt;
+    }
+
+    public void setWarLeague(WarLeague warLeague) {
+        this.warLeague = warLeague;
+    }
+
+    public void setWarLeagueChangedAt(Instant warLeagueChangedAt) {
+        this.warLeagueChangedAt = warLeagueChangedAt;
+    }
+
+    public void setMemberCount(Integer memberCount) {
+        this.memberCount = memberCount;
+    }
+
+    public void setMemberCountChangedAt(Instant memberCountChangedAt) {
+        this.memberCountChangedAt = memberCountChangedAt;
+    }
+
+    public void setMemberList(List<Member> memberList) {
+        this.memberList = memberList;
+    }
+
+    public void setMemberListChangedAt(Instant memberListChangedAt) {
+        this.memberListChangedAt = memberListChangedAt;
+    }
+
+    public void setLabelLinks(List<ClanLabelLink> labelLinks) {
+        this.labelLinks = labelLinks;
+    }
+
+    public void setLabelLinksChangedAt(Instant labelLinksChangedAt) {
+        this.labelLinksChangedAt = labelLinksChangedAt;
+    }
+
+    public void setRequiredBuilderBaseTrophies(Integer requiredBuilderBaseTrophies) {
+        this.requiredBuilderBaseTrophies = requiredBuilderBaseTrophies;
+    }
+
+    public void setRequiredBuilderBaseTrophiesChangedAt(Instant requiredBuilderBaseTrophiesChangedAt) {
+        this.requiredBuilderBaseTrophiesChangedAt = requiredBuilderBaseTrophiesChangedAt;
+    }
+
+    public void setRequiredTownHallLevel(Integer requiredTownHallLevel) {
+        this.requiredTownHallLevel = requiredTownHallLevel;
+    }
+
+    public void setRequiredTownHallLevelChangedAt(Instant requiredTownHallLevelChangedAt) {
+        this.requiredTownHallLevelChangedAt = requiredTownHallLevelChangedAt;
+    }
+
+    public void setRequiredLeagueTier(LeagueTier requiredLeagueTier) {
+        this.requiredLeagueTier = requiredLeagueTier;
+    }
+
+    public void setRequiredLeagueTierChangedAt(Instant requiredLeagueTierChangedAt) {
+        this.requiredLeagueTierChangedAt = requiredLeagueTierChangedAt;
+    }
+
+    public void setClanChatLanguage(ClanChatLanguage clanChatLanguage) {
+        this.clanChatLanguage = clanChatLanguage;
+    }
+
+    public void setClanChatLanguageChangedAt(Instant clanChatLanguageChangedAt) {
+        this.clanChatLanguageChangedAt = clanChatLanguageChangedAt;
     }
 
 }

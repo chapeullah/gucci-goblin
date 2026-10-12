@@ -82,9 +82,11 @@ public class MemberService {
                 membersToSave.add(existingMember);
             }
         }
-        return memberRepository
-                .saveAll(membersToSave)
-                .stream()
+        List<Member> savedMembers = memberRepository.saveAll(membersToSave);
+        for (Member member : savedMembers) {
+            clan.addMember(member);
+        }
+        return savedMembers.stream()
                 .filter(Member::isInClan)
                 .toList();
     }

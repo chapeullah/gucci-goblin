@@ -4,11 +4,13 @@ import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.label.IconUrls;
 import com.chapeullah.guccigoblin.label.dto.LabelIconUrlsResponse;
 import com.chapeullah.guccigoblin.label.dto.LabelResponse;
-import com.chapeullah.guccigoblin.label.dto.LabelsResponse;
+import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,14 +20,17 @@ public class ClanLabelService {
 
     private final ClanLabelRepository clanLabelRepository;
 
-    public void syncClanLabels() {
-        LabelsResponse response = client.getClanLabelsResponse();
-        List<ClanLabel> clanLabels = response
-                .items()
+    @Transactional(readOnly = true)
+    public Optional<ClanLabel> findById(@NonNull Integer id) {
+        return clanLabelRepository.findById(id);
+    }
+
+    @Transactional
+    public void syncAll() {
+        clanLabelRepository.saveAll(client.getClanLabelsResponse().items()
                 .stream()
                 .map(this::toClanLabel)
-                .toList();
-        clanLabelRepository.saveAll(clanLabels);
+                .toList());
     }
 
     private ClanLabel toClanLabel(LabelResponse response) {

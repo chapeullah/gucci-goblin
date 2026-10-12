@@ -7,6 +7,7 @@ import com.chapeullah.guccigoblin.label.dto.LabelResponse;
 import com.chapeullah.guccigoblin.label.dto.LabelsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,14 +19,12 @@ public class PlayerLabelService {
 
     private final PlayerLabelRepository playerLabelRepository;
 
-    public List<PlayerLabel> syncPlayerLabels() {
-        LabelsResponse response = client.getPlayerLabelsResponse();
-        List<PlayerLabel> playerLabels = response
-                .items()
+    @Transactional
+    public List<PlayerLabel> syncAll() {
+        return playerLabelRepository.saveAll(client.getPlayerLabelsResponse().items()
                 .stream()
                 .map(this::toPlayerLabel)
-                .toList();
-        return playerLabelRepository.saveAll(playerLabels);
+                .toList());
     }
 
     private PlayerLabel toPlayerLabel(LabelResponse response) {

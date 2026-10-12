@@ -55,7 +55,7 @@ public class Scheduler {
         try {
             log.info("Sync clan: clanTag=\"{}\"", clanTag);
             Clan clan = clanService.syncClan(clanTag);
-            log.info("Sync clan success: clanTag=\"{}\" members={}", clanTag, clan.getMembers());
+            log.info("Sync clan success: clanTag=\"{}\" memberCount={}", clanTag, clan.getMemberCount());
         } catch (Exception e) {
             log.error("Sync clan failed: clanTag=\"{}\"", clanTag, e);
         }
