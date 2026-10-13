@@ -138,7 +138,7 @@ public class Member {
     private Instant builderBaseLeagueChangedAt;
 
     @Column(name = "in_clan", nullable = false)
-    private boolean inClan;
+    private Boolean inClan;
 
     @Column(name = "in_clan_changed_at", nullable = true)
     private Instant inClanChangedAt;
@@ -181,84 +181,6 @@ public class Member {
         this.inClan = true;
     }
 
-    public void updateFrom(@NonNull Member source) {
-        if (!tag.equals(source.tag)) {
-            throw new IllegalArgumentException(
-                    "Member tags mismatch: currentMemberTag=\"" + tag + "\", sourceMemberTag=\"" + source.tag + "\"");
-        }
-        if (!clan.getTag().equals(source.clan.getTag())) {
-            throw new IllegalArgumentException(
-                    "Member clan tags mismatch: currentClanTag=\""
-                            + clan.getTag()
-                            + "\", sourceClanTag=\""
-                            + source.clan.getTag()
-                            + "\"");
-        }
-
-        Instant now = Instant.now();
-
-        if (!Objects.equals(this.name, source.name)) {
-            this.name = source.name;
-            this.nameChangedAt = now;
-        }
-
-        if (!Objects.equals(this.role, source.role)) {
-            this.role = source.role;
-            this.roleChangedAt = now;
-        }
-
-        if (!Objects.equals(this.townHallLevel, source.townHallLevel)) {
-            this.townHallLevel = source.townHallLevel;
-            this.townHallLevelChangedAt = now;
-        }
-
-        if (!Objects.equals(this.expLevel, source.expLevel)) {
-            this.expLevel = source.expLevel;
-            this.expLevelChangedAt = now;
-        }
-
-        if (!Objects.equals(this.leagueTier, source.leagueTier)) {
-            this.leagueTier = source.leagueTier;
-            this.leagueTierChangedAt = now;
-        }
-
-        if (!Objects.equals(this.trophies, source.trophies)) {
-            this.trophies = source.trophies;
-            this.trophiesChangedAt = now;
-        }
-
-        if (!Objects.equals(this.builderBaseTrophies, source.builderBaseTrophies)) {
-            this.builderBaseTrophies = source.builderBaseTrophies;
-            this.builderBaseTrophiesChangedAt = now;
-        }
-
-        if (!Objects.equals(this.clanRank, source.clanRank)) {
-            this.clanRank = source.clanRank;
-            this.clanRankChangedAt = now;
-        }
-
-        if (!Objects.equals(this.previousClanRank, source.previousClanRank)) {
-            this.previousClanRank = source.previousClanRank;
-            this.previousClanRankChangedAt = now;
-        }
-
-        if (!Objects.equals(this.donations, source.donations)) {
-            this.donations = source.donations;
-            this.donationsChangedAt = now;
-        }
-
-        if (!Objects.equals(this.donationsReceived, source.donationsReceived)) {
-            this.donationsReceived = source.donationsReceived;
-            this.donationsReceivedChangedAt = now;
-        }
-
-        if (!Objects.equals(this.builderBaseLeague, source.builderBaseLeague)) {
-            this.builderBaseLeague = source.builderBaseLeague;
-            this.builderBaseLeagueChangedAt = now;
-        }
-
-    }
-
     public void addHouseElement(
             @NonNull Integer elementId,
             @NonNull String elementType) {
@@ -281,6 +203,138 @@ public class Member {
         }
         this.inClan = false;
         this.inClanChangedAt = Instant.now();
+    }
+
+    public void setClan(Clan clan) {
+        this.clan = clan;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setNameChangedAt(Instant nameChangedAt) {
+        this.nameChangedAt = nameChangedAt;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public void setRoleChangedAt(Instant roleChangedAt) {
+        this.roleChangedAt = roleChangedAt;
+    }
+
+    public void setTownHallLevel(Integer townHallLevel) {
+        this.townHallLevel = townHallLevel;
+    }
+
+    public void setTownHallLevelChangedAt(Instant townHallLevelChangedAt) {
+        this.townHallLevelChangedAt = townHallLevelChangedAt;
+    }
+
+    public void setExpLevel(Integer expLevel) {
+        this.expLevel = expLevel;
+    }
+
+    public void setExpLevelChangedAt(Instant expLevelChangedAt) {
+        this.expLevelChangedAt = expLevelChangedAt;
+    }
+
+    public void setLeagueTier(LeagueTier leagueTier) {
+        this.leagueTier = leagueTier;
+    }
+
+    public void setLeagueTierChangedAt(Instant leagueTierChangedAt) {
+        this.leagueTierChangedAt = leagueTierChangedAt;
+    }
+
+    public void setTrophies(Integer trophies) {
+        this.trophies = trophies;
+    }
+
+    public void setTrophiesChangedAt(Instant trophiesChangedAt) {
+        this.trophiesChangedAt = trophiesChangedAt;
+    }
+
+    public void setBuilderBaseTrophies(Integer builderBaseTrophies) {
+        this.builderBaseTrophies = builderBaseTrophies;
+    }
+
+    public void setBuilderBaseTrophiesChangedAt(Instant builderBaseTrophiesChangedAt) {
+        this.builderBaseTrophiesChangedAt = builderBaseTrophiesChangedAt;
+    }
+
+    public void setClanRank(Integer clanRank) {
+        this.clanRank = clanRank;
+    }
+
+    public void setClanRankChangedAt(Instant clanRankChangedAt) {
+        this.clanRankChangedAt = clanRankChangedAt;
+    }
+
+    public void setPreviousClanRank(Integer previousClanRank) {
+        this.previousClanRank = previousClanRank;
+    }
+
+    public void setPreviousClanRankChangedAt(Instant previousClanRankChangedAt) {
+        this.previousClanRankChangedAt = previousClanRankChangedAt;
+    }
+
+    public void setDonations(Integer donations) {
+        this.donations = donations;
+    }
+
+    public void setDonationsChangedAt(Instant donationsChangedAt) {
+        this.donationsChangedAt = donationsChangedAt;
+    }
+
+    public void setTotalDonations(Integer totalDonations) {
+        this.totalDonations = totalDonations;
+    }
+
+    public void setTotalDonationsChangedAt(Instant totalDonationsChangedAt) {
+        this.totalDonationsChangedAt = totalDonationsChangedAt;
+    }
+
+    public void setDonationsReceived(Integer donationsReceived) {
+        this.donationsReceived = donationsReceived;
+    }
+
+    public void setDonationsReceivedChangedAt(Instant donationsReceivedChangedAt) {
+        this.donationsReceivedChangedAt = donationsReceivedChangedAt;
+    }
+
+    public void setTotalDonationsReceived(Integer totalDonationsReceived) {
+        this.totalDonationsReceived = totalDonationsReceived;
+    }
+
+    public void setTotalDonationsReceivedChangedAt(Instant totalDonationsReceivedChangedAt) {
+        this.totalDonationsReceivedChangedAt = totalDonationsReceivedChangedAt;
+    }
+
+    public void setMemberHouseElements(List<MemberHouseElement> memberHouseElements) {
+        this.memberHouseElements = memberHouseElements;
+    }
+
+    public void setMemberHouseElementsChangedAt(Instant memberHouseElementsChangedAt) {
+        this.memberHouseElementsChangedAt = memberHouseElementsChangedAt;
+    }
+
+    public void setBuilderBaseLeague(BuilderBaseLeague builderBaseLeague) {
+        this.builderBaseLeague = builderBaseLeague;
+    }
+
+    public void setBuilderBaseLeagueChangedAt(Instant builderBaseLeagueChangedAt) {
+        this.builderBaseLeagueChangedAt = builderBaseLeagueChangedAt;
+    }
+
+    public void setInClan(boolean inClan) {
+        this.inClan = inClan;
+    }
+
+    public void setInClanChangedAt(Instant inClanChangedAt) {
+        this.inClanChangedAt = inClanChangedAt;
     }
 
 }

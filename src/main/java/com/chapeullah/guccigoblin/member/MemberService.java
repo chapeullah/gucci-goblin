@@ -1,22 +1,20 @@
 package com.chapeullah.guccigoblin.member;
 
-import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeagueService;
 import com.chapeullah.guccigoblin.clan.dto.ClanMemberResponse;
 import com.chapeullah.guccigoblin.clan.model.Clan;
-import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTierService;
-import com.chapeullah.guccigoblin.member.dto.MemberHouseElementResponse;
 import com.chapeullah.guccigoblin.member.model.Member;
-import com.chapeullah.guccigoblin.member.model.MemberHouseElement;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -42,128 +40,144 @@ public class MemberService {
     @Transactional
     public List<Member> syncMembers(
             @NonNull Clan clan,
-            @NonNull List<ClanMemberResponse> responses) {
-        syncLeagueTiersIfMissing(responses);
-        syncBuilderBaseLeagueIfMissing(responses);
+            @NonNull List<ClanMemberResponse> clanMemberResponses) {
+        syncLeagueTiersAndBuilderBaseLeaguesIfMissing(clanMemberResponses);
 
-        Map<String, Member> incomingMembers = responses.stream()
-                .collect(Collectors.toMap(
-                        ClanMemberResponse::tag,
-                        response -> toMember(clan, response)));
-        List<Member> existingMembers = memberRepository.findAllByClanTag(clan.getTag());
-
-        Map<String, Member> existingMembersByTag = existingMembers.stream()
+        Map<String, Member> currentMembersByTag = memberRepository
+                .findAllByClanTag(clan.getTag())
+                .stream()
                 .collect(Collectors.toMap(Member::getTag, Function.identity()));
-
-        memberDeltaService.memberDeltaOutput(existingMembersByTag, incomingMembers);
 
         List<Member> membersToSave = new ArrayList<>();
 
-        for (Map.Entry<String, Member> entry : incomingMembers.entrySet()) {
-            String tag = entry.getKey();
-            Member incomingMember = entry.getValue();
-            Member existingMember = existingMembersByTag.get(tag);
-            if (existingMember == null) {
-                membersToSave.add(incomingMember);
-                continue;
-            }
-            boolean rejoining = !existingMember.isInClan();
-            existingMember.updateFrom(incomingMember);
-            syncMemberHouseElements(existingMember, incomingMember);
-            if (rejoining) {
-                existingMember.rejoin();
-            }
-            membersToSave.add(existingMember);
-        }
-        for (Member existingMember : existingMembers) {
-            if (existingMember.isInClan() &&
-                    !incomingMembers.containsKey(existingMember.getTag())) {
-                existingMember.leave();
-                membersToSave.add(existingMember);
+        for (ClanMemberResponse clanMemberResponse : clanMemberResponses) {
+            Member member = currentMembersByTag.get(clanMemberResponse.tag());
+            if (member != null) {
+                membersToSave.add(updateMember(member, clanMemberResponse));
+            } else {
+                membersToSave.add(createMember(clanMemberResponse));
             }
         }
-        List<Member> savedMembers = memberRepository.saveAll(membersToSave);
-        for (Member member : savedMembers) {
-            clan.addMember(member);
-        }
-        return savedMembers.stream()
-                .filter(Member::isInClan)
-                .toList();
+
+
     }
 
-    private void syncLeagueTiersIfMissing(
+    public Member updateMember(
+            @NonNull Member member,
+            @NonNull ClanMemberResponse response) {
+        if (!Objects.equals(member.getTag(), response.tag())) {
+            throw new IllegalArgumentException(
+                    "Member tags mismatch: currentMemberTag=\"" + member.getTag() + "\", sourceMemberTag=\"" + response.tag() + "\"");
+        }
+
+        Instant now = Instant.now();
+
+        // TODO clan
+
+        if (!Objects.equals(member.getName(), response.name())) {
+            member.setName(response.name());
+            member.setNameChangedAt(now);
+        }
+
+        if (!Objects.equals(member.getRole(), response.role())) {
+            member.setRole(response.role());
+            member.setRoleChangedAt(now);
+        }
+
+        if (!Objects.equals(member.getTownHallLevel(), response.townHallLevel())) {
+            member.setTownHallLevel(response.townHallLevel());
+            member.setTownHallLevelChangedAt(now);
+        }
+
+        if (!Objects.equals(member.getExpLevel(), response.expLevel())) {
+            member.setExpLevel(response.expLevel());
+            member.setExpLevelChangedAt(now);
+        }
+
+        // TODO league tier
+
+        if (!Objects.equals(member.getTrophies(), response.trophies())) {
+            member.setTrophies(response.trophies());
+            member.setTrophiesChangedAt(now);
+        }
+
+        if (!Objects.equals(member.getBuilderBaseTrophies(), response.builderBaseTrophies())) {
+            member.setBuilderBaseTrophies(response.builderBaseTrophies());
+            member.setBuilderBaseTrophiesChangedAt(now);
+        }
+
+        if (!Objects.equals(member.getClanRank(), response.clanRank())) {
+            member.setClanRank(response.clanRank());
+            member.setClanRankChangedAt(now);
+        }
+
+        if (!Objects.equals(member.getPreviousClanRank(), response.previousClanRank())) {
+            member.setPreviousClanRank(response.previousClanRank());
+            member.setPreviousClanRankChangedAt(now);
+        }
+
+        if (!Objects.equals(member.getDonations(), response.donations())) {
+            member.setDonations(response.donations());
+            member.setDonationsChangedAt(now);
+        }
+
+        // TODO totalDonations
+
+        if (!Objects.equals(member.getDonationsReceived(), response.donationsReceived())) {
+            member.setDonationsReceived(response.donationsReceived());
+            member.setDonationsReceivedChangedAt(now);
+        }
+
+        // TODO totalDonationsReceived
+
+        // TODO memberHouseElements
+
+        // TODO builderBaseLeague
+
+        // TODO inClan
+
+    }
+
+    public Member createMember(@NonNull ClanMemberResponse response) {
+
+    }
+
+    private void syncLeagueTiersAndBuilderBaseLeaguesIfMissing(
             @NonNull List<ClanMemberResponse> responses) {
-        boolean syncRequired = false;
-        for (var response : responses) {
-            if (response.leagueTier() == null) {
+        boolean leagueTiersSyncRequired = false, builderBaseLeaguesSyncRequired = false;
+        for (ClanMemberResponse response : responses) {
+            if (response.leagueTier() == null && response.builderBaseLeague() == null) {
                 continue;
             }
-            if (leagueTierService.findById(response.leagueTier().id()).isEmpty()) {
-                syncRequired = true;
+
+            // leagueTier
+            Integer leagueTierId = response.leagueTier() == null ? null
+                    : response.leagueTier().id();
+            if (!leagueTiersSyncRequired
+                    && leagueTierId != null
+                    && leagueTierService.findById(leagueTierId).isEmpty()) {
+                leagueTiersSyncRequired = true;
+            }
+
+            // builderBaseLeague
+            Integer builderBaseLeagueId = response.builderBaseLeague() == null ? null
+                    : response.builderBaseLeague().id();
+            if (!builderBaseLeaguesSyncRequired
+                    && builderBaseLeagueId != null
+                    && builderBaseLeagueService.findById(builderBaseLeagueId).isEmpty()) {
+                builderBaseLeaguesSyncRequired = true;
+            }
+
+            if (leagueTiersSyncRequired && builderBaseLeaguesSyncRequired) {
                 break;
             }
         }
-        if (syncRequired) {
+        if (leagueTiersSyncRequired) {
             leagueTierService.syncAll();
         }
-    }
-
-    private void syncBuilderBaseLeagueIfMissing(
-            @NonNull List<ClanMemberResponse> responses) {
-        boolean syncRequired = false;
-        for (var response : responses) {
-            if (response.builderBaseLeague() == null) {
-                continue;
-            }
-            if (builderBaseLeagueService.findById(response.builderBaseLeague().id()).isEmpty()) {
-                syncRequired = true;
-                break;
-            }
-        }
-        if (syncRequired) {
+        if (builderBaseLeaguesSyncRequired) {
             builderBaseLeagueService.syncAll();
         }
-    }
-
-    private void syncMemberHouseElements(
-            @NonNull Member target,
-            @NonNull Member source) {
-        List<MemberHouseElement> elements =
-                source.getMemberHouseElements().stream()
-                        .map(element -> new MemberHouseElement(
-                                element.getElementId(),
-                                element.getElementType()))
-                        .toList();
-        target.getMemberHouseElements().clear();
-        target.getMemberHouseElements().addAll(elements);
-    }
-
-    private Member toMember(@NonNull Clan clan, @NonNull ClanMemberResponse response) {
-        LeagueTier leagueTier = response.leagueTier() == null ? null
-                : leagueTierService.getById(response.leagueTier().id());
-        BuilderBaseLeague builderBaseLeague = response.builderBaseLeague() == null ? null
-                : builderBaseLeagueService.getById(response.builderBaseLeague().id());
-        Member member = new Member(
-                response.tag(),
-                clan,
-                response.name(),
-                response.role(),
-                response.townHallLevel(),
-                response.expLevel(),
-                leagueTier,
-                response.trophies(),
-                response.builderBaseTrophies(),
-                response.clanRank(),
-                response.previousClanRank(),
-                response.donations(),
-                response.donationsReceived(),
-                builderBaseLeague);
-        if (response.playerHouse() != null && response.playerHouse().elements() != null) {
-            for (MemberHouseElementResponse element : response.playerHouse().elements()) {
-                member.addHouseElement(element.id(), element.type());
-            }
-        }
-        return member;
     }
 
 }

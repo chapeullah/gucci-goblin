@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -32,12 +33,21 @@ public class HttpConfig {
                 .baseUrl(baseUrl)
                 .requestFactory(factory)
                 .requestInterceptor((request, body, execution) -> {
-                    log.debug(
-                            "HTTP request: method=\"{}\" uri=\"{}\"",
-                            request.getMethod(),
-                            request.getURI());
+                    log.debug("HTTP request: method=\"{}\" uri=\"{}\"", request.getMethod(), request.getURI());
                     return execution.execute(request, body);
                 })
+                .defaultStatusHandler(status -> status.value() != 200,
+                        (request, response) -> {
+                            throw new RestClientResponseException(
+                                    "Unexpected HTTP status: "
+                                            + response.getStatusCode()
+                                            + " for " + request.getURI(),
+                                    response.getStatusCode(),
+                                    response.getStatusText(),
+                                    response.getHeaders(),
+                                    response.getBody().readAllBytes(),
+                                    null);
+                        })
                 .build();
     }
 }

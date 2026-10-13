@@ -10,6 +10,7 @@ import com.chapeullah.guccigoblin.clan.dto.ClanResponse;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.clan.model.ClanBadgeUrls;
 import com.chapeullah.guccigoblin.clan.model.ClanChatLanguage;
+import com.chapeullah.guccigoblin.clan.model.ClanLabelLink;
 import com.chapeullah.guccigoblin.label.clan.ClanLabelService;
 import com.chapeullah.guccigoblin.label.dto.LabelResponse;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
@@ -27,10 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,13 +40,14 @@ public class ClanService {
 
     private final ClanRepository clanRepository;
 
-    private final ClanChatLanguageRepository clanChatLanguageRepository;
-
     private final LocationService locationService;
     private final CapitalLeagueService capitalLeagueService;
     private final WarLeagueService warLeagueService;
     private final LeagueTierService leagueTierService;
     private final ClanLabelService clanLabelService;
+    private final ClanBadgeUrlsService clanBadgeUrlsService;
+    private final ClanLabelLinkService clanLabelLinkService;
+    private final ClanChatLanguageService clanChatLanguageService;
 
     private final MemberService memberService;
 
@@ -58,14 +58,20 @@ public class ClanService {
             throw new IllegalStateException("Clan member list is missing: clanTag=\"" + clanTag + "\"");
         }
 
+        syncLocationsIfMissing(response);
+        syncCapitalLeaguesIfMissing(response);
+        syncWarLeaguesIfMissing(response);
+        syncClanLabelsIfMissing(response);
+        syncLeagueTiersIfMissing(response);
+
         Clan clan = clanRepository.findById(response.tag()).orElse(null);
         if (clan == null) {
-            createClan(response);
+            clan = createClan(response);
         } else {
             updateClan(clan, response);
         }
-        clan = clanRepository.findById(response.tag()).orElseThrow(() ->
-                new IllegalStateException("Clan not found after creation or update: clanTag\"" +
+        clan = clanRepository.findById(response.tag()).orElseThrow(
+                () -> new IllegalStateException("Clan not found after creation or update: clanTag\"" +
                         response.tag() + "\""));
 
 //        Clan savedClan;
@@ -77,7 +83,7 @@ public class ClanService {
 //        }
 //        memberService.syncMembers(savedClan, response.memberList());
 //        return savedClan;
-        return clan;
+        return clanRepository.save(clan);
     }
 
     private void syncLocationsIfMissing(
@@ -147,38 +153,21 @@ public class ClanService {
         }
     }
 
-    public void createClan(@NonNull ClanResponse response) {
-        ClanBadgeUrlsResponse badgeResponse = response.badgeUrls();
-        ClanBadgeUrls badgeUrls = badgeResponse == null ? null : new ClanBadgeUrls(
-                badgeResponse.small(),
-                badgeResponse.large(),
-                badgeResponse.medium());
-
-        syncLocationsIfMissing(response);
+    public Clan createClan(@NonNull ClanResponse response) {
         Location location = response.location() == null ? null
                 : locationService.getById(response.location().id());
 
-        syncCapitalLeaguesIfMissing(response);
         CapitalLeague capitalLeague = response.capitalLeague() == null ? null
                 : capitalLeagueService.getById(response.capitalLeague().id());
 
-        syncWarLeaguesIfMissing(response);
         WarLeague warLeague = response.warLeague() == null ? null
                 : warLeagueService.getById(response.warLeague().id());
 
-        syncClanLabelsIfMissing(response);
-
-
-        syncLeagueTiersIfMissing(response);
         LeagueTier requiredLeagueTier = response.requiredLeagueTier() == null ? null
                 : leagueTierService.getById(response.requiredLeagueTier().id());
 
-        ClanChatLanguageResponse languageResponse = response.chatLanguage();
-        ClanChatLanguage chatLanguage = languageResponse == null ? null
-                : clanChatLanguageRepository.save(new ClanChatLanguage(
-                languageResponse.id(),
-                languageResponse.name(),
-                languageResponse.languageCode()));
+        ClanChatLanguage chatLanguage = response.chatLanguage() == null ? null
+                : clanChatLanguageService.getOrCreate(response.chatLanguage());
 
         Clan clan = new Clan(
                 response.tag(),
@@ -187,7 +176,6 @@ public class ClanService {
                 response.description(),
                 location,
                 response.isFamilyFriendly(),
-                badgeUrls,
                 response.clanLevel(),
                 response.clanPoints(),
                 response.clanBuilderBasePoints(),
@@ -206,7 +194,19 @@ public class ClanService {
                 response.requiredTownHallLevel(),
                 requiredLeagueTier,
                 chatLanguage);
-        clanRepository.save(clan);
+
+        clan = clanRepository.save(clan);
+
+        // TODO: clanBadgeUrls
+        ClanBadgeUrls clanBadgeUrls = clanBadgeUrlsService
+                .syncAndGetByClan(clan, response.badgeUrls());
+        clan.setClanBadgeUrls(clanBadgeUrls);
+
+        // TODO: memberList
+
+        // TODO: labelLinks
+
+        return clan;
     }
 
     public void updateClan(@NonNull Clan clan, @NonNull ClanResponse response) {
@@ -216,124 +216,216 @@ public class ClanService {
 
         Instant now = Instant.now();
 
+        // type
+        // typeChangedAt
         if (!Objects.equals(clan.getType(), response.type())) {
             clan.setType(response.type());
             clan.setTypeChangedAt(now);
         }
 
+        // description
+        // descriptionChangedAt
         if (!Objects.equals(clan.getDescription(), response.description())) {
             clan.setDescription(response.description());
             clan.setDescriptionChangedAt(now);
         }
 
-        Location location = locationService.getById(response.location().id());
+        // location
+        // locationChangedAt
+        Location location = response.location() == null ? null
+                : locationService.getById(response.location().id());
         if (!Objects.equals(clan.getLocation(), location)) {
             clan.setLocation(location);
             clan.setLocationChangedAt(now);
         }
 
-        ClanBadgeUrls clanBadgeUrls = toClanBadgeUrls(response.badgeUrls());
-        if (!Objects.equals(clan.getClanBadgeUrls(), clanBadgeUrls)) {
-            clan.setClanBadgeUrls(clanBadgeUrls);
+        // clanBadgeUrls
+        // clanBadgeUrlsChangedAt
+        ClanBadgeUrls currentClanBadgeUrls = clanBadgeUrlsService
+                .findByClanTag(clan.getTag()).orElse(null);
+        ClanBadgeUrls oldClanBadgeUrls = currentClanBadgeUrls == null ? null
+                : new ClanBadgeUrls(
+                clan,
+                currentClanBadgeUrls.getSmall(),
+                currentClanBadgeUrls.getLarge(),
+                currentClanBadgeUrls.getMedium());
+        ClanBadgeUrls newClanBadgeUrls = clanBadgeUrlsService
+                .syncAndGetByClan(clan, response.badgeUrls());
+        if (!Objects.equals(oldClanBadgeUrls, newClanBadgeUrls)) {
+            clan.setClanBadgeUrls(newClanBadgeUrls);
             clan.setClanBadgeUrlsChangedAt(now);
         }
 
+        // clanLevel
+        // clanLevelChangedAt
         if (!Objects.equals(clan.getClanLevel(), response.clanLevel())) {
             clan.setClanLevel(response.clanLevel());
             clan.setClanLevelChangedAt(now);
         }
 
+        // clanPoints
+        // clanPointsChanged
         if (!Objects.equals(clan.getClanPoints(), response.clanPoints())) {
             clan.setClanPoints(response.clanPoints());
             clan.setClanPointsChangedAt(now);
         }
 
+        // clanBuilderBasePoints
+        // clanBuilderBasePointsChangedAt
         if (!Objects.equals(clan.getClanBuilderBasePoints(), response.clanBuilderBasePoints())) {
             clan.setClanBuilderBasePoints(response.clanBuilderBasePoints());
             clan.setClanBuilderBasePointsChangedAt(now);
         }
 
+        // clanCapitalPoints
+        // clanCapitalPointsChangedAt
         if (!Objects.equals(clan.getClanCapitalPoints(), response.clanCapitalPoints())) {
             clan.setClanCapitalPoints(response.clanCapitalPoints());
             clan.setClanCapitalPointsChangedAt(now);
         }
 
-        CapitalLeague capitalLeague = capitalLeagueService.getById(response.capitalLeague().id());
+        // capitalLeague
+        // capitalLeagueChangedAt
+        CapitalLeague capitalLeague = response.capitalLeague() == null ? null :
+                capitalLeagueService.getById(response.capitalLeague().id());
         if (!Objects.equals(clan.getCapitalLeague(), capitalLeague)) {
             clan.setCapitalLeague(capitalLeague);
             clan.setCapitalLeagueChangedAt(now);
         }
 
+        // requiredTrophies
+        // requiredTrophiesChangedAt
         if (!Objects.equals(clan.getRequiredTrophies(), response.requiredTrophies())) {
             clan.setRequiredTrophies(response.requiredTrophies());
             clan.setRequiredTrophiesChangedAt(now);
         }
 
+        // warFrequency
+        // warFrequencyChangedAt
         if (!Objects.equals(clan.getWarFrequency(), response.warFrequency())) {
             clan.setWarFrequency(response.warFrequency());
             clan.setWarFrequencyChangedAt(now);
         }
 
+        // warWinStreak
+        // warWinStreakChangedAt
         if (!Objects.equals(clan.getWarWinStreak(), response.warWinStreak())) {
             clan.setWarWinStreak(response.warWinStreak());
             clan.setWarWinStreakChangedAt(now);
         }
 
+        // warWins
+        // warWinsChangedAt
         if (!Objects.equals(clan.getWarWins(), response.warWins())) {
             clan.setWarWins(response.warWins());
             clan.setWarWinsChangedAt(now);
         }
 
+        // warTies
+        // warTiesChangedAt
         if (!Objects.equals(clan.getWarTies(), response.warTies())) {
             clan.setWarTies(response.warTies());
             clan.setWarTiesChangedAt(now);
         }
 
+        // warLosses
+        // warLossesChangedAt
         if (!Objects.equals(clan.getWarLosses(), response.warLosses())) {
             clan.setWarLosses(response.warLosses());
             clan.setWarLossesChangedAt(now);
         }
 
+        // isWarLogPublic
+        // isWarLogPublicChangedAt
         if (!Objects.equals(clan.getIsWarLogPublic(), response.isWarLogPublic())) {
             clan.setIsWarLogPublic(response.isWarLogPublic());
             clan.setIsWarLogPublicChangedAt(now);
         }
 
-        WarLeague warLeague = warLeagueService.getById(response.warLeague().id());
+        // warLeague
+        // warLeagueChangedAt
+        WarLeague warLeague = response.warLeague() == null ? null
+                : warLeagueService.getById(response.warLeague().id());
         if (!Objects.equals(clan.getWarLeague(), warLeague)) {
             clan.setWarLeague(warLeague);
             clan.setWarLeagueChangedAt(now);
         }
 
+        // memberCount
+        // memberCountChangedAt
         if (!Objects.equals(clan.getMemberCount(), response.memberCount())) {
             clan.setMemberCount(response.memberCount());
             clan.setMemberCountChangedAt(now);
         }
 
-        if (!Objects.equals(clan.getRequiredBuilderBaseTrophies(), response.requiredBuilderBaseTrophies())) {
-            clan.setRequiredBuilderBaseTrophies(response.requiredBuilderBaseTrophies());
+        // memberList
+        // memberListChangedAt
+        Set<String> memberSetBefore = memberService
+                .getCurrentMembersByClanTag(clan.getTag())
+                .stream()
+                .map(Member::getTag)
+                .collect(Collectors.toSet());
+        Set<String> memberSetAfter = memberService
+                .syncMembers(clan, response.memberList())
+                .stream()
+                .map(Member::getTag)
+                .collect(Collectors.toSet());
+        if (!Objects.equals(memberSetBefore, memberSetAfter)) {
+            clan.setMemberListChangedAt(now);
+        }
+
+        // labelLinks
+        // labelLinksChangedAt
+        Set<ClanLabelLink> clanLabelLinkSetBefore =
+                new HashSet<>(clanLabelLinkService
+                        .getAllByClanTag(clan.getTag()));
+        Set<ClanLabelLink> clanLabelLinkSetAfter =
+                new HashSet<>(clanLabelLinkService
+                        .syncAndGetByClan(clan, response.labels()));
+        if (!Objects.equals(clanLabelLinkSetBefore, clanLabelLinkSetAfter)) {
+            clan.setLabelLinksChangedAt(now);
+        }
+
+        // requiredBuilderBaseTrophies
+        // requiredBuilderBaseTrophiesChangedAt
+        if (!Objects.equals(
+                clan.getRequiredBuilderBaseTrophies(),
+                response.requiredBuilderBaseTrophies())) {
+            clan.setRequiredBuilderBaseTrophies(
+                    response.requiredBuilderBaseTrophies());
             clan.setRequiredBuilderBaseTrophiesChangedAt(now);
         }
 
+        // requiredTownHallLevel
+        // requiredTownHallLevelChangedAt
         if (!Objects.equals(clan.getRequiredTownHallLevel(), response.requiredTownHallLevel())) {
             clan.setRequiredTownHallLevel(response.requiredTownHallLevel());
             clan.setRequiredTownHallLevelChangedAt(now);
         }
 
-        LeagueTier requiredLeagueTier = leagueTierService.getById(response.requiredLeagueTier().id());
+        // requiredLeagueTier
+        // requiredLeagueTierChangedAt
+        LeagueTier requiredLeagueTier = response.requiredLeagueTier() == null ? null
+                : leagueTierService.getById(response.requiredLeagueTier().id());
         if (!Objects.equals(clan.getRequiredLeagueTier(), requiredLeagueTier)) {
             clan.setRequiredLeagueTier(requiredLeagueTier);
             clan.setRequiredLeagueTierChangedAt(now);
         }
 
-        ClanChatLanguage clanChatLanguage = toClanChatLanguage(response.chatLanguage());
+        // clanChatLanguage
+        // clanChatLanguageChangedAt
+        ClanChatLanguage clanChatLanguage = response.chatLanguage() == null
+                ? null
+                : clanChatLanguageService.getOrCreate(response.chatLanguage());
         if (!Objects.equals(clan.getClanChatLanguage(), clanChatLanguage)) {
             clan.setClanChatLanguage(clanChatLanguage);
             clan.setClanChatLanguageChangedAt(now);
         }
     }
 
-    public void updateMembers(@NonNull List<Member> members, @NonNull List<ClanMemberResponse> responses) {
+    public void updateMembers(
+            @NonNull List<Member> members,
+            @NonNull List<ClanMemberResponse> responses) {
 //        Map<String, ClanMemberResponse> clanMemberResponsesByTag = new HashMap<>();
 //        responses.forEach(response -> clanMemberResponsesByTag.put(response.tag(), response));
 //
@@ -350,16 +442,6 @@ public class ClanService {
 
     public void setMemberListChangedAt(@NonNull Instant instant) {
 //        this.memberListChangedAt = instant; Так же
-    }
-
-    private ClanBadgeUrls toClanBadgeUrls(
-            ClanBadgeUrlsResponse response) {
-        return response == null
-                ? null
-                : new ClanBadgeUrls(
-                        response.small(),
-                        response.large(),
-                        response.medium());
     }
 
     private ClanChatLanguage toClanChatLanguage(

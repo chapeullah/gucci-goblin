@@ -6,10 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-@Entity
-@Table(name = "chat_languages")
+@Entity @Table(name = "clan_chat_languages")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ClanChatLanguage {
@@ -18,6 +19,10 @@ public class ClanChatLanguage {
     @Column(name = "id",
             nullable = false)
     private Integer id;
+
+    @SuppressWarnings("FieldMayBeFinal")
+    @OneToMany(mappedBy = "clanChatLanguage")
+    private List<Clan> clans = new ArrayList<>();
 
     @Column(name = "name",
             nullable = false)
@@ -31,20 +36,9 @@ public class ClanChatLanguage {
             @NonNull Integer id,
             @NonNull String name,
             String languageCode) {
-        if (name.isBlank()) {
-            throw new IllegalArgumentException("Clan telegram chat language name must not be blank");
-        }
         this.id = id;
         this.name = name;
         this.languageCode = languageCode;
-    }
-
-    public void updateFrom(ClanChatLanguage clanChatLanguage) {
-        if (!this.id.equals(clanChatLanguage.id)) {
-            throw new IllegalArgumentException("Clan telegram chat language id mismatch");
-        }
-        this.name = clanChatLanguage.name;
-        this.languageCode = clanChatLanguage.languageCode;
     }
 
     @Override

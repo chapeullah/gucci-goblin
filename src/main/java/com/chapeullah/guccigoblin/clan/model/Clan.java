@@ -48,7 +48,7 @@ public class Clan {
     @Column(name = "is_family_friendly", nullable = true)
     private Boolean isFamilyFriendly;
 
-    @Embedded
+    @OneToOne(mappedBy = "clan")
     private ClanBadgeUrls clanBadgeUrls;
 
     @Column(name = "clan_badge_urls_changed_at", nullable = true)
@@ -197,7 +197,6 @@ public class Clan {
             String description,
             Location location,
             Boolean isFamilyFriendly,
-            ClanBadgeUrls clanBadgeUrls,
             Integer clanLevel,
             Integer clanPoints,
             Integer clanBuilderBasePoints,
@@ -222,7 +221,6 @@ public class Clan {
         this.description = description;
         this.location = location;
         this.isFamilyFriendly = isFamilyFriendly;
-        this.clanBadgeUrls = clanBadgeUrls;
         this.clanLevel = clanLevel;
         this.clanPoints = clanPoints;
         this.clanBuilderBasePoints = clanBuilderBasePoints;
@@ -265,10 +263,6 @@ public class Clan {
 
     public void setLocationChangedAt(Instant locationChangedAt) {
         this.locationChangedAt = locationChangedAt;
-    }
-
-    public void setFamilyFriendly(Boolean familyFriendly) {
-        isFamilyFriendly = familyFriendly;
     }
 
     public void setClanBadgeUrls(ClanBadgeUrls clanBadgeUrls) {
