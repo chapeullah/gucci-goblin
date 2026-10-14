@@ -28,6 +28,10 @@ public class ClanCapitalDistrictService {
             List<ClanCapitalDistrictResponse> responses) {
         List<ClanCapitalDistrict> current = capital.getDistricts();
         if (responses == null) {
+            if (!current.isEmpty()) {
+                throw new IllegalStateException(
+                        "Clan capital districts are missing: clanTag=\"" + capital.getClanTag() + "\"");
+            }
             return new ArrayList<>(current);
         }
         List<ClanCapitalDistrict> incoming = new ArrayList<>();

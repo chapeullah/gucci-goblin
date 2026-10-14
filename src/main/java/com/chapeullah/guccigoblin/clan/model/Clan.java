@@ -175,6 +175,12 @@ public class Clan {
     @Column(name = "required_league_tier_changed_at", nullable = true)
     private Instant requiredLeagueTierChangedAt;
 
+    @OneToOne(mappedBy = "clan")
+    private ClanCapital clanCapital;
+
+    @Column(name = "clan_capital_changed_at", nullable = true)
+    private Instant clanCapitalChangedAt;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "chat_language_id", nullable = true)
     private ClanChatLanguage clanChatLanguage;
@@ -423,6 +429,14 @@ public class Clan {
 
     public void setRequiredLeagueTierChangedAt(Instant requiredLeagueTierChangedAt) {
         this.requiredLeagueTierChangedAt = requiredLeagueTierChangedAt;
+    }
+
+    public void setClanCapital(ClanCapital clanCapital) {
+        this.clanCapital = clanCapital;
+    }
+
+    public void setClanCapitalChangedAt(Instant clanCapitalChangedAt) {
+        this.clanCapitalChangedAt = clanCapitalChangedAt;
     }
 
     public void setClanChatLanguage(ClanChatLanguage clanChatLanguage) {

@@ -55,8 +55,8 @@ public class ClanService {
     @Transactional
     public Clan syncClan(@NonNull String clanTag) {
         ClanResponse response = client.getClan(clanTag);
-        if (response.memberList() == null) {
-            throw new IllegalStateException("Clan member list is missing: clanTag=\"" + clanTag + "\"");
+        if (response.memberList() == null || response.memberList().isEmpty()) {
+            throw new IllegalStateException("Clan member list is missing or empty: clanTag=\"" + clanTag + "\"");
         }
 
         syncLocationsIfMissing(response);
@@ -72,7 +72,7 @@ public class ClanService {
             updateClan(clan, response);
         }
 
-        clanCapitalService.syncAndGetByClan(clan, response.clanCapital());
+        clan.setClanCapital(clanCapitalService.syncAndGetByClan(clan, response.clanCapital()));
 
         return clanRepository.save(clan);
     }

@@ -23,13 +23,15 @@ public class ClanCapitalService {
     public ClanCapital syncAndGetByClan(
             @NonNull Clan clan,
             ClanCapitalResponse response) {
-
         ClanCapital capital = clanCapitalRepository
                 .findById(clan.getTag())
                 .orElse(null);
 
         if (response == null) {
-            return capital;
+            if (capital != null) {
+                throw new IllegalStateException("Clan capital is missing: clanTag=\"" + clan.getTag() + "\"");
+            }
+            return null;
         }
 
         Integer capitalHallLevel = Objects.requireNonNull(

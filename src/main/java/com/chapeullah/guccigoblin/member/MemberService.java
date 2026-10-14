@@ -45,6 +45,10 @@ public class MemberService {
     public List<Member> syncMembers(
             @NonNull Clan clan,
             @NonNull List<ClanMemberResponse> clanMemberResponses) {
+        if (clanMemberResponses.isEmpty()) {
+            throw new IllegalArgumentException("Clan member list is empty: clanTag=\"" + clan.getTag() + "\"");
+        }
+
         syncLeagueTiersAndBuilderBaseLeaguesIfMissing(clanMemberResponses);
 
         Map<String, Member> remainingMembersByTag = memberRepository
