@@ -212,14 +212,14 @@ public class MemberService {
         if (!Objects.equals(oldDonations, newDonations)) {
             member.setDonations(newDonations);
             member.setDonationsChangedAt(now);
-
-            int addedDonations = newDonations >= oldDonations
-                    ? newDonations - oldDonations
-                    : newDonations;
-            if (addedDonations > 0) {
-                member.setTotalDonations(member.getTotalDonations() + addedDonations);
-                member.setTotalDonationsChangedAt(now);
-            }
+        }
+        Integer addedDonations = (!Boolean.TRUE.equals(member.getInClan())
+                || newDonations < oldDonations)
+                ? newDonations
+                : newDonations - oldDonations;
+        if (addedDonations > 0) {
+            member.setTotalDonations(member.getTotalDonations() + addedDonations);
+            member.setTotalDonationsChangedAt(now);
         }
 
         // donationsReceived
@@ -231,14 +231,14 @@ public class MemberService {
         if (!Objects.equals(oldDonationsReceived, newDonationsReceived)) {
             member.setDonationsReceived(newDonationsReceived);
             member.setDonationsReceivedChangedAt(now);
-
-            int addedDonationsReceived = newDonationsReceived >= oldDonationsReceived
-                            ? newDonationsReceived - oldDonationsReceived
-                            : newDonationsReceived;
-            if (addedDonationsReceived > 0) {
-                member.setTotalDonationsReceived(member.getTotalDonationsReceived() + addedDonationsReceived);
-                member.setTotalDonationsReceivedChangedAt(now);
-            }
+        }
+        Integer addedDonationsReceived = (!Boolean.TRUE.equals(member.getInClan())
+                || newDonationsReceived < oldDonationsReceived)
+                ? newDonationsReceived
+                : newDonationsReceived - oldDonationsReceived;
+        if (addedDonationsReceived > 0) {
+            member.setTotalDonationsReceived(member.getTotalDonationsReceived() + addedDonationsReceived);
+            member.setTotalDonationsReceivedChangedAt(now);
         }
 
         // memberHouseElements
