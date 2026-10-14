@@ -83,11 +83,11 @@ public class MemberService {
             }
         }
 
-        Map<String, Member> newMembersByTag =
-                currentMembers.stream()
-                        .collect(Collectors.toMap(
-                                Member::getTag,
-                                Function.identity()));
+        Map<String, Member> newMembersByTag = currentMembers
+                .stream()
+                .collect(Collectors.toMap(
+                        Member::getTag,
+                        Function.identity()));
 
         memberDeltaService.memberDeltaOutput(
                 oldMembersByTag,
@@ -101,9 +101,8 @@ public class MemberService {
             @NonNull ClanMemberResponse response) {
         LeagueTier leagueTier = response.leagueTier() == null ? null
                 : leagueTierService.getById(response.leagueTier().id());
-        BuilderBaseLeague builderBaseLeague =
-                response.builderBaseLeague() == null ? null
-                        : builderBaseLeagueService.getById(response.builderBaseLeague().id());
+        BuilderBaseLeague builderBaseLeague = response.builderBaseLeague() == null ? null
+                : builderBaseLeagueService.getById(response.builderBaseLeague().id());
 
         Member member = new Member(
                 response.tag(),
@@ -128,7 +127,7 @@ public class MemberService {
         return savedMember;
     }
 
-    public Member updateMember(
+    private void updateMember(
             @NonNull Member member,
             @NonNull ClanMemberResponse response) {
         if (!Objects.equals(member.getTag(), response.tag())) {
@@ -280,8 +279,6 @@ public class MemberService {
             member.setInClan(true);
             member.setInClanChangedAt(now);
         }
-
-        return member;
 
     }
 
