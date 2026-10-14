@@ -106,7 +106,7 @@ public class Member {
     @Column(name = "donations_received", nullable = false)
     private Integer donationsReceived;
 
-    @Column(name = "dontations_received_changed_at", nullable = true)
+    @Column(name = "donations_received_changed_at", nullable = true)
     private Instant donationsReceivedChangedAt;
 
     @Column(name = "total_donations_received", nullable = false)
@@ -116,15 +116,10 @@ public class Member {
     private Instant totalDonationsReceivedChangedAt;
 
     @SuppressWarnings("FieldMayBeFinal")
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "member_house_elements",
-            joinColumns = @JoinColumn(
-                    name = "member_id",
-                    nullable = false),
-            uniqueConstraints = @UniqueConstraint(
-                    name = "uk_member_house_elements_member_element",
-                    columnNames = {"member_id", "element_id"}))
+    @OneToMany(
+            mappedBy = "member",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private List<MemberHouseElement> memberHouseElements = new ArrayList<>();
 
     @Column(name = "member_house_elements_changed_at", nullable = true)
@@ -176,37 +171,11 @@ public class Member {
         this.clanRank = clanRank;
         this.previousClanRank = previousClanRank;
         this.donations = donations;
+        this.totalDonations = donations;
         this.donationsReceived = donationsReceived;
+        this.totalDonationsReceived = donationsReceived;
         this.builderBaseLeague = builderBaseLeague;
         this.inClan = true;
-    }
-
-    public void addHouseElement(
-            @NonNull Integer elementId,
-            @NonNull String elementType) {
-        memberHouseElements.add(
-                new MemberHouseElement(elementId, elementType));
-        this.memberHouseElementsChangedAt = Instant.now();
-    }
-
-    public void rejoin() {
-        if (this.inClan) {
-            throw new IllegalStateException("Member is already in clan: memberTag=\"" + tag + "\"");
-        }
-        this.inClan = true;
-        this.inClanChangedAt = Instant.now();
-    }
-
-    public void leave() {
-        if (!this.inClan) {
-            throw new IllegalStateException("Member has already left clan: memberTag=\"" + tag + "\"");
-        }
-        this.inClan = false;
-        this.inClanChangedAt = Instant.now();
-    }
-
-    public void setClan(Clan clan) {
-        this.clan = clan;
     }
 
     public void setName(String name) {
@@ -313,10 +282,6 @@ public class Member {
         this.totalDonationsReceivedChangedAt = totalDonationsReceivedChangedAt;
     }
 
-    public void setMemberHouseElements(List<MemberHouseElement> memberHouseElements) {
-        this.memberHouseElements = memberHouseElements;
-    }
-
     public void setMemberHouseElementsChangedAt(Instant memberHouseElementsChangedAt) {
         this.memberHouseElementsChangedAt = memberHouseElementsChangedAt;
     }
@@ -335,6 +300,23 @@ public class Member {
 
     public void setInClanChangedAt(Instant inClanChangedAt) {
         this.inClanChangedAt = inClanChangedAt;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof Member other)) {
+            return false;
+        }
+        return Objects.equals(this.getTag(), other.getTag())
+                && Objects.equals(this.getClan().getTag(), other.getClan().getTag());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getTag(), this.getClan().getTag());
     }
 
 }

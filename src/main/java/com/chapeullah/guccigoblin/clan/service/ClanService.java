@@ -1,9 +1,9 @@
-package com.chapeullah.guccigoblin.clan;
+package com.chapeullah.guccigoblin.clan.service;
 
 import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.capitalleague.CapitalLeague;
 import com.chapeullah.guccigoblin.capitalleague.CapitalLeagueService;
-import com.chapeullah.guccigoblin.clan.dto.ClanBadgeUrlsResponse;
+import com.chapeullah.guccigoblin.clan.repository.ClanRepository;
 import com.chapeullah.guccigoblin.clan.dto.ClanChatLanguageResponse;
 import com.chapeullah.guccigoblin.clan.dto.ClanMemberResponse;
 import com.chapeullah.guccigoblin.clan.dto.ClanResponse;
@@ -48,6 +48,7 @@ public class ClanService {
     private final ClanBadgeUrlsService clanBadgeUrlsService;
     private final ClanLabelLinkService clanLabelLinkService;
     private final ClanChatLanguageService clanChatLanguageService;
+    private final ClanCapitalService clanCapitalService;
 
     private final MemberService memberService;
 
@@ -70,19 +71,9 @@ public class ClanService {
         } else {
             updateClan(clan, response);
         }
-        clan = clanRepository.findById(response.tag()).orElseThrow(
-                () -> new IllegalStateException("Clan not found after creation or update: clanTag\"" +
-                        response.tag() + "\""));
 
-//        Clan savedClan;
-//        if (existingClan == null) {
-//            savedClan = clanRepository.save(clan);
-//        } else {
-//            existingClan.updateFrom(clan);
-//            savedClan = existingClan;
-//        }
-//        memberService.syncMembers(savedClan, response.memberList());
-//        return savedClan;
+        clanCapitalService.syncAndGetByClan(clan, response.clanCapital());
+
         return clanRepository.save(clan);
     }
 
@@ -127,7 +118,13 @@ public class ClanService {
     }
 
     private void syncClanLabelsIfMissing(@NonNull ClanResponse clanResponse) {
-        for (LabelResponse labelResponse : clanResponse.labels()) {
+        List<LabelResponse> labels = clanResponse.labels();
+        if (labels == null) {
+            log.debug("Clan labels is missing: clanTag=\"{}\"", clanResponse.tag());
+            return;
+
+        }
+        for (LabelResponse labelResponse : labels) {
             if (labelResponse == null) {
                 log.debug("Clan label is missing: clanTag=\"{}\"", clanResponse.tag());
                 continue;
@@ -197,14 +194,11 @@ public class ClanService {
 
         clan = clanRepository.save(clan);
 
-        // TODO: clanBadgeUrls
-        ClanBadgeUrls clanBadgeUrls = clanBadgeUrlsService
-                .syncAndGetByClan(clan, response.badgeUrls());
-        clan.setClanBadgeUrls(clanBadgeUrls);
+        clan.setClanBadgeUrls(clanBadgeUrlsService.syncAndGetByClan(clan, response.badgeUrls()));
 
-        // TODO: memberList
+        memberService.syncMembers(clan, response.memberList());
 
-        // TODO: labelLinks
+        clanLabelLinkService.syncAndGetByClan(clan, response.labels());
 
         return clan;
     }
@@ -421,37 +415,6 @@ public class ClanService {
             clan.setClanChatLanguage(clanChatLanguage);
             clan.setClanChatLanguageChangedAt(now);
         }
-    }
-
-    public void updateMembers(
-            @NonNull List<Member> members,
-            @NonNull List<ClanMemberResponse> responses) {
-//        Map<String, ClanMemberResponse> clanMemberResponsesByTag = new HashMap<>();
-//        responses.forEach(response -> clanMemberResponsesByTag.put(response.tag(), response));
-//
-//        for (Member member : members) {
-//            if (!clanMemberResponsesByTag.containsKey(member.getTag())) {
-//                member.set
-//            }
-//        }
-//
-//        if (this.memberList.stream().noneMatch(existing ->existing.getTag().equals(member.getTag()))) {
-//            this.memberList.add(member);
-//        } ЭтО НАВЕРНОЕ ДОЛЖНО БЫТЬ В MemberService
-    }
-
-    public void setMemberListChangedAt(@NonNull Instant instant) {
-//        this.memberListChangedAt = instant; Так же
-    }
-
-    private ClanChatLanguage toClanChatLanguage(
-            ClanChatLanguageResponse response) {
-        return response == null
-                ? null
-                : new ClanChatLanguage(
-                        response.id(),
-                        response.name(),
-                        response.languageCode());
     }
 
 }

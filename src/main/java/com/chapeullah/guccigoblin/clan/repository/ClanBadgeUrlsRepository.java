@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.clan;
+package com.chapeullah.guccigoblin.clan.repository;
 
 import com.chapeullah.guccigoblin.clan.model.ClanBadgeUrls;
 import org.springframework.data.jpa.repository.JpaRepository;

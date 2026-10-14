@@ -1,5 +1,6 @@
-package com.chapeullah.guccigoblin.clan;
+package com.chapeullah.guccigoblin.clan.service;
 
+import com.chapeullah.guccigoblin.clan.repository.ClanBadgeUrlsRepository;
 import com.chapeullah.guccigoblin.clan.dto.ClanBadgeUrlsResponse;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.clan.model.ClanBadgeUrls;
@@ -35,8 +36,7 @@ public class ClanBadgeUrlsService {
             ClanBadgeUrlsResponse response) {
         ClanBadgeUrls current = clanBadgeUrlsRepository
                 .findById(clan.getTag()).orElse(null);
-        ClanBadgeUrls incoming = response == null
-                ? null
+        ClanBadgeUrls incoming = response == null ? null
                 : new ClanBadgeUrls(
                         clan,
                         response.small(),

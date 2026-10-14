@@ -1,5 +1,6 @@
-package com.chapeullah.guccigoblin.clan;
+package com.chapeullah.guccigoblin.clan.service;
 
+import com.chapeullah.guccigoblin.clan.repository.ClanChatLanguageRepository;
 import com.chapeullah.guccigoblin.clan.dto.ClanChatLanguageResponse;
 import com.chapeullah.guccigoblin.clan.model.ClanChatLanguage;
 import lombok.NonNull;

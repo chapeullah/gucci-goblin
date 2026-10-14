@@ -40,7 +40,8 @@ public class MemberDeltaService {
             String tag = entry.getKey();
             Member newMember = entry.getValue();
             Member oldMember = oldMembers.get(tag);
-            if (oldMember == null || !oldMember.isInClan()) {
+            if (oldMember == null
+                    || !Boolean.TRUE.equals(oldMember.getInClan())) {
                 memberDeltas.add(MemberDelta.joined(newMember));
                 remainingOldMembers.remove(tag);
                 continue;
@@ -52,7 +53,7 @@ public class MemberDeltaService {
             remainingOldMembers.remove(tag);
         }
         for (Member oldMember : remainingOldMembers.values()) {
-            if (oldMember.isInClan()) {
+            if (Boolean.TRUE.equals(oldMember.getInClan())) {
                 memberDeltas.add(MemberDelta.left(oldMember));
             }
         }

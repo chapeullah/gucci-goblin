@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.telegram;
 
-import com.chapeullah.guccigoblin.clan.ClanRepository;
+import com.chapeullah.guccigoblin.clan.repository.ClanRepository;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.member.MemberService;
 import com.chapeullah.guccigoblin.member.model.Member;
@@ -62,13 +62,12 @@ public class TelegramCommandService {
     public String getMembersMessage() {
         List<Member> members = memberService.getCurrentMembersByClanTag(clanTag);
         StringBuilder message = new StringBuilder();
-        message.append("");
         if (members.isEmpty()) {
             return "Список участников клана пуст";
         }
         members.forEach(member -> message
                 .append(String.format("<b>%02d.</b> ", member.getClanRank()))
-                .append(member.getName())
+                .append(escapeHtml(member.getName()))
                 .append(" • ")
                 .append(getRoleDisplayName(member.getRole()))
                 .append("\n"));

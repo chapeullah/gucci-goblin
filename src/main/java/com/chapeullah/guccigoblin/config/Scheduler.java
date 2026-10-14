@@ -1,6 +1,6 @@
 package com.chapeullah.guccigoblin.config;
 
-import com.chapeullah.guccigoblin.clan.ClanService;
+import com.chapeullah.guccigoblin.clan.service.ClanService;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.player.service.PlayerService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
