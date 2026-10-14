@@ -199,7 +199,7 @@ public class TelegramCommandService {
             🕒 %s: %s
             """.formatted(
                     escapeHtml(war.getClanName()),
-                    escapeHtml(war.getOpponentName()),
+                    escapeHtml(war.getOpponentClanName()),
                     escapeHtml(state),
                     war.getClanStars(),
                     war.getOpponentStars(),
@@ -227,7 +227,7 @@ public class TelegramCommandService {
                     .append(" <b>")
                     .append(escapeHtml(war.getClanName()))
                     .append(" против ")
-                    .append(escapeHtml(war.getOpponentName()))
+                    .append(escapeHtml(war.getOpponentClanName()))
                     .append("</b>\n")
                     .append("⭐ ")
                     .append(war.getClanStars())

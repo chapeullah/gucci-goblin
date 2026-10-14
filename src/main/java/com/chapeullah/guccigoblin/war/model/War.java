@@ -1,128 +1,133 @@
 package com.chapeullah.guccigoblin.war.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Table(
         name = "wars",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_wars_clans_start",
-                columnNames = {"clan_tag", "opponent_tag", "start_time"}))
-@Getter @Setter
-@NoArgsConstructor
+                columnNames = {"clan_tag", "opponent_clan_tag", "start_time"}))
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class War {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
     /**
      * CLAN
      */
 
-    @Column(name = "clan_tag",
-            nullable = false)
+    @Column(name = "clan_tag", nullable = false)
     private String clanTag;
-    @Column(name = "clan_name",
-            nullable = false)
+
+    @Column(name = "clan_name", nullable = false)
     private String clanName;
-    @Column(name = "clan_attacks",
-            nullable = false)
+
+    @OneToOne(mappedBy = "war")
+    private WarClanBadgeUrls warClanBadgeUrls;
+
+    @Column(name = "clan_attacks", nullable = false)
     private Integer clanAttacks;
-    @Column(name = "clan_stars",
-            nullable = false)
+
+    @Column(name = "clan_stars", nullable = false)
     private Integer clanStars;
-    @Column(name = "clan_destruction_percentage",
-            nullable = false)
+
+    @Column(name = "clan_destruction_percentage", nullable = false)
     private Double clanDestructionPercentage;
-    @Column(name = "clan_level",
-            nullable = false)
+
+    @Column(name = "clan_destruction_percentage_changed_at", nullable = true)
+    private Instant clanDestructionPercentageChangedAt;
+
+    @Column(name = "clan_level", nullable = false)
     private Integer clanLevel;
 
     /**
      * OPPONENT
      */
 
-    @Column(name = "opponent_tag",
-            nullable = false)
-    private String opponentTag;
-    @Column(name = "opponent_name",
-            nullable = false)
-    private String opponentName;
-    @Column(name = "opponent_attacks",
-            nullable = false)
-    private Integer opponentAttacks;
-    @Column(name = "opponent_stars",
-            nullable = false)
-    private Integer opponentStars;
-    @Column(name = "opponent_destruction_percentage",
-            nullable = false)
-    private Double opponentDestructionPercentage;
-    @Column(name = "opponent_level",
-            nullable = false)
-    private Integer opponentLevel;
+    @Column(name = "opponent_clan_tag", nullable = false)
+    private String opponentClanTag;
+
+    @Column(name = "opponent_clan_name", nullable = false)
+    private String opponentClanName;
+
+    @Column(name = "opponent_clan_attacks", nullable = false)
+    private Integer opponentClanAttacks;
+
+    @Column(name = "opponent_clan_stars", nullable = false)
+    private Integer opponentClanStars;
+
+    @Column(name = "opponent_clan_destruction_percentage", nullable = false)
+    private Double opponentClanDestructionPercentage;
+
+    @Column(name = "opponent_clan_level", nullable = false)
+    private Integer opponentClanLevel;
 
     /**
      * GENERAL
      */
 
-    @Column(name = "state",
-            nullable = false)
+    @Column(name = "state", nullable = false)
     private String state;
 
-    @Column(name = "start_time",
-            nullable = false)
-    private Instant startTime;
-
-    @Column(name = "end_time",
-            nullable = false)
-    private Instant endTime;
-
-    @Column(name = "team_size",
-            nullable = false)
+    @Column(name = "team_size", nullable = false)
     private Integer teamSize;
 
-    @Column(name = "attacks_per_member",
-            nullable = false)
+    @Column(name = "attacks_per_member", nullable = false)
     private Integer attacksPerMember;
 
+    @Column(name = "battle_modifier", nullable = false)
+    private String battleModifier;
+
+    @Column(name = "preparation_start_time", nullable = false)
+    private Instant preparationStartTime;
+
+    @Column(name = "start_time", nullable = false)
+    private Instant startTime;
+
+    @Column(name = "end_time", nullable = false)
+    private Instant endTime;
+
     @CreationTimestamp
-    @Column(name = "created_at",
-            nullable = false)
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at",
-            nullable = false)
+    @Column(name = "updated_at", nullable = true)
     private Instant updatedAt;
 
     public War(
-            String clanTag,
-            String clanName,
-            Integer clanAttacks,
-            Integer clanStars,
-            Double clanDestructionPercentage,
-            Integer clanLevel,
+            @NonNull String clanTag,
+            @NonNull String clanName,
+            @NonNull Integer clanAttacks,
+            @NonNull Integer clanStars,
+            @NonNull Double clanDestructionPercentage,
+            @NonNull Integer clanLevel,
 
-            String opponentTag,
-            String opponentName,
-            Integer opponentAttacks,
-            Integer opponentStars,
-            Double opponentDestructionPercentage,
-            Integer opponentLevel,
+            @NonNull String opponentClanTag,
+            @NonNull String opponentClanName,
+            @NonNull Integer opponentClanAttacks,
+            @NonNull Integer opponentClanStars,
+            @NonNull Double opponentClanDestructionPercentage,
+            @NonNull Integer opponentClanLevel,
 
-            String state,
-            Instant startTime,
-            Instant endTime,
-            Integer teamSize,
-            Integer attacksPerMember) {
+            @NonNull String state,
+            @NonNull Integer teamSize,
+            @NonNull Integer attacksPerMember,
+            @NonNull String battleModifier,
+            @NonNull Instant preparationStartTime,
+            @NonNull Instant startTime,
+            @NonNull Instant endTime) {
         this.clanTag = clanTag;
         this.clanName = clanName;
         this.clanAttacks = clanAttacks;
@@ -130,26 +135,38 @@ public class War {
         this.clanDestructionPercentage = clanDestructionPercentage;
         this.clanLevel = clanLevel;
 
-        this.opponentTag = opponentTag;
-        this.opponentName = opponentName;
-        this.opponentAttacks = opponentAttacks;
-        this.opponentStars = opponentStars;
-        this.opponentDestructionPercentage = opponentDestructionPercentage;
-        this.opponentLevel = opponentLevel;
+        this.opponentClanTag = opponentClanTag;
+        this.opponentClanName = opponentClanName;
+        this.opponentClanAttacks = opponentClanAttacks;
+        this.opponentClanStars = opponentClanStars;
+        this.opponentClanDestructionPercentage = opponentClanDestructionPercentage;
+        this.opponentClanLevel = opponentClanLevel;
 
         this.state = state;
-        this.startTime = startTime;
-        this.endTime = endTime;
         this.teamSize = teamSize;
         this.attacksPerMember = attacksPerMember;
+        this.battleModifier = battleModifier;
+        this.preparationStartTime = preparationStartTime;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
-    public boolean isEnded() {
-        return isEnded(Instant.now());
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof War other)) {
+            return false;
+        }
+        return Objects.equals(this.getClanTag(), other.getClanTag())
+                && Objects.equals(this.getOpponentClanTag(), other.getOpponentClanTag())
+                && Objects.equals(this.getStartTime(), other.getStartTime());
     }
 
-    public boolean isEnded(Instant now) {
-        return !now.isBefore(endTime);
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getClanTag(), this.getOpponentClanTag(), this.getStartTime());
     }
 
 }

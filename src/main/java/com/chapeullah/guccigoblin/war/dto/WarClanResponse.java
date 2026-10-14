@@ -8,6 +8,7 @@ import java.util.List;
 public record WarClanResponse(
         String tag,
         String name,
+        WarClanBadgeUrlsResponse badgeUrls,
         Integer clanLevel,
         Integer attacks,
         Integer stars,

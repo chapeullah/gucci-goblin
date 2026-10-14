@@ -39,16 +39,15 @@ public class WarService {
 
 
     @Transactional
-    public Optional<War> syncWar(@NonNull String clanTag) {
+    public Optional<War> syncCurrentClanWarByClanTag(@NonNull String clanTag) {
         WarResponse response = client.getCurrentWar(clanTag);
-
         if (response == null) {
-            throw new IllegalStateException("Empty current getCurrentWarMessage response");
+            throw new IllegalStateException("Empty current war response: clanTag=" + clanTag);
         }
-
-        if ("notInWar".equals(response.state())) {
+        if (response.state().equals("nowInWar")) {
             return Optional.empty();
         }
+
         War war = saveOrUpdateWar(response);
         saveParticipants(war, response.clan());
         saveParticipants(war, response.opponent());
@@ -58,12 +57,8 @@ public class WarService {
 
     @Transactional
     public void finishEndedWars() {
-        var wars = warRepository.findAllByEndTimeLessThanEqualAndStateNot(
-                clock.instant(),
-                "warEnded");
-        for (War war : wars) {
-            war.setState("warEnded");
-        }
+        var wars = warRepository.findAllByEndTimeLessThanEqualAndStateNot(clock.instant(), "warEnded");
+        // TODO
         warRepository.saveAll(wars);
     }
 
@@ -76,34 +71,9 @@ public class WarService {
         Instant endTime = Instant.from(
                 WAR_TIME_FORMAT.parse(response.endTime()));
 
-        War war = warRepository
-                .findByClanTagAndOpponentTagAndStartTime(
-                        warClanResponse.tag(),
-                        opponent.tag(),
-                        startTime)
-                .orElseGet(War::new);
+        // TODO
 
-        war.setClanTag(warClanResponse.tag());
-        war.setClanName(warClanResponse.name());
-        war.setClanAttacks(warClanResponse.attacks());
-        war.setClanStars(warClanResponse.stars());
-        war.setClanDestructionPercentage(warClanResponse.destructionPercentage());
-        war.setClanLevel(warClanResponse.clanLevel());
-
-        war.setOpponentTag(opponent.tag());
-        war.setOpponentName(opponent.name());
-        war.setOpponentAttacks(opponent.attacks());
-        war.setOpponentStars(opponent.stars());
-        war.setOpponentDestructionPercentage(opponent.destructionPercentage());
-        war.setOpponentLevel(opponent.clanLevel());
-
-        war.setStartTime(startTime);
-        war.setEndTime(endTime);
-        war.setState(war.isEnded(clock.instant()) ? "warEnded" : response.state());
-        war.setTeamSize(response.teamSize());
-        war.setAttacksPerMember(response.attacksPerMember());
-
-        return war;
+        return null;
     }
 
     private void saveParticipants(War war, WarClanResponse warClanResponse) {
