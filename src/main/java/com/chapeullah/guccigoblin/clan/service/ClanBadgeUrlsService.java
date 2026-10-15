@@ -49,11 +49,9 @@ public class ClanBadgeUrlsService {
             clanBadgeUrlsRepository.delete(current);
             return null;
         }
-
         if (current == null) {
             return clanBadgeUrlsRepository.save(incoming);
         }
-
         current.update(response.small(), response.large(), response.medium());
         return current;
     }

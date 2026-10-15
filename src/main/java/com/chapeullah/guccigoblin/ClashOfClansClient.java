@@ -11,6 +11,7 @@ import com.chapeullah.guccigoblin.player.dto.PlayerResponse;
 import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import com.chapeullah.guccigoblin.warleague.dto.WarLeaguesResponse;
+import com.chapeullah.guccigoblin.warlog.dto.WarLogResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +79,7 @@ public class ClashOfClansClient {
     }
 
     public WarResponse getCurrentWar(@NonNull String clanTag) {
-        log.debug("Fetching current getCurrentWarMessage: clanTag=\"{}\"", clanTag);
+        log.debug("Fetching current war: clanTag=\"{}\"", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}/currentwar", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
@@ -86,9 +87,24 @@ public class ClashOfClansClient {
                 .retrieve()
                 .body(WarResponse.class);
         if (response == null) {
-            throw new IllegalStateException("Empty response for current getCurrentWarMessage: clanTag=" + clanTag);
+            throw new IllegalStateException("Empty response for current war: clanTag=" + clanTag);
         }
-        log.debug("Received current getCurrentWarMessage: clanTag=\"{}\"", clanTag);
+        log.debug("Received current war: clanTag=\"{}\"", clanTag);
+        return response;
+    }
+
+    public WarLogResponse getWarLog(@NonNull String clanTag) {
+        log.debug("Fetching war log: clanTag=\"{}\"", clanTag);
+        var response = rest.get()
+                .uri("/clans/{clanTag}/warlog", clanTag)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
+                .retrieve()
+                .body(WarLogResponse.class);
+        if (response == null) {
+            throw new IllegalStateException("Empty response for war log: clanTag=" + clanTag);
+        }
+        log.debug("Received war log: clanTag=\"{}\"", clanTag);
         return response;
     }
 

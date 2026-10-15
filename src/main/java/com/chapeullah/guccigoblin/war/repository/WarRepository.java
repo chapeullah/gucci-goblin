@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface WarRepository extends JpaRepository<War, Long> {
 
-    Optional<War> findByClanTagAndOpponentTagAndStartTime(
+    Optional<War> findByClanTagAndOpponentClanTagAndStartTime(
             String clanTag,
             String opponentTag,
             Instant startTime);

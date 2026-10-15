@@ -33,14 +33,21 @@ public class War {
     @Column(name = "clan_name", nullable = false)
     private String clanName;
 
+    @Setter
     @OneToOne(mappedBy = "war")
     private WarClanBadgeUrls warClanBadgeUrls;
 
     @Column(name = "clan_attacks", nullable = false)
     private Integer clanAttacks;
 
+    @Column(name = "clan_attacks_changed_at", nullable = true)
+    private Instant clanAttacksChangedAt;
+
     @Column(name = "clan_stars", nullable = false)
     private Integer clanStars;
+
+    @Column(name = "clan_stars_changed_at", nullable = true)
+    private Instant clanStarsChangedAt;
 
     @Column(name = "clan_destruction_percentage", nullable = false)
     private Double clanDestructionPercentage;
@@ -50,6 +57,9 @@ public class War {
 
     @Column(name = "clan_level", nullable = false)
     private Integer clanLevel;
+
+    @Column(name = "clan_level_changed_at", nullable = true)
+    private Instant clanLevelChangedAt;
 
     /**
      * OPPONENT
@@ -64,14 +74,26 @@ public class War {
     @Column(name = "opponent_clan_attacks", nullable = false)
     private Integer opponentClanAttacks;
 
+    @Column(name = "opponent_clan_attacks_changed_at", nullable = true)
+    private Instant opponentClanAttacksChangedAt;
+
     @Column(name = "opponent_clan_stars", nullable = false)
     private Integer opponentClanStars;
+
+    @Column(name = "opponent_clan_stars_changed_at", nullable = true)
+    private Instant opponentClanStarsChangedAt;
 
     @Column(name = "opponent_clan_destruction_percentage", nullable = false)
     private Double opponentClanDestructionPercentage;
 
+    @Column(name = "opponent_clan_destruction_percentage_changed_at", nullable = true)
+    private Instant opponentClanDestructionPercentageChangedAt;
+
     @Column(name = "opponent_clan_level", nullable = false)
     private Integer opponentClanLevel;
+
+    @Column(name = "opponent_clan_level_changed_at", nullable = true)
+    private Instant opponentClanLevelChangedAt;
 
     /**
      * GENERAL
@@ -79,6 +101,9 @@ public class War {
 
     @Column(name = "state", nullable = false)
     private String state;
+
+    @Column(name = "state_changed_at", nullable = true)
+    private Instant stateChangedAt;
 
     @Column(name = "team_size", nullable = false)
     private Integer teamSize;
@@ -149,6 +174,74 @@ public class War {
         this.preparationStartTime = preparationStartTime;
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+
+    public void update(
+            @NonNull Integer clanAttacks,
+            @NonNull Integer clanStars,
+            @NonNull Double clanDestructionPercentage,
+            @NonNull Integer clanLevel,
+
+            @NonNull Integer opponentClanAttacks,
+            @NonNull Integer opponentClanStars,
+            @NonNull Double opponentClanDestructionPercentage,
+            @NonNull Integer opponentClanLevel,
+
+            @NonNull String state) {
+        Instant now = Instant.now();
+
+        if (!Objects.equals(this.clanAttacks, clanAttacks)) {
+            this.clanAttacks = clanAttacks;
+            this.clanAttacksChangedAt = now;
+        }
+
+        if (!Objects.equals(this.clanStars, clanStars)) {
+            this.clanStars = clanStars;
+            this.clanStarsChangedAt = now;
+        }
+
+        if (!Objects.equals(this.clanDestructionPercentage, clanDestructionPercentage)) {
+            this.clanDestructionPercentage = clanDestructionPercentage;
+            this.clanDestructionPercentageChangedAt = now;
+        }
+
+        if (!Objects.equals(this.clanLevel, clanLevel)) {
+            this.clanLevel = clanLevel;
+            this.clanLevelChangedAt = now;
+        }
+
+        if (!Objects.equals(this.opponentClanAttacks, opponentClanAttacks)) {
+            this.opponentClanAttacks = opponentClanAttacks;
+            this.opponentClanAttacksChangedAt = now;
+        }
+
+        if (!Objects.equals(this.opponentClanStars, opponentClanStars)) {
+            this.opponentClanStars = opponentClanStars;
+            this.opponentClanStarsChangedAt = now;
+        }
+
+        if (!Objects.equals(this.opponentClanDestructionPercentage, opponentClanDestructionPercentage)) {
+            this.opponentClanDestructionPercentage = opponentClanDestructionPercentage;
+            this.opponentClanDestructionPercentageChangedAt = now;
+        }
+
+        if (!Objects.equals(this.opponentClanLevel, opponentClanLevel)) {
+            this.opponentClanLevel = opponentClanLevel;
+            this.opponentClanLevelChangedAt = now;
+        }
+
+        if (!Objects.equals(this.state, state)) {
+            this.state = state;
+            this.stateChangedAt = now;
+        }
+    }
+
+    public War finish() {
+        if (!Objects.equals(this.state, "warEnded")) {
+            this.state = "warEnded";
+            this.stateChangedAt = Instant.now();
+        }
+        return this;
     }
 
     @Override
