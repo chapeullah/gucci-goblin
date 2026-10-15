@@ -4,7 +4,7 @@ import com.chapeullah.guccigoblin.clan.service.ClanService;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.player.service.PlayerService;
 import com.chapeullah.guccigoblin.raidseason.RaidSeasonService;
-import com.chapeullah.guccigoblin.war.WarService;
+import com.chapeullah.guccigoblin.war.service.WarService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

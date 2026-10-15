@@ -1,6 +1,7 @@
-package com.chapeullah.guccigoblin.war;
+package com.chapeullah.guccigoblin.war.service;
 
 import com.chapeullah.guccigoblin.war.dto.WarClanResponse;
+import com.chapeullah.guccigoblin.war.dto.WarMemberResponse;
 import com.chapeullah.guccigoblin.war.model.War;
 import com.chapeullah.guccigoblin.war.model.WarParticipant;
 import com.chapeullah.guccigoblin.war.repository.WarParticipantRepository;
@@ -9,15 +10,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class WarParticipantService {
 
     private final WarParticipantRepository warParticipantRepository;
+
+    @Transactional(readOnly = true)
+    public List<WarParticipant> getByWar(@NonNull War war) {
+        return warParticipantRepository.findByWar(war);
+    }
 
     @Transactional
     public void syncWarParticipants(
@@ -58,10 +62,11 @@ public class WarParticipantService {
         if (!warParticipantRepository.existsByWar(war)) {
             createParticipants(war, clanResponse, opponentResponse);
         } else {
-            updateParticipants();
+            updateParticipants(war, clanResponse, opponentResponse);
         }
     }
 
+    @Transactional
     private void createParticipants(
             War war,
             WarClanResponse clanResponse,
@@ -87,8 +92,41 @@ public class WarParticipantService {
         warParticipantRepository.saveAll(warParticipants);
     }
 
-    private void updateParticipants() {
+    @Transactional
+    private void updateParticipants(
+            War war,
+            WarClanResponse clanResponse,
+            WarClanResponse opponentResponse) {
+        List<WarParticipant> warParticipants = warParticipantRepository.findByWar(war);
+        Map<String, WarMemberResponse> incomingWarMemberResponsesByTag =
+                HashMap.newHashMap(war.getTeamSize() * 2);
+        clanResponse.members().forEach(
+                member -> incomingWarMemberResponsesByTag.put(member.tag(), member));
+        opponentResponse.members().forEach(
+                member -> incomingWarMemberResponsesByTag.put(member.tag(), member));
 
+        if (warParticipants.size() != war.getTeamSize() * 2) {
+            throw new IllegalStateException(
+                    "War participants count mismatch: warId=" + war.getId()
+                            + ", expected teamSize=" + war.getTeamSize() * 2
+                            + ", actual teamSize=" + warParticipants.size());
+        }
+
+        for (WarParticipant warParticipant : warParticipants) {
+            WarMemberResponse warMemberResponse = incomingWarMemberResponsesByTag
+                    .get(warParticipant.getPlayerTag());
+            if (warMemberResponse == null) {
+                throw new IllegalStateException(
+                        "War participant not found in API response: warId=" + war.getId()
+                                + ", playerTag=" + warParticipant.getPlayerTag());
+            }
+
+            warParticipant.update(
+                    warMemberResponse.name(),
+                    warMemberResponse.townHallLevel());
+        }
+
+        warParticipantRepository.saveAll(warParticipants);
     }
 
 }

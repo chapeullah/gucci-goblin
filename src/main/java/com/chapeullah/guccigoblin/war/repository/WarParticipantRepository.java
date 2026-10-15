@@ -18,4 +18,6 @@ public interface WarParticipantRepository extends JpaRepository<WarParticipant, 
             War war,
             String clanTag);
 
+    List<WarParticipant> findByWar(War war);
+
 }

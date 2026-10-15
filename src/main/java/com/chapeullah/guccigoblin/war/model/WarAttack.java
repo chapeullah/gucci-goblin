@@ -19,7 +19,7 @@ import java.util.Objects;
 public class WarAttack {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -27,20 +27,22 @@ public class WarAttack {
     @JoinColumn(name = "war_id", nullable = false)
     private War war;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "attacker_participant_id", nullable = false)
+    private WarParticipant attacker;
+
     @Column(name = "attacker_tag", nullable = false)
     private String attackerTag;
-
-    @Column(name = "attacker_name", nullable = false)
-    private String attackerName;
 
     @Column(name = "attacker_town_hall_level", nullable = false)
     private Integer attackerTownHallLevel;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "defender_participant_id", nullable = false)
+    private WarParticipant defender;
+
     @Column(name = "defender_tag", nullable = false)
     private String defenderTag;
-
-    @Column(name = "defender_name", nullable = false)
-    private String defenderName;
 
     @Column(name = "defender_town_hall_level", nullable = false)
     private Integer defenderTownHallLevel;
@@ -67,21 +69,23 @@ public class WarAttack {
 
     public WarAttack(
             @NonNull War war,
-            @NonNull String attackerTag,
-            @NonNull String attackerName,
-            @NonNull String defenderTag,
-            @NonNull String defenderName,
+            @NonNull WarParticipant attacker,
+            @NonNull WarParticipant defender,
             @NonNull Integer attackerTownHallLevel,
             @NonNull Integer defenderTownHallLevel,
             @NonNull Integer stars,
             @NonNull Double destructionPercentage,
             @NonNull Integer attackOrder,
             @NonNull Integer durationSeconds) {
+        if (!Objects.equals(war, attacker.getWar()) || !Objects.equals(war, defender.getWar())) {
+            throw new IllegalArgumentException("Attack participants must belong to the specified war");
+        }
+
         this.war = war;
-        this.attackerTag = attackerTag;
-        this.attackerName = attackerName;
-        this.defenderTag = defenderTag;
-        this.defenderName = defenderName;
+        this.attacker = attacker;
+        this.attackerTag = attacker.getPlayerTag();
+        this.defender = defender;
+        this.defenderTag = defender.getPlayerTag();
         this.attackerTownHallLevel = attackerTownHallLevel;
         this.defenderTownHallLevel = defenderTownHallLevel;
         this.stars = stars;

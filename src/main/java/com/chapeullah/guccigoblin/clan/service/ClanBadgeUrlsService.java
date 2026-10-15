@@ -45,13 +45,17 @@ public class ClanBadgeUrlsService {
         if (Objects.equals(current, incoming)) {
             return current;
         }
-        ClanBadgeUrls saved = null;
         if (incoming == null) {
             clanBadgeUrlsRepository.delete(current);
-        } else {
-            saved = clanBadgeUrlsRepository.save(incoming);
+            return null;
         }
-        return saved;
+
+        if (current == null) {
+            return clanBadgeUrlsRepository.save(incoming);
+        }
+
+        current.update(response.small(), response.large(), response.medium());
+        return current;
     }
 
 }

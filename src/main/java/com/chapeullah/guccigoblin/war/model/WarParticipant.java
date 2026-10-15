@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -33,14 +35,28 @@ public class WarParticipant {
     @Column(name = "player_name", nullable = false)
     private String playerName;
 
+    @Column(name = "player_name_changed_at", nullable = true)
+    private Instant playerNameChangedAt;
+
     @Column(name = "clan_tag", nullable = false)
     private String clanTag;
 
     @Column(name = "town_hall_level", nullable = false)
     private Integer townHallLevel;
 
+    @Column(name = "town_hall_level_changed_at", nullable = true)
+    private Instant townHallLevelChangedAt;
+
     @Column(name = "map_position", nullable = false)
     private Integer mapPosition;
+
+    @SuppressWarnings("FieldMayBeFinal")
+    @OneToMany(mappedBy = "attacker")
+    private List<WarAttack> attacks = new ArrayList<>();
+
+    @SuppressWarnings("FieldMayBeFinal")
+    @OneToMany(mappedBy = "defender")
+    private List<WarAttack> defenses = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -68,8 +84,17 @@ public class WarParticipant {
     public void update(
             @NonNull String playerName,
             @NonNull Integer townHallLevel) {
-        this.playerName = playerName;
-        this.townHallLevel = townHallLevel;
+        Instant now = Instant.now();
+
+        if (!Objects.equals(this.playerName, playerName)) {
+            this.playerName = playerName;
+            this.playerNameChangedAt = now;
+        }
+
+        if (!Objects.equals(this.townHallLevel, townHallLevel)) {
+            this.townHallLevel = townHallLevel;
+            this.townHallLevelChangedAt = now;
+        }
     }
 
     @Override

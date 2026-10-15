@@ -53,6 +53,12 @@ public class WarClanBadgeUrls {
         this.medium = medium;
     }
 
+    public void update(String small, String large, String medium) {
+        this.small = small;
+        this.large = large;
+        this.medium = medium;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) {
