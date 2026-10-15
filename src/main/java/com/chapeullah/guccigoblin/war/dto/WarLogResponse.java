@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.warlog.dto;
+package com.chapeullah.guccigoblin.war.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

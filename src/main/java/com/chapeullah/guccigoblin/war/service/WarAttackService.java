@@ -80,7 +80,6 @@ public class WarAttackService {
 
         for (WarMemberResponse clanMember : clanResponse.members()) {
             if (clanMember.attacks() == null) {
-                log.debug("Clan member attacks is null, skipping: clanMemberTag=\"{}\"", clanMember.tag());
                 continue;
             }
             for (WarAttackResponse attack : clanMember.attacks()) {

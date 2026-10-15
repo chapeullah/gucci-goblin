@@ -8,10 +8,10 @@ import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTiersResponse;
 import com.chapeullah.guccigoblin.location.dto.LocationsResponse;
 import com.chapeullah.guccigoblin.member.dto.MemberResponses;
 import com.chapeullah.guccigoblin.player.dto.PlayerResponse;
-import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonResponse;
+import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonsResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import com.chapeullah.guccigoblin.warleague.dto.WarLeaguesResponse;
-import com.chapeullah.guccigoblin.warlog.dto.WarLogResponse;
+import com.chapeullah.guccigoblin.war.dto.WarLogResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -108,14 +108,14 @@ public class ClashOfClansClient {
         return response;
     }
 
-    public RaidSeasonResponse getCurrentRaid(@NonNull String clanTag) {
+    public RaidSeasonsResponse getCurrentRaid(@NonNull String clanTag) {
         log.debug("Fetching current raid: clanTag=\"{}\"", clanTag);
         var response = rest.get()
                 .uri("/clans/{clanTag}/capitalraidseasons?limit=1", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
                 .retrieve()
-                .body(RaidSeasonResponse.class);
+                .body(RaidSeasonsResponse.class);
         if (response == null) {
             throw new IllegalStateException("Empty response for current raid: clanTag=" + clanTag);
         }

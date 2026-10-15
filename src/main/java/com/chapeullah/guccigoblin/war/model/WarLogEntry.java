@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.warlog;
+package com.chapeullah.guccigoblin.war.model;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -67,14 +67,8 @@ public class WarLogEntry {
     @Column(name = "clan_exp_earned")
     private Integer clanExpEarned;
 
-    @Column(name = "clan_badge_small_url", length = 512)
-    private String clanBadgeSmallUrl;
-
-    @Column(name = "clan_badge_medium_url", length = 512)
-    private String clanBadgeMediumUrl;
-
-    @Column(name = "clan_badge_large_url", length = 512)
-    private String clanBadgeLargeUrl;
+    @Embedded
+    private WarLogEntryClanBadgeUrls clanBadgeUrls;
 
     /**
      * OPPONENT
@@ -95,14 +89,13 @@ public class WarLogEntry {
     @Column(name = "opponent_clan_destruction_percentage", nullable = true)
     private Double opponentClanDestructionPercentage;
 
-    @Column(name = "opponent_clan_badge_small_url", nullable = true, length = 512)
-    private String opponentClanBadgeSmallUrl;
-
-    @Column(name = "opponent_clan_badge_medium_url", nullable = true, length = 512)
-    private String opponentClanBadgeMediumUrl;
-
-    @Column(name = "opponent_clan_badge_large_url", nullable = true, length = 512)
-    private String opponentClanBadgeLargeUrl;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "small", column = @Column(name = "opponent_clan_badge_small_url", length = 512)),
+            @AttributeOverride(name = "large", column = @Column(name = "opponent_clan_badge_large_url", length = 512)),
+            @AttributeOverride(name = "medium", column = @Column(name = "opponent_clan_badge_medium_url", length = 512))
+    })
+    private WarLogEntryClanBadgeUrls opponentClanBadgeUrls;
 
     public WarLogEntry(
             String result,
@@ -118,18 +111,14 @@ public class WarLogEntry {
             Integer clanStars,
             Double clanDestructionPercentage,
             Integer clanExpEarned,
-            String clanBadgeSmallUrl,
-            String clanBadgeMediumUrl,
-            String clanBadgeLargeUrl,
+            WarLogEntryClanBadgeUrls clanBadgeUrls,
 
             String opponentClanTag,
             String opponentClanName,
             Integer opponentClanLevel,
             Integer opponentClanStars,
             Double opponentClanDestructionPercentage,
-            String opponentClanBadgeSmallUrl,
-            String opponentClanBadgeMediumUrl,
-            String opponentClanBadgeLargeUrl) {
+            WarLogEntryClanBadgeUrls opponentClanBadgeUrls) {
         this.result = result;
         this.endTime = endTime;
         this.teamSize = teamSize;
@@ -143,18 +132,14 @@ public class WarLogEntry {
         this.clanStars = clanStars;
         this.clanDestructionPercentage = clanDestructionPercentage;
         this.clanExpEarned = clanExpEarned;
-        this.clanBadgeSmallUrl = clanBadgeSmallUrl;
-        this.clanBadgeMediumUrl = clanBadgeMediumUrl;
-        this.clanBadgeLargeUrl = clanBadgeLargeUrl;
+        this.clanBadgeUrls = clanBadgeUrls;
 
         this.opponentClanTag = opponentClanTag;
         this.opponentClanName = opponentClanName;
         this.opponentClanLevel = opponentClanLevel;
         this.opponentClanStars = opponentClanStars;
         this.opponentClanDestructionPercentage = opponentClanDestructionPercentage;
-        this.opponentClanBadgeSmallUrl = opponentClanBadgeSmallUrl;
-        this.opponentClanBadgeMediumUrl = opponentClanBadgeMediumUrl;
-        this.opponentClanBadgeLargeUrl = opponentClanBadgeLargeUrl;
+        this.opponentClanBadgeUrls = opponentClanBadgeUrls;
     }
 
     public boolean updateFrom(@NonNull WarLogEntry incoming) {
@@ -174,18 +159,14 @@ public class WarLogEntry {
                 && Objects.equals(this.clanStars, incoming.getClanStars())
                 && Objects.equals(this.clanDestructionPercentage, incoming.getClanDestructionPercentage())
                 && Objects.equals(this.clanExpEarned, incoming.getClanExpEarned())
-                && Objects.equals(this.clanBadgeSmallUrl, incoming.getClanBadgeSmallUrl())
-                && Objects.equals(this.clanBadgeMediumUrl, incoming.getClanBadgeMediumUrl())
-                && Objects.equals(this.clanBadgeLargeUrl, incoming.getClanBadgeLargeUrl())
+                && Objects.equals(this.clanBadgeUrls, incoming.getClanBadgeUrls())
 
                 && Objects.equals(this.opponentClanTag, incoming.getOpponentClanTag())
                 && Objects.equals(this.opponentClanName, incoming.getOpponentClanName())
                 && Objects.equals(this.opponentClanLevel, incoming.getOpponentClanLevel())
                 && Objects.equals(this.opponentClanStars, incoming.getOpponentClanStars())
                 && Objects.equals(this.opponentClanDestructionPercentage, incoming.getOpponentClanDestructionPercentage())
-                && Objects.equals(this.opponentClanBadgeSmallUrl, incoming.getOpponentClanBadgeSmallUrl())
-                && Objects.equals(this.opponentClanBadgeMediumUrl, incoming.getOpponentClanBadgeMediumUrl())
-                && Objects.equals(this.opponentClanBadgeLargeUrl, incoming.getOpponentClanBadgeLargeUrl());
+                && Objects.equals(this.opponentClanBadgeUrls, incoming.getOpponentClanBadgeUrls());
 
         if (unchanged) {
             return false;
@@ -202,9 +183,7 @@ public class WarLogEntry {
         this.clanStars = incoming.getClanStars();
         this.clanDestructionPercentage = incoming.getClanDestructionPercentage();
         this.clanExpEarned = incoming.getClanExpEarned();
-        this.clanBadgeSmallUrl = incoming.getClanBadgeSmallUrl();
-        this.clanBadgeMediumUrl = incoming.getClanBadgeMediumUrl();
-        this.clanBadgeLargeUrl = incoming.getClanBadgeLargeUrl();
+        this.clanBadgeUrls = incoming.getClanBadgeUrls();
 
         this.opponentClanTag = incoming.getOpponentClanTag();
         this.opponentClanName = incoming.getOpponentClanName();
@@ -212,9 +191,7 @@ public class WarLogEntry {
         this.opponentClanStars = incoming.getOpponentClanStars();
         this.opponentClanDestructionPercentage =
                 incoming.getOpponentClanDestructionPercentage();
-        this.opponentClanBadgeSmallUrl = incoming.getOpponentClanBadgeSmallUrl();
-        this.opponentClanBadgeMediumUrl = incoming.getOpponentClanBadgeMediumUrl();
-        this.opponentClanBadgeLargeUrl = incoming.getOpponentClanBadgeLargeUrl();
+        this.opponentClanBadgeUrls = incoming.getOpponentClanBadgeUrls();
 
         return true;
     }

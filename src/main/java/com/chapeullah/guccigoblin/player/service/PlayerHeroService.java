@@ -45,7 +45,7 @@ public class PlayerHeroService {
                 playerHeroRepository.delete(playerHero);
             }
         }
-        log.debug("Player heroes synchronized: playerName=\"{}\" playerTag=\"{}\" count={}",
+        log.debug("Player heroes synchronized: playerName=\"{}\", playerTag=\"{}\", count={}",
                 player.getName(),
                 player.getTag(),
                 savedPlayerHeroes.size());

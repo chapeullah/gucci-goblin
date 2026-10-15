@@ -178,7 +178,7 @@ public class PlayerService {
 
         Player savedPlayer = playerRepository.save(player);
 
-        log.info("Player synchronized: playerName=\"{}\" playerTag=\"{}\"",
+        log.info("Player synchronized: playerName=\"{}\", playerTag=\"{}\"",
                 savedPlayer.getName(), savedPlayer.getTag());
 
         return savedPlayer;

@@ -45,7 +45,7 @@ public class PlayerSpellService {
                 playerSpellRepository.delete(playerSpell);
             }
         }
-        log.debug("Player spells synchronized: playerName=\"{}\" playerTag=\"{}\" count={}",
+        log.debug("Player spells synchronized: playerName=\"{}\", playerTag=\"{}\", count={}",
                 player.getName(),
                 player.getTag(),
                 savedPlayerSpells.size());

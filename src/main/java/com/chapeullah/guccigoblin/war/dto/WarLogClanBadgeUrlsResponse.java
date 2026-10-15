@@ -1,4 +1,4 @@
-package com.chapeullah.guccigoblin.warlog.dto;
+package com.chapeullah.guccigoblin.war.dto;
 
 public record WarLogClanBadgeUrlsResponse(
         String small,

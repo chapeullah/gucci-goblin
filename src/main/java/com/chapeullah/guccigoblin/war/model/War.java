@@ -34,7 +34,7 @@ public class War {
     private String clanName;
 
     @Setter
-    @OneToOne(mappedBy = "war")
+    @Embedded
     private WarClanBadgeUrls warClanBadgeUrls;
 
     @Column(name = "clan_attacks", nullable = false)

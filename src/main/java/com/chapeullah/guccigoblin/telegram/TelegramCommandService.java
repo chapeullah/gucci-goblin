@@ -202,9 +202,9 @@ public class TelegramCommandService {
                     escapeHtml(war.getOpponentClanName()),
                     escapeHtml(state),
                     war.getClanStars(),
-                    war.getOpponentStars(),
+                    war.getOpponentClanStars(),
                     war.getClanDestructionPercentage(),
-                    war.getOpponentDestructionPercentage(),
+                    war.getOpponentClanDestructionPercentage(),
                     war.getClanAttacks(),
                     maximumAttacks,
                     war.getTeamSize(),
@@ -232,12 +232,12 @@ public class TelegramCommandService {
                     .append("⭐ ")
                     .append(war.getClanStars())
                     .append(" — ")
-                    .append(war.getOpponentStars())
+                    .append(war.getOpponentClanStars())
                     .append("\n")
                     .append("💥 ")
                     .append("%.2f%% — %.2f%%".formatted(
                             war.getClanDestructionPercentage(),
-                            war.getOpponentDestructionPercentage()))
+                            war.getOpponentClanDestructionPercentage()))
                     .append("\n")
                     .append("📅 ")
                     .append(DATE_TIME_FORMATTER.format(war.getEndTime()))
@@ -247,17 +247,17 @@ public class TelegramCommandService {
     }
 
     private String getWarResult(War war) {
-        if (war.getClanStars() > war.getOpponentStars()) {
+        if (war.getClanStars() > war.getOpponentClanStars()) {
             return "✅ Победа";
         }
 
-        if (war.getClanStars() < war.getOpponentStars()) {
+        if (war.getClanStars() < war.getOpponentClanStars()) {
             return "❌ Поражение";
         }
 
         int destructionComparison = Double.compare(
                 war.getClanDestructionPercentage(),
-                war.getOpponentDestructionPercentage());
+                war.getOpponentClanDestructionPercentage());
 
         if (destructionComparison > 0) {
             return "✅ Победа";
@@ -394,7 +394,7 @@ public class TelegramCommandService {
 
     private static boolean hasCompleteRaidParticipants(
             RaidSeason season, List<RaidSeasonParticipant> participants) {
-        return participants.stream().mapToLong(p -> p.getAttacks()).sum() == season.getTotalAttacks();
+        return participants.stream().mapToLong(RaidSeasonParticipant::getAttacks).sum() == season.getTotalAttacks();
     }
 
     private static String getRaidPeriod(RaidSeason season) {

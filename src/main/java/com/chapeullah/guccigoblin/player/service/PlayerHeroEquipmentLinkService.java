@@ -42,7 +42,7 @@ public class PlayerHeroEquipmentLinkService {
                 playerHeroEquipmentLinkRepository.delete(playerHeroEquipmentLink);
             }
         }
-        log.debug("Player hero equipment links synchronized: playerName=\"{}\" playerTag=\"{}\" heroName=\"{}\" count={}",
+        log.debug("Player hero equipment links synchronized: playerName=\"{}\", playerTag=\"{}\", heroName=\"{}\", count={}",
                 playerHero.getPlayer().getName(),
                 playerHero.getPlayer().getTag(),
                 playerHero.getName(),

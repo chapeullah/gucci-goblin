@@ -1,44 +1,46 @@
 package com.chapeullah.guccigoblin.war.service;
 
 import com.chapeullah.guccigoblin.ClashOfClansClient;
+import com.chapeullah.guccigoblin.war.dto.WarClanBadgeUrlsResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import com.chapeullah.guccigoblin.war.model.War;
+import com.chapeullah.guccigoblin.war.model.WarClanBadgeUrls;
 import com.chapeullah.guccigoblin.war.repository.WarRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WarService {
 
-    private static final DateTimeFormatter WAR_TIME_FORMAT =
-            DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss.SSSX");
+    private static final DateTimeFormatter WAR_TIME_FORMAT = DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss.SSSX");
 
     private final ClashOfClansClient client;
 
     private final WarRepository warRepository;
     private final Clock clock;
 
-    private final WarClanBadgeUrlsService warClanBadgeUrlsService;
     private final WarParticipantService warParticipantService;
     private final WarAttackService warAttackService;
 
     @Transactional
-    public War syncCurrentWar(@NonNull String clanTag) {
+    public Optional<War> syncCurrentWar(@NonNull String clanTag) {
         WarResponse response = client.getCurrentWar(clanTag);
         if (response == null) {
-            throw new IllegalStateException(
-                    "Empty current war response: clanTag=" + clanTag);
+            throw new IllegalStateException("Empty current war response: clanTag=" + clanTag);
         }
-
         if ("notInWar".equals(response.state())) {
-            return null;
+            return Optional.empty();
         }
 
         War war = warRepository
@@ -54,6 +56,8 @@ public class WarService {
             updateWar(war, response);
         }
 
+        war.setWarClanBadgeUrls(toWarClanBadgeUrls(response.clan().badgeUrls()));
+
         if (!clock.instant().isBefore(war.getEndTime())) {
             war.finish();
         }
@@ -68,8 +72,8 @@ public class WarService {
     }
 
     @Transactional
-    public void finishEndedWars() {
-        warRepository.saveAll(warRepository
+    public List<War> finishEndedWars() {
+        return warRepository.saveAll(warRepository
                 .findAllByEndTimeLessThanEqualAndStateNot(
                         clock.instant(),
                         "warEnded")
@@ -79,7 +83,7 @@ public class WarService {
     }
 
     private War createWar(@NonNull WarResponse response) {
-        War war = new War(
+        return new War(
                 response.clan().tag(),
                 response.clan().name(),
                 response.clan().attacks(),
@@ -101,12 +105,6 @@ public class WarService {
                 Instant.from(WAR_TIME_FORMAT.parse(response.preparationStartTime())),
                 Instant.from(WAR_TIME_FORMAT.parse(response.startTime())),
                 Instant.from(WAR_TIME_FORMAT.parse(response.endTime())));
-
-        war = warRepository.save(war);
-
-        war.setWarClanBadgeUrls(warClanBadgeUrlsService.syncAndGetByWar(war, response.clan().badgeUrls()));
-
-        return war;
     }
 
     private void updateWar(@NonNull War war, @NonNull WarResponse response) {
@@ -122,4 +120,8 @@ public class WarService {
                 response.state());
     }
 
+    private WarClanBadgeUrls toWarClanBadgeUrls(WarClanBadgeUrlsResponse response) {
+        return response == null ? null
+                : WarClanBadgeUrls.of(response.small(), response.large(), response.medium());
+    }
 }

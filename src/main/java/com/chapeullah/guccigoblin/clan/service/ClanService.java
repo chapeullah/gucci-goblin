@@ -4,8 +4,7 @@ import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.capitalleague.CapitalLeague;
 import com.chapeullah.guccigoblin.capitalleague.CapitalLeagueService;
 import com.chapeullah.guccigoblin.clan.repository.ClanRepository;
-import com.chapeullah.guccigoblin.clan.dto.ClanChatLanguageResponse;
-import com.chapeullah.guccigoblin.clan.dto.ClanMemberResponse;
+import com.chapeullah.guccigoblin.clan.dto.ClanBadgeUrlsResponse;
 import com.chapeullah.guccigoblin.clan.dto.ClanResponse;
 import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.clan.model.ClanBadgeUrls;
@@ -21,11 +20,11 @@ import com.chapeullah.guccigoblin.member.MemberService;
 import com.chapeullah.guccigoblin.member.model.Member;
 import com.chapeullah.guccigoblin.warleague.WarLeague;
 import com.chapeullah.guccigoblin.warleague.WarLeagueService;
-import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -45,12 +44,18 @@ public class ClanService {
     private final WarLeagueService warLeagueService;
     private final LeagueTierService leagueTierService;
     private final ClanLabelService clanLabelService;
-    private final ClanBadgeUrlsService clanBadgeUrlsService;
     private final ClanLabelLinkService clanLabelLinkService;
     private final ClanChatLanguageService clanChatLanguageService;
     private final ClanCapitalService clanCapitalService;
 
     private final MemberService memberService;
+
+    @Transactional(readOnly = true)
+    public Clan getClanByTag(@NonNull String clanTag) {
+        return clanRepository
+                .findById(clanTag)
+                .orElseThrow(() -> new IllegalArgumentException("Clan not found: clanTag=\"" + clanTag + "\""));
+    }
 
     @Transactional
     public Clan syncClan(@NonNull String clanTag) {
@@ -192,9 +197,8 @@ public class ClanService {
                 requiredLeagueTier,
                 chatLanguage);
 
+        clan.setClanBadgeUrls(toClanBadgeUrls(response.badgeUrls()));
         clan = clanRepository.save(clan);
-
-        clan.setClanBadgeUrls(clanBadgeUrlsService.syncAndGetByClan(clan, response.badgeUrls()));
 
         memberService.syncMembers(clan, response.memberList());
 
@@ -235,17 +239,8 @@ public class ClanService {
 
         // clanBadgeUrls
         // clanBadgeUrlsChangedAt
-        ClanBadgeUrls currentClanBadgeUrls = clanBadgeUrlsService
-                .findByClanTag(clan.getTag()).orElse(null);
-        ClanBadgeUrls oldClanBadgeUrls = currentClanBadgeUrls == null ? null
-                : new ClanBadgeUrls(
-                clan,
-                currentClanBadgeUrls.getSmall(),
-                currentClanBadgeUrls.getLarge(),
-                currentClanBadgeUrls.getMedium());
-        ClanBadgeUrls newClanBadgeUrls = clanBadgeUrlsService
-                .syncAndGetByClan(clan, response.badgeUrls());
-        if (!Objects.equals(oldClanBadgeUrls, newClanBadgeUrls)) {
+        ClanBadgeUrls newClanBadgeUrls = toClanBadgeUrls(response.badgeUrls());
+        if (!Objects.equals(clan.getClanBadgeUrls(), newClanBadgeUrls)) {
             clan.setClanBadgeUrls(newClanBadgeUrls);
             clan.setClanBadgeUrlsChangedAt(now);
         }
@@ -417,4 +412,8 @@ public class ClanService {
         }
     }
 
+    private ClanBadgeUrls toClanBadgeUrls(ClanBadgeUrlsResponse response) {
+        return response == null ? null
+                : ClanBadgeUrls.of(response.small(), response.large(), response.medium());
+    }
 }

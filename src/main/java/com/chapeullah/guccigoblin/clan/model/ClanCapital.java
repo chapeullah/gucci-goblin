@@ -48,7 +48,6 @@ public class ClanCapital {
             @NonNull Clan clan,
             @NonNull Integer capitalHallLevel,
             Long clanGoldSinkTotal) {
-        this.clanTag = clan.getTag();
         this.clan = clan;
         this.capitalHallLevel = capitalHallLevel;
         this.clanGoldSinkTotal = clanGoldSinkTotal;

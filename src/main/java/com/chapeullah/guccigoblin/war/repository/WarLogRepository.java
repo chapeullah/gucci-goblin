@@ -1,5 +1,6 @@
-package com.chapeullah.guccigoblin.warlog;
+package com.chapeullah.guccigoblin.war.repository;
 
+import com.chapeullah.guccigoblin.war.model.WarLogEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;

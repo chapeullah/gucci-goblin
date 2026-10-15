@@ -1,11 +1,15 @@
 package com.chapeullah.guccigoblin.raidseason.model;
 
+import com.chapeullah.guccigoblin.clan.model.Clan;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -21,8 +25,9 @@ public class RaidSeason {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "clan_tag", nullable = false)
-    private String clanTag;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "clan_tag", nullable = false)
+    private Clan clan;
 
     @Column(name = "state", nullable = false)
     private String state;
@@ -51,18 +56,29 @@ public class RaidSeason {
     @Column(name = "defensive_reward", nullable = false)
     private Integer defensiveReward;
 
+    @OneToMany(mappedBy = "raidSeason", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<RaidSeasonParticipant> participants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "raidSeason", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OrderBy("id ASC")
+    private List<RaidSeasonAttackLogEntry> attackLog = new ArrayList<>();
+
+    @OneToMany(mappedBy = "raidSeason", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OrderBy("id ASC")
+    private List<RaidSeasonDefenseLogEntry> defenseLog = new ArrayList<>();
+
     public RaidSeason(
-            String clanTag,
-            String state,
-            Instant startTime,
-            Instant endTime,
+            @NonNull Clan clan,
+            @NonNull String state,
+            @NonNull Instant startTime,
+            @NonNull Instant endTime,
             Integer capitalTotalLoot,
             Integer raidsCompleted,
             Integer totalAttacks,
             Integer enemyDistrictsDestroyed,
             Integer offensiveReward,
             Integer defensiveReward) {
-        this.clanTag = clanTag;
+        this.clan = clan;
         this.state = state;
         this.startTime = startTime;
         this.endTime = endTime;

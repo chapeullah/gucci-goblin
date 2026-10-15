@@ -48,7 +48,7 @@ public class Clan {
     @Column(name = "is_family_friendly", nullable = true)
     private Boolean isFamilyFriendly;
 
-    @OneToOne(mappedBy = "clan")
+    @Embedded
     private ClanBadgeUrls clanBadgeUrls;
 
     @Column(name = "clan_badge_urls_changed_at", nullable = true)

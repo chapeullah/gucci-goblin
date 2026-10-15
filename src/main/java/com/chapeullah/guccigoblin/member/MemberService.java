@@ -136,7 +136,7 @@ public class MemberService {
             @NonNull ClanMemberResponse response) {
         if (!Objects.equals(member.getTag(), response.tag())) {
             throw new IllegalArgumentException(
-                    "Member tags mismatch: currentMemberTag=\"" + member.getTag() + "\" sourceMemberTag=\""
+                    "Member tags mismatch: currentMemberTag=\"" + member.getTag() + "\", sourceMemberTag=\""
                             + response.tag() + "\"");
         }
 

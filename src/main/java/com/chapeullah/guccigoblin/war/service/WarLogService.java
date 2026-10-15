@@ -1,14 +1,17 @@
-package com.chapeullah.guccigoblin.warlog;
+package com.chapeullah.guccigoblin.war.service;
 
 import com.chapeullah.guccigoblin.ClashOfClansClient;
-import com.chapeullah.guccigoblin.warlog.dto.WarLogClanBadgeUrlsResponse;
-import com.chapeullah.guccigoblin.warlog.dto.WarLogClanResponse;
-import com.chapeullah.guccigoblin.warlog.dto.WarLogEntryResponse;
-import com.chapeullah.guccigoblin.warlog.dto.WarLogResponse;
-import jakarta.transaction.Transactional;
+import com.chapeullah.guccigoblin.war.dto.WarLogClanBadgeUrlsResponse;
+import com.chapeullah.guccigoblin.war.dto.WarLogClanResponse;
+import com.chapeullah.guccigoblin.war.dto.WarLogEntryResponse;
+import com.chapeullah.guccigoblin.war.dto.WarLogResponse;
+import com.chapeullah.guccigoblin.war.model.WarLogEntry;
+import com.chapeullah.guccigoblin.war.model.WarLogEntryClanBadgeUrls;
+import com.chapeullah.guccigoblin.war.repository.WarLogRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -25,32 +28,50 @@ public class WarLogService {
     private final WarLogRepository warLogRepository;
 
     @Transactional
+    public WarLogEntry getOrSyncWarLogEntry(
+            @NonNull String clanTag,
+            @NonNull Instant endTime) {
+        WarLogEntry warLogEntry = warLogRepository
+                .findByClanTagAndEndTime(clanTag, endTime)
+                .orElse(null);
+        if (warLogEntry != null) {
+            return warLogEntry;
+        }
+        syncWarLog(clanTag);
+        return warLogRepository
+                .findByClanTagAndEndTime(clanTag, endTime)
+                .orElseThrow(() -> new IllegalStateException(
+                        "War log entry not found: clanTag=\"" + clanTag
+                                + "\", endTime=" + endTime));
+    }
+
+    @Transactional
     public List<WarLogEntry> syncWarLog(@NonNull String clanTag) {
         WarLogResponse response = client.getWarLog(clanTag);
         if (response.items() == null) {
-            throw new IllegalStateException("War log items are missing: clanTag=" + clanTag);
+            throw new IllegalStateException("War log items are missing: clanTag=\"" + clanTag + "\"");
         }
 
-        List<WarLogEntry> changedEntries = new ArrayList<>();
+        List<WarLogEntry> changedWarLogEntries = new ArrayList<>();
 
         for (WarLogEntryResponse entryResponse : response.items()) {
-            WarLogEntry incoming = toEntry(entryResponse);
+            WarLogEntry incoming = toWarLogEntry(entryResponse);
             WarLogEntry existing = warLogRepository
                     .findByClanTagAndEndTime(
                             incoming.getClanTag(),
                             incoming.getEndTime())
                     .orElse(null);
             if (existing == null) {
-                changedEntries.add(incoming);
+                changedWarLogEntries.add(incoming);
             } else if (existing.updateFrom(incoming)) {
-                changedEntries.add(existing);
+                changedWarLogEntries.add(existing);
             }
         }
 
-        return warLogRepository.saveAll(changedEntries);
+        return warLogRepository.saveAll(changedWarLogEntries);
     }
 
-    private WarLogEntry toEntry(@NonNull WarLogEntryResponse response) {
+    private WarLogEntry toWarLogEntry(@NonNull WarLogEntryResponse response) {
         WarLogClanResponse clan = response.clan();
         WarLogClanResponse opponent = response.opponent();
 
@@ -76,17 +97,19 @@ public class WarLogService {
                 clan.stars(),
                 clan.destructionPercentage(),
                 clan.expEarned(),
-                clanBadgeUrls == null ? null : clanBadgeUrls.small(),
-                clanBadgeUrls == null ? null : clanBadgeUrls.medium(),
-                clanBadgeUrls == null ? null : clanBadgeUrls.large(),
+                toClanBadgeUrls(clanBadgeUrls),
 
                 opponent == null ? null : opponent.tag(),
                 opponent == null ? null : opponent.name(),
                 opponent == null ? null : opponent.clanLevel(),
                 opponent == null ? null : opponent.stars(),
                 opponent == null ? null : opponent.destructionPercentage(),
-                opponentBadgeUrls == null ? null : opponentBadgeUrls.small(),
-                opponentBadgeUrls == null ? null : opponentBadgeUrls.medium(),
-                opponentBadgeUrls == null ? null : opponentBadgeUrls.large());
+                toClanBadgeUrls(opponentBadgeUrls));
     }
+
+    private WarLogEntryClanBadgeUrls toClanBadgeUrls(WarLogClanBadgeUrlsResponse response) {
+        return response == null ? null
+                : WarLogEntryClanBadgeUrls.of(response.small(), response.large(), response.medium());
+    }
+
 }
