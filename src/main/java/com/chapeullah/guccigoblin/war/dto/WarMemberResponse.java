@@ -5,12 +5,8 @@ import java.util.List;
 public record WarMemberResponse(
         String tag,
         String name,
-        Integer townhallLevel,
+        Integer townHallLevel,
         Integer mapPosition,
         List<WarAttackResponse> attacks,
         Integer opponentAttacks,
-        WarAttackResponse bestOpponentAttack) {
-    public WarMemberResponse {
-        attacks = attacks == null ? List.of() : attacks;
-    }
-}
+        WarAttackResponse bestOpponentAttack) {}

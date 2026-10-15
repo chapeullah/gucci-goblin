@@ -12,6 +12,8 @@ public interface WarParticipantRepository extends JpaRepository<WarParticipant, 
 
     boolean existsByWarAndPlayerTag(War war, String playerTag);
 
+    boolean existsByWar(War war);
+
     List<WarParticipant> findAllByWarAndClanTagOrderByMapPositionAsc(
             War war,
             String clanTag);

@@ -19,7 +19,7 @@ import java.util.Objects;
 public class WarParticipant {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -63,6 +63,13 @@ public class WarParticipant {
         this.clanTag = clanTag;
         this.townHallLevel = townHallLevel;
         this.mapPosition = mapPosition;
+    }
+
+    public void update(
+            @NonNull String playerName,
+            @NonNull Integer townHallLevel) {
+        this.playerName = playerName;
+        this.townHallLevel = townHallLevel;
     }
 
     @Override

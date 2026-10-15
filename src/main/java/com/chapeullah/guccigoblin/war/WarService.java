@@ -39,19 +39,28 @@ public class WarService {
 
 
     @Transactional
-    public Optional<War> syncCurrentClanWarByClanTag(@NonNull String clanTag) {
+    public Optional<War> syncCurrentWar(@NonNull String clanTag) {
         WarResponse response = client.getCurrentWar(clanTag);
         if (response == null) {
             throw new IllegalStateException("Empty current war response: clanTag=" + clanTag);
         }
-        if (response.state().equals("nowInWar")) {
+        if (response.state().equals("notInWar")) {
+            // TODO здесь стоит реализовать закрытие предыдущих войн. Бот может быть выключен во время войны, а потом включен, когда война уже закончилась и в таком случае проверить состояние последней войны что она isEnded или вообще стоит сделать защиту от таких случаев. Надо думать
             return Optional.empty();
         }
 
-        War war = saveOrUpdateWar(response);
-        saveParticipants(war, response.clan());
-        saveParticipants(war, response.opponent());
-        saveAttacks(war, response);
+        War war = warRepository
+                .findByClanTagAndOpponentTagAndStartTime(
+                        response.clan().tag(),
+                        response.opponent().tag(),
+                        Instant.from(WAR_TIME_FORMAT.parse(response.startTime())))
+                .orElse(null);
+        if (war == null) {
+            war = createWar(response);
+        } else {
+            updateWar(war, response);
+        }
+
         return Optional.of(war);
     }
 
@@ -62,14 +71,21 @@ public class WarService {
         warRepository.saveAll(wars);
     }
 
-    private War saveOrUpdateWar(WarResponse response) {
-        WarClanResponse warClanResponse = response.clan();
-        WarClanResponse opponent = response.opponent();
+    private War createWar(@NonNull WarResponse response) {
 
-        Instant startTime = Instant.from(
-                WAR_TIME_FORMAT.parse(response.startTime()));
-        Instant endTime = Instant.from(
-                WAR_TIME_FORMAT.parse(response.endTime()));
+        return null;
+    }
+
+    private void updateWar(@NonNull War war, @NonNull WarResponse response) {
+
+    }
+
+    private War saveOrUpdateWar(WarResponse response) {
+        WarClanResponse clanResponse = response.clan();
+        WarClanResponse opponentClanResponse = response.opponent();
+
+        Instant startTime = Instant.from(WAR_TIME_FORMAT.parse(response.startTime()));
+        Instant endTime = Instant.from(WAR_TIME_FORMAT.parse(response.endTime()));
 
         // TODO
 
@@ -78,8 +94,7 @@ public class WarService {
 
     private void saveParticipants(War war, WarClanResponse warClanResponse) {
         for (WarMemberResponse warMemberResponse : warClanResponse.members()) {
-            if (warParticipantRepository.existsByWarAndPlayerTag(
-                    war, warMemberResponse.tag())) {
+            if (warParticipantRepository.existsByWarAndPlayerTag(war, warMemberResponse.tag())) {
                 continue;
             }
             WarParticipant participant = new WarParticipant(
@@ -87,7 +102,7 @@ public class WarService {
                     warMemberResponse.tag(),
                     warMemberResponse.name(),
                     warClanResponse.tag(),
-                    warMemberResponse.townhallLevel(),
+                    warMemberResponse.townHallLevel(),
                     warMemberResponse.mapPosition());
             warParticipantRepository.save(participant);
         }
@@ -122,8 +137,8 @@ public class WarService {
                         attacker.name(),
                         warAttackResponse.defenderTag(),
                         defender.name(),
-                        attacker.townhallLevel(),
-                        defender.townhallLevel(),
+                        attacker.townHallLevel(),
+                        defender.townHallLevel(),
                         warAttackResponse.stars(),
                         warAttackResponse.destructionPercentage(),
                         warAttackResponse.order(),
