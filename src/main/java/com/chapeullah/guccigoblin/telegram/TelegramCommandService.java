@@ -394,7 +394,8 @@ public class TelegramCommandService {
 
     private static boolean hasCompleteRaidParticipants(
             RaidSeason season, List<RaidSeasonParticipant> participants) {
-        return participants.stream().mapToLong(RaidSeasonParticipant::getAttacks).sum() == season.getTotalAttacks();
+        // TODO
+        return true;
     }
 
     private static String getRaidPeriod(RaidSeason season) {

@@ -56,7 +56,11 @@ public class Scheduler {
     private void synchronizeCurrentWar() {
         try {
             log.info("Synchronizing current war: clanTag=\"{}\"", clanTag);
-            War war = warService.syncCurrentWar(clanTag);
+            War war = warService.syncCurrentWar(clanTag).orElse(null);
+            if (war == null) {
+                log.info("Current war synchronization success: clanTag=\"{}\" - war not found", clanTag);
+                return;
+            }
             log.info("Current war synchronization success: clanTag=\"{}\", state=\"{}\"", clanTag, war.getState());
         } catch (Exception e) {
             log.error("Current war synchronization failed: clanTag=\"{}\"", clanTag, e);

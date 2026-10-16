@@ -108,19 +108,19 @@ public class ClashOfClansClient {
         return response;
     }
 
-    public RaidSeasonsResponse getCurrentRaid(@NonNull String clanTag) {
+    public String getCurrentRaid(@NonNull String clanTag) {
         log.debug("Fetching current raid: clanTag=\"{}\"", clanTag);
-        var response = rest.get()
+        String rawJson = rest.get()
                 .uri("/clans/{clanTag}/capitalraidseasons?limit=1", clanTag)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiToken)
                 .retrieve()
-                .body(RaidSeasonsResponse.class);
-        if (response == null) {
-            throw new IllegalStateException("Empty response for current raid: clanTag=" + clanTag);
+                .body(String.class);
+        if (rawJson == null || rawJson.isBlank()) {
+            throw new IllegalStateException("Empty response for current raid: clanTag=\"" + clanTag + "\"");
         }
         log.debug("Received current raid: clanTag=\"{}\"", clanTag);
-        return response;
+        return rawJson;
     }
 
     public LeagueTiersResponse getLeagueTiers() {
