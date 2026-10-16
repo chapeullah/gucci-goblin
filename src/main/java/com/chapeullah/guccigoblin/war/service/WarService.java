@@ -5,6 +5,7 @@ import com.chapeullah.guccigoblin.war.dto.WarClanBadgeUrlsResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import com.chapeullah.guccigoblin.war.model.War;
 import com.chapeullah.guccigoblin.war.model.WarClanBadgeUrls;
+import com.chapeullah.guccigoblin.war.model.WarLogEntry;
 import com.chapeullah.guccigoblin.war.repository.WarRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -32,6 +35,7 @@ public class WarService {
 
     private final WarParticipantService warParticipantService;
     private final WarAttackService warAttackService;
+    private final WarLogService warLogService;
 
     @Transactional
     public Optional<War> syncCurrentWar(@NonNull String clanTag) {
@@ -52,7 +56,7 @@ public class WarService {
 
         if (war == null) {
             war = createWar(response);
-        } else {
+        } else if (war.getWarLogSyncedAt() == null) {
             updateWar(war, response);
         }
 
@@ -68,7 +72,7 @@ public class WarService {
 
         warAttackService.syncAttacks(war, response.clan(), response.opponent());
 
-        return war;
+        return Optional.of(war);
     }
 
     @Transactional
@@ -80,6 +84,75 @@ public class WarService {
                 .stream()
                 .map(War::finish)
                 .toList());
+    }
+
+    @Transactional
+    public List<War> syncEndedWarsFromWarLog(@NonNull String clanTag) {
+        Instant now = clock.instant();
+
+        List<War> wars = warRepository
+                .findAllByClanTagAndEndTimeLessThanEqualAndWarLogSyncedAtIsNull(
+                        clanTag, now);
+
+        List<War> syncedWars = new ArrayList<>();
+
+        for (War war : wars) {
+            WarLogEntry entry = warLogService
+                    .findByClanTagAndEndTime(war.getClanTag(), war.getEndTime())
+                    .orElse(null);
+
+            if (entry == null) {
+                continue;
+            }
+
+            if (!Objects.equals(war.getOpponentClanTag(), entry.getOpponentClanTag())
+                    || !Objects.equals(war.getTeamSize(), entry.getTeamSize())
+                    || (entry.getAttacksPerMember() != null
+                    && !Objects.equals(
+                    war.getAttacksPerMember(), entry.getAttacksPerMember()))
+                    || (entry.getBattleModifier() != null
+                    && !Objects.equals(
+                    war.getBattleModifier(), entry.getBattleModifier()))) {
+                log.warn(
+                        "War log entry does not match war: warId={}, warLogEntryId={}",
+                        war.getId(), entry.getId());
+                continue;
+            }
+
+            if (entry.getClanAttacks() == null
+                    || entry.getClanStars() == null
+                    || entry.getClanDestructionPercentage() == null
+                    || entry.getOpponentClanStars() == null
+                    || entry.getOpponentClanDestructionPercentage() == null) {
+                log.warn(
+                        "War log entry is incomplete: warId={}, warLogEntryId={}",
+                        war.getId(), entry.getId());
+                continue;
+            }
+
+            war.update(
+                    entry.getClanAttacks(),
+                    entry.getClanStars(),
+                    entry.getClanDestructionPercentage(),
+                    entry.getClanLevel() == null
+                            ? war.getClanLevel()
+                            : entry.getClanLevel(),
+
+                    // В текущей WarLogEntry нет количества атак соперника.
+                    war.getOpponentClanAttacks(),
+                    entry.getOpponentClanStars(),
+                    entry.getOpponentClanDestructionPercentage(),
+                    entry.getOpponentClanLevel() == null
+                            ? war.getOpponentClanLevel()
+                            : entry.getOpponentClanLevel(),
+
+                    "warEnded");
+
+            war.markWarLogSynced(now);
+            syncedWars.add(war);
+        }
+
+        return warRepository.saveAll(syncedWars);
     }
 
     private War createWar(@NonNull WarResponse response) {

@@ -16,7 +16,7 @@ public class RaidCommand implements BotCommand {
     }
 
     @Override
-    public String execute(String args) {
+    public String execute(String args, long chatId) {
         return name();
     }
 

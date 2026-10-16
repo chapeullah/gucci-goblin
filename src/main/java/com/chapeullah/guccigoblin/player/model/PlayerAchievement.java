@@ -7,9 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Entity @Table(
-        name = "achievements",
+        name = "player_achievements",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_achievements_player_tag_name_village",
+                name = "uk_player_achievements_player_tag_name_village",
                 columnNames = {"player_tag", "name"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -63,19 +63,19 @@ public class PlayerAchievement {
             String completionInfo,
             String village) {
         if (name.isBlank()) {
-            throw new IllegalArgumentException("Achievement name must not be blank");
+            throw new IllegalArgumentException("Player achievement name must not be blank");
         }
         if (stars != null && (stars < 0 || stars > 3)) {
-            throw new IllegalArgumentException("Achievement stars must be between 0 and 3");
+            throw new IllegalArgumentException("Player achievement stars must be between 0 and 3");
         }
         if (info != null && info.isBlank()) {
-            throw new IllegalArgumentException("Achievement info must not be blank");
+            throw new IllegalArgumentException("Player achievement info must not be blank");
         }
         if (completionInfo != null && completionInfo.isBlank()) {
-            throw new IllegalArgumentException("Achievement completion info must not be blank");
+            throw new IllegalArgumentException("Player achievement completion info must not be blank");
         }
         if (village != null && village.isBlank()) {
-            throw new IllegalArgumentException("Achievement village must not be blank");
+            throw new IllegalArgumentException("Player achievement village must not be blank");
         }
         this.player = player;
         this.name = name;

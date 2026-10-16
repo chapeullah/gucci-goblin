@@ -25,10 +25,10 @@ public class TelegramBot {
                 nextOffset = Math.max(nextOffset, update.updateId() + 1);
                 handle(update);
             }
+            log.debug("Telegram polling success");
         } catch (RuntimeException exception) {
             log.warn("Telegram polling failed", exception);
         }
-        log.debug("Telegram polling success");
     }
 
     private void handle(TelegramUpdate telegramUpdate) {
@@ -40,17 +40,18 @@ public class TelegramBot {
 
         long chatId = telegramMessage.telegramChat().id();
         String messageString = telegramMessage.text().trim();
-        if(messageString.isEmpty()) {
+        if (messageString.isEmpty()) {
             telegramClient.sendMessage(chatId, "Неверный ввод.");
+            return;
         }
 
-        String[] messageParts = telegramMessage.text().trim().split("\\s+", 2);
+        String[] messageParts = messageString.split("\\s+", 2);
         String command = messageParts[0];
         String args = messageParts.length == 2 ? messageParts[1] : "";
 
         telegramClient.sendMessage(
                 chatId,
-                telegramCommandDispatcher.execute(command, args));
+                telegramCommandDispatcher.execute(command, args, chatId));
     }
 
 }

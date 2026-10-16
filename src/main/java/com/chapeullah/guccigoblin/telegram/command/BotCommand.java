@@ -4,6 +4,6 @@ public interface BotCommand {
 
     String name();
 
-    String execute(String args);
+    String execute(String args, long chatId);
 
 }

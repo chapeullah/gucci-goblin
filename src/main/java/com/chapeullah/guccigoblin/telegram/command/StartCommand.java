@@ -16,7 +16,7 @@ public class StartCommand implements BotCommand {
     }
 
     @Override
-    public String execute(String args) {
+    public String execute(String args, long chatId) {
         return telegramCommandService.start();
     }
 

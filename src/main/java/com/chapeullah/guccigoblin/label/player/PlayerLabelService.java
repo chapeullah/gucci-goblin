@@ -4,7 +4,6 @@ import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.label.IconUrls;
 import com.chapeullah.guccigoblin.label.dto.LabelIconUrlsResponse;
 import com.chapeullah.guccigoblin.label.dto.LabelResponse;
-import com.chapeullah.guccigoblin.label.dto.LabelsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -13,11 +13,8 @@ services:
   app:
     build:
       context: .
-      no_cache: true
     depends_on:
       - db
-    ports:
-      - "8097:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/gucci
       SPRING_DATASOURCE_USERNAME: gucci
@@ -32,6 +29,7 @@ services:
       COC_API_BASE_URL: ${COC_API_BASE_URL}
 
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_ADMIN_CHAT_ID: ${TELEGRAM_ADMIN_CHAT_ID}
 
     tty: true
     stdin_open: true

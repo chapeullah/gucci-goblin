@@ -6,11 +6,9 @@ import com.chapeullah.guccigoblin.clan.service.ClanService;
 import com.chapeullah.guccigoblin.raidseason.dto.*;
 import com.chapeullah.guccigoblin.raidseason.model.*;
 import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonRepository;
-import com.chapeullah.guccigoblin.raidseason.repository.RaidSeasonParticipantRepository;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
@@ -19,7 +17,6 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @DependsOn("environmentVariablesValidator")
@@ -43,7 +40,7 @@ public class RaidSeasonService {
             throw new IllegalStateException("Raid seasons response is null: clanTag=\"" + clanTag + "\"");
         }
         if (response.items() == null) {
-            throw new IllegalStateException("Raid season response items is null: clanTag=\"" + clanTag + "\"");
+            throw new IllegalStateException("Raid season response items are null: clanTag=\"" + clanTag + "\"");
         }
         if (response.items().isEmpty()) {
             return Optional.empty();
@@ -64,6 +61,31 @@ public class RaidSeasonService {
         } else {
             raidSeason = updateRaidSeason(raidSeason, raidSeasonResponse, rawJson);
         }
+
+        Integer expectedAttacks = raidSeasonResponse.totalAttacks();
+        var participants = raidSeason.getParticipants();
+
+        if (expectedAttacks == null
+                || expectedAttacks < 0
+                || participants.stream().anyMatch(participant ->
+                participant.getAttackCount() == null
+                        || participant.getAttackCount() < 0)) {
+            throw new IllegalStateException(
+                    "Raid attack counts are missing or invalid: clanTag=\""
+                            + clanTag + "\"");
+        }
+
+        long actualAttacks = participants.stream()
+                .mapToLong(RaidSeasonParticipant::getAttackCount)
+                .sum();
+
+        if (actualAttacks != expectedAttacks) {
+            throw new IllegalStateException(
+                    "Raid attacks count mismatch: clanTag=\"" + clanTag
+                            + "\", expectedCount=" + expectedAttacks
+                            + ", actualCount=" + actualAttacks);
+        }
+
         return Optional.of(raidSeason);
     }
 

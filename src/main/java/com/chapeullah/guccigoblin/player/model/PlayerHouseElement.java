@@ -42,7 +42,7 @@ public class PlayerHouseElement {
             @NonNull Integer elementId,
             @NonNull String elementType) {
         if (elementType.isBlank()) {
-            throw new IllegalArgumentException("Players house element type must not be blank");
+            throw new IllegalArgumentException("Player house element type must not be blank");
         }
         this.player = player;
         this.elementId = elementId;

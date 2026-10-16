@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Entity
-@Table(name = "troops", uniqueConstraints = @UniqueConstraint(
-        name = "uk_troops_player_tag_name",
+@Table(name = "player_troops", uniqueConstraints = @UniqueConstraint(
+        name = "uk_player_troops_player_tag_name",
         columnNames = {"player_tag", "name", "village"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

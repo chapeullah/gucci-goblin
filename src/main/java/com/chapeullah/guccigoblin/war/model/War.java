@@ -131,6 +131,9 @@ public class War {
     @Column(name = "updated_at", nullable = true)
     private Instant updatedAt;
 
+    @Column(name = "war_log_synced_at", nullable = true)
+    private Instant warLogSyncedAt;
+
     public War(
             @NonNull String clanTag,
             @NonNull String clanName,
@@ -242,6 +245,10 @@ public class War {
             this.stateChangedAt = Instant.now();
         }
         return this;
+    }
+
+    public void markWarLogSynced(@NonNull Instant syncedAt) {
+        this.warLogSyncedAt = syncedAt;
     }
 
     @Override

@@ -4,6 +4,8 @@ coc:
   clan-tag: ${COC_CLAN_TAG}
 
 telegram:
+  admin:
+    chat-id: ${TELEGRAM_ADMIN_CHAT_ID}
   bot:
     token: ${TELEGRAM_BOT_TOKEN}
     poll-delay-ms: 1000

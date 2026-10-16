@@ -8,7 +8,6 @@ import com.chapeullah.guccigoblin.leaguetier.dto.LeagueTiersResponse;
 import com.chapeullah.guccigoblin.location.dto.LocationsResponse;
 import com.chapeullah.guccigoblin.member.dto.MemberResponses;
 import com.chapeullah.guccigoblin.player.dto.PlayerResponse;
-import com.chapeullah.guccigoblin.raidseason.dto.RaidSeasonsResponse;
 import com.chapeullah.guccigoblin.war.dto.WarResponse;
 import com.chapeullah.guccigoblin.warleague.dto.WarLeaguesResponse;
 import com.chapeullah.guccigoblin.war.dto.WarLogResponse;
@@ -169,7 +168,7 @@ public class ClashOfClansClient {
     }
 
     public WarLeaguesResponse getWarLeagues() {
-        log.debug("Fetching getCurrentWarMessage leagues");
+        log.debug("Fetching war leagues");
         var response = rest.get()
                 .uri("/warleagues")
                 .accept(MediaType.APPLICATION_JSON)
@@ -177,9 +176,9 @@ public class ClashOfClansClient {
                 .retrieve()
                 .body(WarLeaguesResponse.class);
         if (response == null) {
-            throw new IllegalStateException("Empty response for getCurrentWarMessage leagues");
+            throw new IllegalStateException("Empty response for war leagues");
         }
-        log.debug("Received getCurrentWarMessage leagues");
+        log.debug("Received war leagues");
         return response;
     }
 

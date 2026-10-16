@@ -17,7 +17,8 @@ public class EnvironmentVariablesValidator {
             "COC_API_BASE_URL",
             "COC_API_TOKEN",
             "COC_CLAN_TAG",
-            "TELEGRAM_BOT_TOKEN");
+            "TELEGRAM_BOT_TOKEN",
+            "TELEGRAM_ADMIN_CHAT_ID");
 
     @PostConstruct
     public void validate() {

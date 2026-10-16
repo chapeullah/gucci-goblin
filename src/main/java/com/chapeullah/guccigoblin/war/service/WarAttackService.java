@@ -9,7 +9,6 @@ import com.chapeullah.guccigoblin.war.model.WarParticipant;
 import com.chapeullah.guccigoblin.war.repository.WarAttackRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +19,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WarAttackService {
@@ -141,6 +139,28 @@ public class WarAttackService {
                                 attack.order(),
                                 attack.duration()));
             }
+        }
+
+        long actualClanAttacks = existingWarAttacksByOrder.values().stream()
+                .filter(attack -> Objects.equals(
+                        attack.getAttacker().getClanTag(), war.getClanTag()))
+                .count();
+
+        long actualOpponentAttacks = existingWarAttacksByOrder.values().stream()
+                .filter(attack -> Objects.equals(
+                        attack.getAttacker().getClanTag(), war.getOpponentClanTag()))
+                .count();
+
+        if (clanResponse.attacks() == null
+                || opponentResponse.attacks() == null
+                || actualClanAttacks != clanResponse.attacks()
+                || actualOpponentAttacks != opponentResponse.attacks()) {
+            throw new IllegalStateException(
+                    "War attacks count mismatch: warId=" + war.getId()
+                            + ", clanExpected=" + clanResponse.attacks()
+                            + ", clanActual=" + actualClanAttacks
+                            + ", opponentExpected=" + opponentResponse.attacks()
+                            + ", opponentActual=" + actualOpponentAttacks);
         }
 
         warAttackRepository.saveAll(existingWarAttacksByOrder.values());

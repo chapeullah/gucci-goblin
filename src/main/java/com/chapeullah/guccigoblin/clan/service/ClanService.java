@@ -50,11 +50,18 @@ public class ClanService {
 
     private final MemberService memberService;
 
+    @Transactional
+    public Clan getOrSyncClanByTag(@NonNull String clanTag) {
+        return clanRepository.findById(clanTag)
+                .orElseGet(() -> syncClan(clanTag));
+    }
+
     @Transactional(readOnly = true)
     public Clan getClanByTag(@NonNull String clanTag) {
         return clanRepository
                 .findById(clanTag)
-                .orElseThrow(() -> new IllegalArgumentException("Clan not found: clanTag=\"" + clanTag + "\""));
+                .orElseThrow(() -> new IllegalArgumentException("Clan not found: clanTag=\""
+                        + clanTag + "\""));
     }
 
     @Transactional
@@ -62,6 +69,23 @@ public class ClanService {
         ClanResponse response = client.getClan(clanTag);
         if (response.memberList() == null || response.memberList().isEmpty()) {
             throw new IllegalStateException("Clan member list is missing or empty: clanTag=\"" + clanTag + "\"");
+        }
+        if (response.memberCount() == null
+                || response.memberCount() != response.memberList().size()) {
+            throw new IllegalStateException("Clan member count mismatch: clanTag=\"" + clanTag
+                    + "\", expectedCount=" + response.memberCount()+ ", actualCount="
+                    + response.memberList().size());
+        }
+
+        Set<String> memberTags = new HashSet<>();
+        for (var member : response.memberList()) {
+            if (member == null
+                    || member.tag() == null
+                    || member.tag().isBlank()
+                    || !memberTags.add(member.tag())) {
+                throw new IllegalStateException("Invalid or duplicate clan member tag: clanTag=\""
+                        + clanTag + "\"");
+            }
         }
 
         syncLocationsIfMissing(response);
@@ -125,7 +149,7 @@ public class ClanService {
     private void syncClanLabelsIfMissing(@NonNull ClanResponse clanResponse) {
         List<LabelResponse> labels = clanResponse.labels();
         if (labels == null) {
-            log.debug("Clan labels is missing: clanTag=\"{}\"", clanResponse.tag());
+            log.debug("Clan labels are missing: clanTag=\"{}\"", clanResponse.tag());
             return;
 
         }

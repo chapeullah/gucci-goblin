@@ -14,7 +14,6 @@ import com.chapeullah.guccigoblin.war.model.WarParticipant;
 import com.chapeullah.guccigoblin.war.repository.WarAttackRepository;
 import com.chapeullah.guccigoblin.war.repository.WarParticipantRepository;
 import com.chapeullah.guccigoblin.war.repository.WarRepository;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
@@ -47,6 +46,42 @@ public class TelegramCommandService {
             DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
                     .withZone(ZoneId.of("Europe/Moscow"));
 
+    private static final Map<String, String> CLAN_TYPES_RU = Map.ofEntries(
+            Map.entry("open", "Открытый"),
+            Map.entry("inviteOnly", "По приглашению"),
+            Map.entry("closed", "Закрытый"));
+
+    private static final Map<String, String> ROLE_NAMES_RU = Map.ofEntries(
+            Map.entry("leader", "Глава"),
+            Map.entry("coLeader", "Соруководитель"),
+            Map.entry("admin", "Старейшина"),
+            Map.entry("member", "Участник"));
+
+    private static final Map<Integer, String> WAR_LEAGUE_NAMES_RU = Map.ofEntries(
+            Map.entry(48000000, "Без лиги"),
+            Map.entry(48000001, "Бронзовая лига III"),
+            Map.entry(48000002, "Бронзовая лига II"),
+            Map.entry(48000003, "Бронзовая лига I"),
+            Map.entry(48000004, "Серебряная лига III"),
+            Map.entry(48000005, "Серебряная лига II"),
+            Map.entry(48000006, "Серебряная лига I"),
+            Map.entry(48000007, "Золотая лига III"),
+            Map.entry(48000008, "Золотая лига II"),
+            Map.entry(48000009, "Золотая лига I"),
+            Map.entry(48000010, "Хрустальная лига III"),
+            Map.entry(48000011, "Хрустальная лига II"),
+            Map.entry(48000012, "Хрустальная лига I"),
+            Map.entry(48000013, "Лига мастеров III"),
+            Map.entry(48000014, "Лига мастеров II"),
+            Map.entry(48000015, "Лига мастеров I"),
+            Map.entry(48000016, "Чемпионская лига III"),
+            Map.entry(48000017, "Чемпионская лига II"),
+            Map.entry(48000018, "Чемпионская лига I"),
+            Map.entry(48000019, "Лига титанов III"),
+            Map.entry(48000020, "Лига титанов II"),
+            Map.entry(48000021, "Лига титанов I"),
+            Map.entry(48000022, "Легендарная лига"));
+
     public String start() {
         return "Используй /help, чтобы посмотреть команды.";
     }
@@ -54,9 +89,23 @@ public class TelegramCommandService {
     public String help() {
         return """
                 <b>Доступные команды</b>
+                
+                
+                /help — Список команд
 
-                /members — текущий состав клана
+                /clan — Информация о клане
+                /members — Текущий состав клана
+                /war — Текущая война клана
+                /wars — История войн клана
+                /raid — Текущий сезон рейдов
+                /raids — История рейдов
+                
+                /chatid — ID текущего чата
                 """.strip();
+    }
+
+    public String getChatId(long chatId) {
+        return "ID чата: <code>" + chatId + "</code>";
     }
 
     public String getMembersMessage() {
@@ -67,22 +116,11 @@ public class TelegramCommandService {
         }
         members.forEach(member -> message
                 .append(String.format("<b>%02d.</b> ", member.getClanRank()))
-                .append(escapeHtml(member.getName()))
+                .append(TelegramUtils.escapeHtml(member.getName()))
                 .append(" • ")
-                .append(getRoleDisplayName(member.getRole()))
+                .append(ROLE_NAMES_RU.getOrDefault(member.getRole(), member.getRole()))
                 .append("\n"));
         return message.toString();
-    }
-
-    private static String getRoleDisplayName(@NonNull String role) {
-        return switch (role) {
-            case "leader" -> "Глава";
-            case "coLeader" -> "Соруководитель";
-            case "admin" -> "Старейшина";
-            case "member" -> "Участник";
-            default -> throw new IllegalArgumentException(
-                    "Неизвестная роль участника: " + role);
-        };
     }
 
     @Transactional(readOnly = true)
@@ -90,28 +128,23 @@ public class TelegramCommandService {
         Clan clan = clanRepository.findById(clanTag).orElse(null);
 
         if (clan == null) {
-            return "Клан не найден: <code>" + escapeHtml(clanTag) + "</code>";
+            return "Клан не найден: <code>" + TelegramUtils.escapeHtml(clanTag) + "</code>";
         }
 
-        String type = switch (clan.getType()) {
-            case "open" -> "Открытый";
-            case "inviteOnly" -> "По приглашению";
-            case "closed" -> "Закрытый";
-            default -> clan.getType();
-        };
+        String type = CLAN_TYPES_RU.getOrDefault(clan.getType(), clan.getType());
 
         String warLeague = clan.getWarLeague() == null
                 ? "Нет данных"
-                : escapeHtml(clan.getWarLeague().getName());
+                : TelegramUtils.escapeHtml(clan.getWarLeague().getName());
 
         String location = clan.getLocation() == null
                 ? "Не указано"
-                : escapeHtml(clan.getLocation().getName());
+                : TelegramUtils.escapeHtml(clan.getLocation().getName());
 
         String description = clan.getDescription() == null
                 || clan.getDescription().isBlank()
                 ? "Без описания"
-                : escapeHtml(clan.getDescription());
+                : TelegramUtils.escapeHtml(clan.getDescription());
 
         return """
             <b>%s</b>
@@ -130,20 +163,20 @@ public class TelegramCommandService {
             🔥 Серия побед: %s
             📍 Расположение: %s
             """.formatted(
-                escapeHtml(clan.getName()),
-                escapeHtml(clan.getTag()),
-                description,
-                valueOrNoData(clan.getClanLevel()),
-                valueOrNoData(clan.getMemberCount()),
-                escapeHtml(type),
-                valueOrNoData(clan.getClanPoints()),
-                valueOrNoData(clan.getClanCapitalPoints()),
-                warLeague,
-                formatWarWinRate(clan),
-                valueOrNoData(clan.getWarWins()),
-                valueOrNoData(clan.getWarWinStreak()),
-                location
-        ).strip();
+                    TelegramUtils.escapeHtml(clan.getName()),
+                    TelegramUtils.escapeHtml(clan.getTag()),
+                    description,
+                    valueOrNoData(clan.getClanLevel()),
+                    valueOrNoData(clan.getMemberCount()),
+                    TelegramUtils.escapeHtml(type),
+                    valueOrNoData(clan.getClanPoints()),
+                    valueOrNoData(clan.getClanCapitalPoints()),
+                    warLeague,
+                    formatWarWinRate(clan),
+                    valueOrNoData(clan.getWarWins()),
+                    valueOrNoData(clan.getWarWinStreak()),
+                    location)
+                .strip();
     }
 
     private static String valueOrNoData(Object value) {
@@ -198,9 +231,9 @@ public class TelegramCommandService {
             👥 Размер: %d на %d
             🕒 %s: %s
             """.formatted(
-                    escapeHtml(war.getClanName()),
-                    escapeHtml(war.getOpponentClanName()),
-                    escapeHtml(state),
+                    TelegramUtils.escapeHtml(war.getClanName()),
+                    TelegramUtils.escapeHtml(war.getOpponentClanName()),
+                    TelegramUtils.escapeHtml(state),
                     war.getClanStars(),
                     war.getOpponentClanStars(),
                     war.getClanDestructionPercentage(),
@@ -225,9 +258,9 @@ public class TelegramCommandService {
             result.append("\n")
                     .append(warResult)
                     .append(" <b>")
-                    .append(escapeHtml(war.getClanName()))
+                    .append(TelegramUtils.escapeHtml(war.getClanName()))
                     .append(" против ")
-                    .append(escapeHtml(war.getOpponentClanName()))
+                    .append(TelegramUtils.escapeHtml(war.getOpponentClanName()))
                     .append("</b>\n")
                     .append("⭐ ")
                     .append(war.getClanStars())
@@ -321,7 +354,7 @@ public class TelegramCommandService {
             result.append("\n")
                     .append(participant.getMapPosition())
                     .append(". ")
-                    .append(escapeHtml(participant.getPlayerName()))
+                    .append(TelegramUtils.escapeHtml(participant.getPlayerName()))
                     .append(" — ")
                     .append(remaining)
                     .append(" из ")
@@ -348,7 +381,7 @@ public class TelegramCommandService {
         List<RaidSeasonParticipant> participants =
                 raidSeasonParticipantRepository.findAllByRaidSeason(season);
         String participantCount = hasCompleteRaidParticipants(season, participants)
-                ? Long.toString(participants.stream().filter(p -> p.getAttacks() > 0).count())
+                ? Long.toString(participants.stream().filter(p -> p.getAttackCount() > 0).count())
                 : "данные ещё не загружены";
 
         return """
@@ -363,7 +396,7 @@ public class TelegramCommandService {
                 💥 Уничтожено районов: %d
                 """.formatted(
                 "ongoing".equals(season.getState()) ? "Текущий рейд" : "Последний рейд",
-                escapeHtml(getRaidState(season)),
+                TelegramUtils.escapeHtml(getRaidState(season)),
                 getRaidPeriod(season),
                 season.getCapitalTotalLoot(),
                 season.getTotalAttacks(),
@@ -384,7 +417,7 @@ public class TelegramCommandService {
         StringBuilder result = new StringBuilder("<b>Последние рейды</b>\n");
         for (RaidSeason season : seasons) {
             result.append("\n📅 ").append(getRaidPeriod(season)).append(" (МСК)\n")
-                    .append("📌 ").append(escapeHtml(getRaidState(season))).append("\n")
+                    .append("📌 ").append(TelegramUtils.escapeHtml(getRaidState(season))).append("\n")
                     .append("💰 ").append(season.getCapitalTotalLoot()).append(" столичного золота\n")
                     .append("🗡 Атаки: ").append(season.getTotalAttacks())
                     .append(" · 💥 Районы: ").append(season.getEnemyDistrictsDestroyed()).append("\n");
@@ -409,13 +442,6 @@ public class TelegramCommandService {
             case "ended" -> "Завершён";
             default -> season.getState();
         };
-    }
-
-    private static String escapeHtml(String value) {
-        return value
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;");
     }
 
 }

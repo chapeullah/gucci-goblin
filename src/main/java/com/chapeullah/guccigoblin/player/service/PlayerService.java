@@ -4,6 +4,7 @@ import com.chapeullah.guccigoblin.ClashOfClansClient;
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeague;
 import com.chapeullah.guccigoblin.builderbaseleague.BuilderBaseLeagueService;
 import com.chapeullah.guccigoblin.clan.model.Clan;
+import com.chapeullah.guccigoblin.clan.service.ClanService;
 import com.chapeullah.guccigoblin.label.dto.LabelResponse;
 import com.chapeullah.guccigoblin.label.player.PlayerLabelService;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
@@ -38,6 +39,7 @@ public class PlayerService {
     private final PlayerHeroEquipmentLinkService playerHeroEquipmentLinkService;
     private final PlayerHeroService playerHeroService;
     private final PlayerSpellService playerSpellService;
+    private final ClanService clanService;
 
     @Transactional
     public Player syncPlayer(@NonNull String playerTag) {
@@ -45,7 +47,9 @@ public class PlayerService {
 
         Player existingPlayer = playerRepository.findById(playerTag).orElse(null);
 
-        Clan clan = existingPlayer == null ? null : existingPlayer.getClan(); // TODO ?
+        Clan clan = response.clan() == null
+                ? null
+                : clanService.getOrSyncClanByTag(response.clan().tag());
 
         LeagueTier leagueTier = null;
         if (response.leagueTier() != null) {
@@ -111,7 +115,14 @@ public class PlayerService {
                 link -> !labelIds.contains(link.getPlayerLabel().getId()));
 
         if (!labelsResponse.isEmpty()) {
-            playerLabelService.syncAll().stream()
+            var allLabels = playerLabelService.syncAll();
+            Set<Integer> missingIds = new HashSet<>(labelIds);
+            allLabels.forEach(label -> missingIds.remove(label.getId()));
+            if (!missingIds.isEmpty()) {
+                throw new IllegalStateException("Player labels not found: playerTag=\""
+                        + player.getTag() + "\", labelIds=" + missingIds);
+            }
+            allLabels.stream()
                     .filter(label -> labelIds.contains(label.getId()))
                     .filter(label -> player.getLabelLinks().stream()
                             .noneMatch(link ->

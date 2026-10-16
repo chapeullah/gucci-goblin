@@ -26,4 +26,8 @@ public interface WarRepository extends JpaRepository<War, Long> {
     List<War> findTop5ByStateOrderByEndTimeDesc(
             String state);
 
+    List<War> findAllByClanTagAndEndTimeLessThanEqualAndWarLogSyncedAtIsNull(
+            String clanTag,
+            Instant now);
+
 }

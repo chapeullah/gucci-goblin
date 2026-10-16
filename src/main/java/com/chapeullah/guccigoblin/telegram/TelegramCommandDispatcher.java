@@ -19,10 +19,12 @@ public class TelegramCommandDispatcher {
                          command -> command));
     }
 
-    public String execute(String commandName, String args) {
+    public String execute(String commandName, String args, long chatId) {
         BotCommand command = commands.get(commandName);
-        if (command == null) return "Команда не найдена.";
-        return command.execute(args);
+        if (command == null) {
+            return "Команда не найдена.";
+        }
+        return command.execute(args, chatId);
     }
 
 }

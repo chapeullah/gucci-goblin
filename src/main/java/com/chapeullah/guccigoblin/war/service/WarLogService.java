@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,13 @@ public class WarLogService {
 
     private final ClashOfClansClient client;
     private final WarLogRepository warLogRepository;
+
+    @Transactional(readOnly = true)
+    public Optional<WarLogEntry> findByClanTagAndEndTime(
+            @NonNull String clanTag,
+            @NonNull Instant endTime) {
+        return warLogRepository.findByClanTagAndEndTime(clanTag, endTime);
+    }
 
     @Transactional
     public WarLogEntry getOrSyncWarLogEntry(

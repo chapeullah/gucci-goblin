@@ -41,7 +41,7 @@ public class LeagueTier {
             String smallIconUrl,
             String largeIconUrl) {
         if (name.isBlank()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("League tier name must not be blank");
         }
         this.id = id;
         this.name = name;

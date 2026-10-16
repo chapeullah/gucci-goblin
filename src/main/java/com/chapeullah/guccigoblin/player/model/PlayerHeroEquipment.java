@@ -8,9 +8,9 @@ import lombok.NonNull;
 
 @Entity
 @Table(
-        name = "hero_equipments",
+        name = "player_hero_equipments",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_hero_equipments_player_name",
+                name = "uk_player_hero_equipments_player_name",
                 columnNames = {"player_tag", "name"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -48,7 +48,7 @@ public class PlayerHeroEquipment {
             @NonNull Integer maxLevel,
             @NonNull String village) {
         if (name.isBlank()) {
-            throw new IllegalArgumentException("Hero equipment name must not be blank");
+            throw new IllegalArgumentException("Player hero equipment name must not be blank");
         }
         this.player = player;
         this.name = name;
