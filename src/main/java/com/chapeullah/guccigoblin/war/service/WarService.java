@@ -38,6 +38,17 @@ public class WarService {
     private final WarLogService warLogService;
 
     @Transactional
+    public Optional<War> findCurrentByClanTag(@NonNull String clanTag) {
+        return warRepository.findFirstByClanTagAndStateInOrderByStartTimeDesc(
+                clanTag, List.of("preparation", "inWar"));
+    }
+
+    @Transactional
+    public List<War> getRecentCompletedByClanTag(@NonNull String clanTag) {
+        return warRepository.findTop5ByClanTagAndStateOrderByEndTimeDesc(clanTag, "warEnded");
+    }
+
+    @Transactional
     public Optional<War> syncCurrentWar(@NonNull String clanTag) {
         WarResponse response = client.getCurrentWar(clanTag);
         if (response == null) {

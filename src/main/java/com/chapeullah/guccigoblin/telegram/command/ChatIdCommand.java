@@ -10,9 +10,17 @@ public class ChatIdCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
+    private static final String NAME = "/chatid";
+    private static final String DESCRIPTION = "ID текущего чата";
+
     @Override
-    public String name() {
-        return "/chatid";
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 
     @Override

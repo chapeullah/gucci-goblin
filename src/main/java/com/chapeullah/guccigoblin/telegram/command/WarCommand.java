@@ -10,14 +10,22 @@ public class WarCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
+    private static final String NAME = "/war";
+    private static final String DESCRIPTION = "Текущая война клана";
+
     @Override
-    public String name() {
-        return "/getCurrentWarMessage";
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 
     @Override
     public String execute(String args, long chatId) {
-        return name();
+        return telegramCommandService.getCurrentWarMessage();
     }
 
 }

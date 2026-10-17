@@ -7,6 +7,7 @@ import com.chapeullah.guccigoblin.clan.model.Clan;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTier;
 import com.chapeullah.guccigoblin.leaguetier.LeagueTierService;
 import com.chapeullah.guccigoblin.member.model.Member;
+import com.chapeullah.guccigoblin.member.model.MemberDelta.Snapshot;
 import com.chapeullah.guccigoblin.member.model.MemberHouseElement;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,10 @@ public class MemberService {
     private final BuilderBaseLeagueService builderBaseLeagueService;
     private final MemberHouseElementService memberHouseElementService;
     private final MemberDeltaService memberDeltaService;
+
+    public Optional<Member> findByTagAndClanTag(@NonNull String tag, @NonNull String clanTag) {
+        return memberRepository.findByTagAndClanTag(tag, clanTag);
+    }
 
     public List<Member> getAllMembersByClanTag(@NonNull String clanTag) {
         return memberRepository.findAllByClanTag(clanTag);
@@ -58,12 +64,13 @@ public class MemberService {
                         Member::getTag,
                         Function.identity()));
 
-        Map<String, Member> oldMembersByTag =
+        Map<String, Snapshot> oldMembersByTag =
                 remainingMembersByTag.values().stream()
                         .collect(Collectors.toMap(
                                 Member::getTag,
-                                this::copyMemberForDelta));
+                                Snapshot::from));
 
+        Instant now = Instant.now();
         List<Member> currentMembers = new ArrayList<>();
 
         for (ClanMemberResponse response : clanMemberResponses) {
@@ -72,19 +79,14 @@ public class MemberService {
             if (member == null) {
                 member = createMember(clan, response);
             } else {
-                updateMember(member, response);
+                updateMember(member, response, now);
             }
 
             currentMembers.add(member);
         }
 
-        Instant now = Instant.now();
-
         for (Member member : remainingMembersByTag.values()) {
-            if (Boolean.TRUE.equals(member.getInClan())) {
-                member.setInClan(false);
-                member.setInClanChangedAt(now);
-            }
+            member.leave(now);
         }
 
         Map<String, Member> newMembersByTag = currentMembers
@@ -133,120 +135,34 @@ public class MemberService {
 
     private void updateMember(
             @NonNull Member member,
-            @NonNull ClanMemberResponse response) {
+            @NonNull ClanMemberResponse response,
+            @NonNull Instant now) {
         if (!Objects.equals(member.getTag(), response.tag())) {
             throw new IllegalArgumentException(
                     "Member tags mismatch: currentMemberTag=\"" + member.getTag() + "\", sourceMemberTag=\""
                             + response.tag() + "\"");
         }
 
-        Instant now = Instant.now();
-
-        // name
-        // nameChangedAt
-        if (!Objects.equals(member.getName(), response.name())) {
-            member.setName(response.name());
-            member.setNameChangedAt(now);
-        }
-
-        // role
-        // roleChangedAt
-        if (!Objects.equals(member.getRole(), response.role())) {
-            member.setRole(response.role());
-            member.setRoleChangedAt(now);
-        }
-
-        // townHallLevel
-        // townHallLevelChangedAt
-        if (!Objects.equals(member.getTownHallLevel(), response.townHallLevel())) {
-            member.setTownHallLevel(response.townHallLevel());
-            member.setTownHallLevelChangedAt(now);
-        }
-
-        // expLevel
-        // expLevelChangedAt
-        if (!Objects.equals(member.getExpLevel(), response.expLevel())) {
-            member.setExpLevel(response.expLevel());
-            member.setExpLevelChangedAt(now);
-        }
-
-        // leagueTier
-        // leagueTierChangedAt
-        LeagueTier newLeagueTier = response.leagueTier() == null ? null
+        LeagueTier leagueTier = response.leagueTier() == null ? null
                 : leagueTierService.getById(response.leagueTier().id());
-        if (!Objects.equals(member.getLeagueTier(), newLeagueTier)) {
-            member.setLeagueTier(newLeagueTier);
-            member.setLeagueTierChangedAt(now);
-        }
+        BuilderBaseLeague builderBaseLeague = response.builderBaseLeague() == null ? null
+                : builderBaseLeagueService.getById(response.builderBaseLeague().id());
 
-        // trophies
-        // trophiesChangedAt
-        if (!Objects.equals(member.getTrophies(), response.trophies())) {
-            member.setTrophies(response.trophies());
-            member.setTrophiesChangedAt(now);
-        }
+        member.update(
+                response.name(),
+                response.role(),
+                response.townHallLevel(),
+                response.expLevel(),
+                leagueTier,
+                response.trophies(),
+                response.builderBaseTrophies(),
+                response.clanRank(),
+                response.previousClanRank(),
+                response.donations(),
+                response.donationsReceived(),
+                builderBaseLeague,
+                now);
 
-        // builderBaseTrophies
-        // builderBaseTrophiesChangedAt
-        if (!Objects.equals(member.getBuilderBaseTrophies(), response.builderBaseTrophies())) {
-            member.setBuilderBaseTrophies(response.builderBaseTrophies());
-            member.setBuilderBaseTrophiesChangedAt(now);
-        }
-
-        // clanRank
-        // clanRankChangedAt
-        if (!Objects.equals(member.getClanRank(), response.clanRank())) {
-            member.setClanRank(response.clanRank());
-            member.setClanRankChangedAt(now);
-        }
-
-        // previousClanRank
-        // previousClanRankChangedAt
-        if (!Objects.equals(member.getPreviousClanRank(), response.previousClanRank())) {
-            member.setPreviousClanRank(response.previousClanRank());
-            member.setPreviousClanRankChangedAt(now);
-        }
-
-        // donations
-        // donationsChangedAt
-        // totalDonations
-        // totalDonationsChangedAt
-        Integer oldDonations = member.getDonations();
-        Integer newDonations = response.donations();
-        if (!Objects.equals(oldDonations, newDonations)) {
-            member.setDonations(newDonations);
-            member.setDonationsChangedAt(now);
-        }
-        Integer addedDonations = (!Boolean.TRUE.equals(member.getInClan())
-                || newDonations < oldDonations)
-                ? newDonations
-                : newDonations - oldDonations;
-        if (addedDonations > 0) {
-            member.setTotalDonations(member.getTotalDonations() + addedDonations);
-            member.setTotalDonationsChangedAt(now);
-        }
-
-        // donationsReceived
-        // donationsReceivedChangedAt
-        // totalDonationsReceived
-        // totalDonationsReceivedChangedAt
-        Integer oldDonationsReceived = member.getDonationsReceived();
-        Integer newDonationsReceived = response.donationsReceived();
-        if (!Objects.equals(oldDonationsReceived, newDonationsReceived)) {
-            member.setDonationsReceived(newDonationsReceived);
-            member.setDonationsReceivedChangedAt(now);
-        }
-        Integer addedDonationsReceived = (!Boolean.TRUE.equals(member.getInClan())
-                || newDonationsReceived < oldDonationsReceived)
-                ? newDonationsReceived
-                : newDonationsReceived - oldDonationsReceived;
-        if (addedDonationsReceived > 0) {
-            member.setTotalDonationsReceived(member.getTotalDonationsReceived() + addedDonationsReceived);
-            member.setTotalDonationsReceivedChangedAt(now);
-        }
-
-        // memberHouseElements
-        // memberHouseElementsChangedAt
         Map<Integer, String> elementsBefore =
                 member.getMemberHouseElements().stream()
                         .collect(Collectors.toMap(
@@ -260,30 +176,10 @@ public class MemberService {
                                 MemberHouseElement::getElementId,
                                 MemberHouseElement::getElementType));
         if (!Objects.equals(elementsBefore, elementsAfter)) {
-            member.setMemberHouseElementsChangedAt(now);
+            member.markHouseElementsChanged(now);
         }
 
-        // builderBaseLeague
-        // builderBaseLeagueChangedAt
-        BuilderBaseLeague newBuilderBaseLeague =
-                response.builderBaseLeague() == null
-                        ? null
-                        : builderBaseLeagueService.getById(
-                        response.builderBaseLeague().id());
-        if (!Objects.equals(
-                member.getBuilderBaseLeague(),
-                newBuilderBaseLeague)) {
-            member.setBuilderBaseLeague(newBuilderBaseLeague);
-            member.setBuilderBaseLeagueChangedAt(now);
-        }
-
-        // inClan
-        // inClanChangedAt
-        if (!Boolean.TRUE.equals(member.getInClan())) {
-            member.setInClan(true);
-            member.setInClanChangedAt(now);
-        }
-
+        member.rejoin(now);
     }
 
     private void syncLeagueTiersAndBuilderBaseLeaguesIfMissing(
@@ -322,26 +218,6 @@ public class MemberService {
         if (builderBaseLeaguesSyncRequired) {
             builderBaseLeagueService.syncAll();
         }
-    }
-
-    private Member copyMemberForDelta(@NonNull Member member) {
-        Member copy = new Member(
-                member.getTag(),
-                member.getClan(),
-                member.getName(),
-                member.getRole(),
-                member.getTownHallLevel(),
-                member.getExpLevel(),
-                member.getLeagueTier(),
-                member.getTrophies(),
-                member.getBuilderBaseTrophies(),
-                member.getClanRank(),
-                member.getPreviousClanRank(),
-                member.getDonations(),
-                member.getDonationsReceived(),
-                member.getBuilderBaseLeague());
-        copy.setInClan(Boolean.TRUE.equals(member.getInClan()));
-        return copy;
     }
 
 }

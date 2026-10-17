@@ -15,6 +15,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,6 +32,16 @@ public class RaidSeasonService {
     private final RaidSeasonClanMemberSnapshotService clanMemberSnapshotService;
 
     private final JsonMapper jsonMapper;
+
+    @Transactional
+    public Optional<RaidSeason> findLatestByClanTag(@NonNull String clanTag) {
+        return raidSeasonRepository.findFirstByClanTagOrderByStartTimeDesc(clanTag);
+    }
+
+    @Transactional
+    public List<RaidSeason> getRecentByClanTag(@NonNull String clanTag) {
+        return raidSeasonRepository.findTop5ByClanTagOrderByStartTimeDesc(clanTag);
+    }
 
     @Transactional
     public Optional<RaidSeason> syncRaidSeason(@NonNull String clanTag) {

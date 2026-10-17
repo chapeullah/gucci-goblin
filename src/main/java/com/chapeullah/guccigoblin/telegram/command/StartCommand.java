@@ -10,9 +10,17 @@ public class StartCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
+    private static final String NAME = "/start";
+    private static final String DESCRIPTION = "Начало работы с ботом";
+
     @Override
-    public String name() {
-        return "/start";
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 
     @Override

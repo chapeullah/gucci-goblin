@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,6 +22,11 @@ public class RaidSeasonClanMemberSnapshotService {
 
     private final ClashOfClansClient client;
     private final RaidSeasonClanMemberSnapshotRepository snapshotRepository;
+
+    @Transactional
+    public List<RaidSeasonClanMemberSnapshot> getByRaidSeason(@NonNull RaidSeason raidSeason) {
+        return snapshotRepository.findAllByRaidSeason(raidSeason);
+    }
 
     @Transactional
     public void captureClanMembers(@NonNull RaidSeason raidSeason) {

@@ -18,6 +18,11 @@ public class RaidSeasonParticipantService {
     private final RaidSeasonParticipantRepository raidSeasonParticipantRepository;
 
     @Transactional
+    public List<RaidSeasonParticipant> getByRaidSeason(@NonNull RaidSeason raidSeason) {
+        return raidSeasonParticipantRepository.findAllByRaidSeason(raidSeason);
+    }
+
+    @Transactional
     public List<RaidSeasonParticipant> syncRaidSeasonParticipants(
             @NonNull RaidSeason raidSeason,
             List<RaidSeasonMemberResponse> responses) {

@@ -10,9 +10,17 @@ public class ClanCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
+    private static final String NAME = "/clan";
+    private static final String DESCRIPTION = "Информация о клане";
+
     @Override
-    public String name() {
-        return "/clan";
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 
     @Override

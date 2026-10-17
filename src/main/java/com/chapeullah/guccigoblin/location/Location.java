@@ -17,20 +17,16 @@ import java.util.Objects;
 public class Location {
 
     @Id
-    @Column(name = "id",
-            nullable = false)
+    @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "name",
-            nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "is_country",
-            nullable = false)
+    @Column(name = "is_country", nullable = false)
     private Boolean isCountry;
 
-    @Column(name = "country_code",
-            nullable = true)
+    @Column(name = "country_code", nullable = true)
     private String countryCode;
 
     public Location(

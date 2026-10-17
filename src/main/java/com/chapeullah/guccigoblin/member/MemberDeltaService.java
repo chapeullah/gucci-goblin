@@ -2,6 +2,7 @@ package com.chapeullah.guccigoblin.member;
 
 import com.chapeullah.guccigoblin.member.model.Member;
 import com.chapeullah.guccigoblin.member.model.MemberDelta;
+import com.chapeullah.guccigoblin.member.model.MemberDelta.Snapshot;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ import java.util.Map;
 public class MemberDeltaService {
 
     public void memberDeltaOutput(
-            @NonNull Map<String, Member> oldMembers,
+            @NonNull Map<String, Snapshot> oldMembers,
             @NonNull Map<String, Member> newMembers) {
         if (!log.isDebugEnabled()) {
             return;
@@ -32,16 +33,16 @@ public class MemberDeltaService {
     }
 
     public static List<MemberDelta> memberDeltasFrom(
-            @NonNull Map<String, Member> oldMembers,
+            @NonNull Map<String, Snapshot> oldMembers,
             @NonNull Map<String, Member> newMembers) {
-        Map<String, Member> remainingOldMembers = new LinkedHashMap<>(oldMembers);
+        Map<String, Snapshot> remainingOldMembers = new LinkedHashMap<>(oldMembers);
         List<MemberDelta> memberDeltas = new ArrayList<>();
         for (Map.Entry<String, Member> entry : newMembers.entrySet()) {
             String tag = entry.getKey();
             Member newMember = entry.getValue();
-            Member oldMember = oldMembers.get(tag);
+            Snapshot oldMember = oldMembers.get(tag);
             if (oldMember == null
-                    || !Boolean.TRUE.equals(oldMember.getInClan())) {
+                    || !oldMember.inClan()) {
                 memberDeltas.add(MemberDelta.joined(newMember));
                 remainingOldMembers.remove(tag);
                 continue;
@@ -52,8 +53,8 @@ public class MemberDeltaService {
             }
             remainingOldMembers.remove(tag);
         }
-        for (Member oldMember : remainingOldMembers.values()) {
-            if (Boolean.TRUE.equals(oldMember.getInClan())) {
+        for (Snapshot oldMember : remainingOldMembers.values()) {
+            if (oldMember.inClan()) {
                 memberDeltas.add(MemberDelta.left(oldMember));
             }
         }

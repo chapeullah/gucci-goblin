@@ -27,6 +27,11 @@ public class WarAttackService {
 
     private final WarParticipantService warParticipantService;
 
+    @Transactional(readOnly = true)
+    public List<WarAttack> getByWar(@NonNull War war) {
+        return warAttackRepository.findAllByWar(war);
+    }
+
     @Transactional
     public void syncAttacks(
             @NonNull War war,

@@ -10,14 +10,22 @@ public class RaidCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
+    private static final String NAME = "/raid";
+    private static final String DESCRIPTION = "Текущий сезон рейдов";
+
     @Override
-    public String name() {
-        return "/raid";
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 
     @Override
     public String execute(String args, long chatId) {
-        return name();
+        return telegramCommandService.getRaidMessage();
     }
 
 }

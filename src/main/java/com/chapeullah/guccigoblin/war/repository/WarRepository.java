@@ -23,7 +23,12 @@ public interface WarRepository extends JpaRepository<War, Long> {
     Optional<War> findFirstByStateInOrderByStartTimeDesc(
             List<String> states);
 
-    List<War> findTop5ByStateOrderByEndTimeDesc(
+    Optional<War> findFirstByClanTagAndStateInOrderByStartTimeDesc(
+            String clanTag,
+            List<String> states);
+
+    List<War> findTop5ByClanTagAndStateOrderByEndTimeDesc(
+            String clanTag,
             String state);
 
     List<War> findAllByClanTagAndEndTimeLessThanEqualAndWarLogSyncedAtIsNull(

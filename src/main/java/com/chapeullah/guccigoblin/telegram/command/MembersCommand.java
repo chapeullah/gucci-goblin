@@ -10,9 +10,17 @@ public class MembersCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
+    private static final String NAME = "/members";
+    private static final String DESCRIPTION = "Текущий состав клана";
+
     @Override
-    public String name() {
-        return "/members";
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 
     @Override

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -15,14 +16,14 @@ public class TelegramCommandDispatcher {
     public TelegramCommandDispatcher(List<BotCommand> commands) {
          this.commands = commands.stream()
                  .collect(Collectors.toMap(
-                         BotCommand::name,
-                         command -> command));
+                         BotCommand::getName,
+                         Function.identity()));
     }
 
     public String execute(String commandName, String args, long chatId) {
         BotCommand command = commands.get(commandName);
         if (command == null) {
-            return "Команда не найдена.";
+            return "Команда не найдена";
         }
         return command.execute(args, chatId);
     }

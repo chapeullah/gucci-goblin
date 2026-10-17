@@ -18,6 +18,43 @@ public final class MemberDelta {
         }
     }
 
+    public record Snapshot(
+            String tag,
+            String clanTag,
+            boolean inClan,
+            String name,
+            String role,
+            Integer townHallLevel,
+            Integer expLevel,
+            Integer leagueTierId,
+            Integer trophies,
+            Integer builderBaseTrophies,
+            Integer builderBaseLeagueId,
+            Integer clanRank,
+            Integer previousClanRank,
+            Integer donations,
+            Integer donationsReceived) {
+
+        public static Snapshot from(@NonNull Member member) {
+            return new Snapshot(
+                    member.getTag(),
+                    member.getClan().getTag(),
+                    Boolean.TRUE.equals(member.getInClan()),
+                    member.getName(),
+                    member.getRole(),
+                    member.getTownHallLevel(),
+                    member.getExpLevel(),
+                    member.getLeagueTier() == null ? null : member.getLeagueTier().getId(),
+                    member.getTrophies(),
+                    member.getBuilderBaseTrophies(),
+                    member.getBuilderBaseLeague() == null ? null : member.getBuilderBaseLeague().getId(),
+                    member.getClanRank(),
+                    member.getPreviousClanRank(),
+                    member.getDonations(),
+                    member.getDonationsReceived());
+        }
+    }
+
     public enum MembershipStatus {
         JOINED,
         UNCHANGED,
@@ -40,79 +77,56 @@ public final class MemberDelta {
     private final Delta<Integer> donationsReceivedDelta;
 
     public static MemberDelta merge(
-            @NonNull Member oldMember,
+            @NonNull Snapshot oldMember,
             @NonNull Member newMember) {
-        if (!oldMember.getTag().equals(newMember.getTag())) {
-            throw new IllegalArgumentException(
-                    "Member tags mismatch: oldMemberTag="
-                            + oldMember.getTag()
-                            + ", newMemberTag="
-                            + newMember.getTag());
+        Snapshot current = Snapshot.from(newMember);
+        if (!Objects.equals(oldMember.tag(), current.tag())
+                || !Objects.equals(oldMember.clanTag(), current.clanTag())) {
+            throw new IllegalArgumentException("Members must belong to the same player and clan");
         }
-        return between(MembershipStatus.UNCHANGED, oldMember, newMember);
+        return between(MembershipStatus.UNCHANGED, oldMember, current);
     }
 
     public static MemberDelta joined(@NonNull Member newMember) {
-        return between(MembershipStatus.JOINED, null, newMember);
+        return between(MembershipStatus.JOINED, null, Snapshot.from(newMember));
     }
 
-    public static MemberDelta left(@NonNull Member oldMember) {
+    public static MemberDelta left(@NonNull Snapshot oldMember) {
         return between(MembershipStatus.LEFT, oldMember, null);
     }
 
     private static MemberDelta between(
             @NonNull MembershipStatus membershipStatus,
-            Member oldMember,
-            Member newMember) {
-        Member identifiedMember = newMember != null ? newMember : oldMember;
+            Snapshot oldMember,
+            Snapshot newMember) {
+        Snapshot identifiedMember = newMember != null ? newMember : oldMember;
         if (identifiedMember == null) {
             throw new IllegalArgumentException("Members must not be null");
         }
         return new MemberDelta(
-                identifiedMember.getTag(),
+                identifiedMember.tag(),
                 membershipStatus,
-                delta(oldMember, newMember, Member::getName),
-                delta(oldMember, newMember, Member::getRole),
-                delta(oldMember, newMember, Member::getTownHallLevel),
-                delta(oldMember, newMember, Member::getExpLevel),
-                new Delta<>(
-                        leagueTierId(oldMember),
-                        leagueTierId(newMember)),
-                delta(oldMember, newMember, Member::getTrophies),
-                delta(
-                        oldMember,
-                        newMember,
-                        Member::getBuilderBaseTrophies),
-                new Delta<>(
-                        builderBaseLeagueId(oldMember),
-                        builderBaseLeagueId(newMember)),
-                delta(oldMember, newMember, Member::getClanRank),
-                delta(oldMember, newMember, Member::getPreviousClanRank),
-                delta(oldMember, newMember, Member::getDonations),
-                delta(oldMember, newMember, Member::getDonationsReceived));
+                delta(oldMember, newMember, Snapshot::name),
+                delta(oldMember, newMember, Snapshot::role),
+                delta(oldMember, newMember, Snapshot::townHallLevel),
+                delta(oldMember, newMember, Snapshot::expLevel),
+                delta(oldMember, newMember, Snapshot::leagueTierId),
+                delta(oldMember, newMember, Snapshot::trophies),
+                delta(oldMember, newMember, Snapshot::builderBaseTrophies),
+                delta(oldMember, newMember, Snapshot::builderBaseLeagueId),
+                delta(oldMember, newMember, Snapshot::clanRank),
+                delta(oldMember, newMember, Snapshot::previousClanRank),
+                delta(oldMember, newMember, Snapshot::donations),
+                delta(oldMember, newMember, Snapshot::donationsReceived));
     }
 
     private static <T> Delta<T> delta(
-            Member oldMember,
-            Member newMember,
-            Function<Member, T> extractor) {
+            Snapshot oldMember,
+            Snapshot newMember,
+            Function<Snapshot, T> extractor) {
         T oldValue = oldMember == null ? null : extractor.apply(oldMember);
         T newValue = newMember == null ? null : extractor.apply(newMember);
         return new Delta<>(oldValue, newValue);
-    }
-
-    private static Integer leagueTierId(Member member) {
-        if (member == null || member.getLeagueTier() == null) {
-            return null;
-        }
-        return member.getLeagueTier().getId();
-    }
-
-    private static Integer builderBaseLeagueId(Member member) {
-        if (member == null || member.getBuilderBaseLeague() == null) {
-            return null;
-        }
-        return member.getBuilderBaseLeague().getId();
     }
 
     public boolean hasChanges() {

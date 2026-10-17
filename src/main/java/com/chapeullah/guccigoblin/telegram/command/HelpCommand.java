@@ -10,9 +10,17 @@ public class HelpCommand implements BotCommand {
 
     private final TelegramCommandService telegramCommandService;
 
+    private static final String NAME = "/help";
+    private static final String DESCRIPTION = "Список команд";
+
     @Override
-    public String name() {
-        return "/help";
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return DESCRIPTION;
     }
 
     @Override
